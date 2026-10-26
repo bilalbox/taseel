@@ -41,7 +41,7 @@ let db: Database | null = null;
 let poolUtil: SAHPoolUtil | null = null;
 let currentVfs = 'opfs-sahpool';
 
-const USER_SCHEMA_SQL = `
+export const USER_SCHEMA_SQL = `
 CREATE TABLE IF NOT EXISTS bookmarks (
   fatwa_id TEXT PRIMARY KEY,
   created_at INTEGER NOT NULL
@@ -58,16 +58,6 @@ CREATE TABLE IF NOT EXISTS quiz_attempts (
   difficulty TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS srs_cards (
-  principle_id TEXT PRIMARY KEY,
-  level INTEGER NOT NULL,
-  streak INTEGER NOT NULL,
-  last_reviewed INTEGER NOT NULL,
-  next_review INTEGER NOT NULL,
-  correct_count INTEGER NOT NULL,
-  total_attempts INTEGER NOT NULL
-);
-
 CREATE TABLE IF NOT EXISTS kv_meta (
   key TEXT PRIMARY KEY,
   value TEXT NOT NULL
@@ -75,13 +65,15 @@ CREATE TABLE IF NOT EXISTS kv_meta (
 `;
 
 function postProgress(stage: string, bytesProcessed = 0, totalExpected = 0, detail = '') {
-  self.postMessage({
-    type: 'BOOT_PROGRESS',
-    stage,
-    bytesProcessed,
-    totalExpected,
-    detail
-  });
+  if (typeof self !== 'undefined' && self.postMessage) {
+    self.postMessage({
+      type: 'BOOT_PROGRESS',
+      stage,
+      bytesProcessed,
+      totalExpected,
+      detail
+    });
+  }
 }
 
 /** Drop dead IA placeholder URLs (`noor-ala-al-darb-samples` never existed). */
@@ -259,20 +251,6 @@ function loadInitialUiPayload(manifest: ManifestData | null, bootMs: number) {
   // Load UserState from attached `user_db`
   const bookmarkRows = db.selectObjects('SELECT fatwa_id FROM user_db.bookmarks ORDER BY created_at DESC');
   const historyRows = db.selectObjects('SELECT * FROM user_db.quiz_attempts ORDER BY timestamp DESC LIMIT 100');
-  const srsRows = db.selectObjects('SELECT * FROM user_db.srs_cards');
-
-  const spacedRepetition: Record<string, any> = {};
-  for (const s of srsRows) {
-    spacedRepetition[String(s.principle_id)] = {
-      principle_id: String(s.principle_id),
-      level: Number(s.level),
-      streak: Number(s.streak),
-      last_reviewed: Number(s.last_reviewed),
-      next_review: Number(s.next_review),
-      correct_count: Number(s.correct_count),
-      total_attempts: Number(s.total_attempts)
-    };
-  }
 
   const totalFatwasCount = Number(
     db.selectValue('SELECT COUNT(*) FROM fatwas') || manifest?.counts.fatwas || 19301
@@ -301,8 +279,7 @@ function loadInitialUiPayload(manifest: ManifestData | null, bootMs: number) {
         timestamp: Number(h.timestamp),
         time_spent_ms: Number(h.time_spent_ms),
         difficulty: String(h.difficulty) as any
-      })),
-      spaced_repetition: spacedRepetition
+      }))
     }
   };
 }
@@ -632,80 +609,66 @@ function searchFatwasFts(rawQuery: string, limit = 80) {
   return { fatwas, latencyMs };
 }
 
-self.onmessage = async (event: MessageEvent) => {
-  const { id, action, payload } = event.data;
-  try {
-    if (action === 'INIT') {
-      const result = await initEngines();
-      self.postMessage({ id, ok: true, result });
-    } else if (action === 'GET_PRINCIPLES_TREE') {
-      const result = db ? getPrinciplesTreeWorker() : await mockArchiveAdapter.getPrinciplesTree();
-      self.postMessage({ id, ok: true, result });
-    } else if (action === 'BROWSE_FATWAS') {
-      const result = db ? browseFatwasWorker(payload) : await mockArchiveAdapter.browseFatwas(payload);
-      self.postMessage({ id, ok: true, result });
-    } else if (action === 'GET_FATWA_DETAIL') {
-      const result = db ? getFatwaDetailWorker(payload?.id) : await mockArchiveAdapter.getFatwaDetail(payload?.id);
-      self.postMessage({ id, ok: true, result });
-    } else if (action === 'SEARCH_FATWAS') {
-      const result = searchFatwasFts(payload.query, payload.limit || 80);
-      self.postMessage({ id, ok: true, result });
-    } else if (action === 'TOGGLE_BOOKMARK') {
-      if (db) {
-        const { fatwaId } = payload;
-        const exists = db.selectValue('SELECT 1 FROM user_db.bookmarks WHERE fatwa_id = ?', [fatwaId]);
-        if (exists) {
-          db.exec({ sql: 'DELETE FROM user_db.bookmarks WHERE fatwa_id = ?', bind: [fatwaId] });
-        } else {
-          db.exec({
-            sql: 'INSERT OR REPLACE INTO user_db.bookmarks (fatwa_id, created_at) VALUES (?, ?)',
-            bind: [fatwaId, Date.now()]
-          });
+if (typeof self !== 'undefined') {
+  self.onmessage = async (event: MessageEvent) => {
+    const { id, action, payload } = event.data;
+    try {
+      if (action === 'INIT') {
+        const result = await initEngines();
+        self.postMessage({ id, ok: true, result });
+      } else if (action === 'GET_PRINCIPLES_TREE') {
+        const result = db ? getPrinciplesTreeWorker() : await mockArchiveAdapter.getPrinciplesTree();
+        self.postMessage({ id, ok: true, result });
+      } else if (action === 'BROWSE_FATWAS') {
+        const result = db ? browseFatwasWorker(payload) : await mockArchiveAdapter.browseFatwas(payload);
+        self.postMessage({ id, ok: true, result });
+      } else if (action === 'GET_FATWA_DETAIL') {
+        const result = db ? getFatwaDetailWorker(payload?.id) : await mockArchiveAdapter.getFatwaDetail(payload?.id);
+        self.postMessage({ id, ok: true, result });
+      } else if (action === 'SEARCH_FATWAS') {
+        const result = searchFatwasFts(payload.query, payload.limit || 80);
+        self.postMessage({ id, ok: true, result });
+      } else if (action === 'TOGGLE_BOOKMARK') {
+        if (db) {
+          const { fatwaId } = payload;
+          const exists = db.selectValue('SELECT 1 FROM user_db.bookmarks WHERE fatwa_id = ?', [fatwaId]);
+          if (exists) {
+            db.exec({ sql: 'DELETE FROM user_db.bookmarks WHERE fatwa_id = ?', bind: [fatwaId] });
+          } else {
+            db.exec({
+              sql: 'INSERT OR REPLACE INTO user_db.bookmarks (fatwa_id, created_at) VALUES (?, ?)',
+              bind: [fatwaId, Date.now()]
+            });
+          }
         }
-      }
-      self.postMessage({ id, ok: true, result: true });
-    } else if (action === 'RECORD_QUIZ_ATTEMPT') {
-      if (db) {
-        const { item, srs } = payload;
-        db.exec({
-          sql: `INSERT OR REPLACE INTO user_db.quiz_attempts
-                (id, fatwa_id, principle_id, selected_principle_id, is_correct, timestamp, time_spent_ms, difficulty)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-          bind: [
-            item.id,
-            item.fatwa_id,
-            item.principle_id,
-            item.selected_principle_id,
-            item.is_correct ? 1 : 0,
-            item.timestamp,
-            item.time_spent_ms,
-            item.difficulty
-          ]
-        });
-        if (srs) {
+        self.postMessage({ id, ok: true, result: true });
+      } else if (action === 'RECORD_QUIZ_ATTEMPT') {
+        if (db) {
+          const { item } = payload;
           db.exec({
-            sql: `INSERT OR REPLACE INTO user_db.srs_cards
-                  (principle_id, level, streak, last_reviewed, next_review, correct_count, total_attempts)
-                  VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            sql: `INSERT OR REPLACE INTO user_db.quiz_attempts
+                  (id, fatwa_id, principle_id, selected_principle_id, is_correct, timestamp, time_spent_ms, difficulty)
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
             bind: [
-              srs.principle_id,
-              srs.level,
-              srs.streak,
-              srs.last_reviewed,
-              srs.next_review,
-              srs.correct_count,
-              srs.total_attempts
+              item.id,
+              item.fatwa_id,
+              item.principle_id,
+              item.selected_principle_id,
+              item.is_correct ? 1 : 0,
+              item.timestamp,
+              item.time_spent_ms,
+              item.difficulty
             ]
           });
         }
+        self.postMessage({ id, ok: true, result: true });
       }
-      self.postMessage({ id, ok: true, result: true });
+    } catch (error: any) {
+      self.postMessage({
+        id,
+        ok: false,
+        error: error?.message || String(error)
+      });
     }
-  } catch (error: any) {
-    self.postMessage({
-      id,
-      ok: false,
-      error: error?.message || String(error)
-    });
-  }
-};
+  };
+}

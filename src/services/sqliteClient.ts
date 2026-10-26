@@ -6,7 +6,6 @@ import {
   FatwaPrinciple,
   Principle,
   PrincipleTreeNode,
-  SpacedRepetitionRecord,
   UserQuizHistoryItem,
 } from '../types';
 import type { ManifestData } from '../workers/sqlite.worker';
@@ -31,7 +30,6 @@ export interface WorkerInitPayload {
   userState: {
     bookmarks: string[];
     history: UserQuizHistoryItem[];
-    spaced_repetition?: Record<string, SpacedRepetitionRecord>;
   };
 }
 
@@ -118,10 +116,9 @@ class SqliteWorkerClient {
   }
 
   public recordQuizAttempt(
-    item: UserQuizHistoryItem,
-    srs: SpacedRepetitionRecord
+    item: UserQuizHistoryItem
   ): Promise<boolean> {
-    return this.call<boolean>('RECORD_QUIZ_ATTEMPT', { item, srs });
+    return this.call<boolean>('RECORD_QUIZ_ATTEMPT', { item });
   }
 }
 

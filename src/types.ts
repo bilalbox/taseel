@@ -134,20 +134,9 @@ export interface UserQuizHistoryItem {
   difficulty: Difficulty;
 }
 
-export interface SpacedRepetitionRecord {
-  principle_id: string;
-  level: number;
-  streak: number;
-  last_reviewed: number;
-  next_review: number;
-  correct_count: number;
-  total_attempts: number;
-}
-
 export interface UserState {
   bookmarks: string[]; // fatwa_ids
   history: UserQuizHistoryItem[];
-  spaced_repetition: Record<string, SpacedRepetitionRecord>;
   xp: number;
   streak_days: number;
 }
