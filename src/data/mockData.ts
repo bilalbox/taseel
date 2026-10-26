@@ -335,17 +335,6 @@ export const INITIAL_USER_STATE = {
       difficulty: 'beginner' as const
     }
   ],
-  spaced_repetition: {
-    'principle-yaqeen': {
-      principle_id: 'principle-yaqeen',
-      level: 2,
-      streak: 2,
-      last_reviewed: Date.now() - 3600000 * 5,
-      next_review: Date.now() + 86400000 * 3,
-      correct_count: 2,
-      total_attempts: 2
-    }
-  },
   xp: 120,
   streak_days: 3
 };

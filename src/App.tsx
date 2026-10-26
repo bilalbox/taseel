@@ -98,10 +98,6 @@ export function App() {
               payload.userState.history.length > 0
                 ? payload.userState.history
                 : prev.history,
-            spaced_repetition: {
-              ...prev.spaced_repetition,
-              ...payload.userState.spaced_repetition,
-            },
           }));
         }
       })
@@ -173,37 +169,11 @@ export function App() {
           difficulty: 'intermediate' as const,
         };
 
-        const currentSR = prev.spaced_repetition[principleId] || {
-          principle_id: principleId,
-          level: 1,
-          streak: 0,
-          last_reviewed: Date.now(),
-          next_review: Date.now() + 86400000,
-          correct_count: 0,
-          total_attempts: 0,
-        };
-
-        const updatedSR = {
-          ...currentSR,
-          level: isCorrect ? currentSR.level + 1 : Math.max(1, currentSR.level - 1),
-          streak: isCorrect ? currentSR.streak + 1 : 0,
-          last_reviewed: Date.now(),
-          next_review: isCorrect
-            ? Date.now() + (currentSR.level + 1) * 86400000
-            : Date.now() + 3600000 * 2,
-          correct_count: isCorrect ? currentSR.correct_count + 1 : currentSR.correct_count,
-          total_attempts: currentSR.total_attempts + 1,
-        };
-
-        sqliteClient.recordQuizAttempt(newHistoryItem, updatedSR).catch(() => {});
+        sqliteClient.recordQuizAttempt(newHistoryItem).catch(() => {});
 
         return {
           ...prev,
           history: [...prev.history, newHistoryItem],
-          spaced_repetition: {
-            ...prev.spaced_repetition,
-            [principleId]: updatedSR,
-          },
           xp: prev.xp + (isCorrect ? 20 : 5),
         };
       });
