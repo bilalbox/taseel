@@ -55,3 +55,8 @@ The exact clause in a Scholar's answer where one or more Principles are actively
 
 **Multi-Principle Ruling (حكم مركب التعليل)**:
 A Fatwa whose ruling rests on the intersection of multiple Principles simultaneously (either via a multi-parent Principle or multiple rows in `fatwa_principles`), triggering a *"Select all principles that apply"* quiz prompt.
+
+**Quiz Attempt (محاولة اختبار)**:
+A recorded user response matching a Fatwa to a candidate Principle, storing correctness, time spent, and the selected choice.
+_Avoid_: Flashcard, review card, SRS interval
+
