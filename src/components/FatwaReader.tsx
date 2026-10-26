@@ -1,19 +1,20 @@
 import React, { useState } from 'react';
-import { Bookmark, BookmarkCheck, Flag, HelpCircle, Sparkles } from 'lucide-react';
+import { Bookmark, BookmarkCheck, Flag, Sparkles } from 'lucide-react';
 import { Fatwa, FatwaPrinciple, Principle } from '../types';
 import { AudioPlayerStub } from './AudioPlayerStub';
 import { CATEGORY_LABELS, chapterLabelAr } from '../utils/arabic';
 import { FeedbackModal } from './FeedbackModal';
+import { useLearnerProgress } from '../hooks/useLearnerProgress';
 
 interface FatwaReaderProps {
   fatwa: Fatwa | undefined;
   principles: Principle[];
   fatwaPrinciples: FatwaPrinciple[];
   activePrincipleId: string | null;
-  isBookmarked: boolean;
+  isBookmarked?: boolean;
   /** Hide linked-principle chips in quiz mode so they do not spoil the answer. */
   showExtractedPrinciples?: boolean;
-  onToggleBookmark: (fatwaId: string) => void;
+  onToggleBookmark?: (fatwaId: string) => void;
   onSelectPrinciple: (principleId: string) => void;
 }
 
@@ -22,11 +23,28 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
   principles,
   fatwaPrinciples,
   activePrincipleId,
-  isBookmarked,
+  isBookmarked: propIsBookmarked,
   showExtractedPrinciples = true,
-  onToggleBookmark,
+  onToggleBookmark: propOnToggleBookmark,
   onSelectPrinciple,
 }) => {
+  const learner = useLearnerProgress();
+  const isBookmarked =
+    propIsBookmarked !== undefined
+      ? propIsBookmarked
+      : fatwa
+        ? learner.isBookmarked(fatwa.id)
+        : false;
+
+  const handleToggleBookmark = () => {
+    if (!fatwa) return;
+    if (propOnToggleBookmark) {
+      propOnToggleBookmark(fatwa.id);
+    } else {
+      learner.toggleBookmark(fatwa.id);
+    }
+  };
+
   if (!fatwa) {
     return (
       <div className="bg-page-raised border border-page-line rounded-lg p-10 text-center text-ink-muted text-sm">
@@ -64,7 +82,7 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => onToggleBookmark(fatwa.id)}
+            onClick={handleToggleBookmark}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs transition ${
               isBookmarked
                 ? 'bg-accent text-white border-accent'

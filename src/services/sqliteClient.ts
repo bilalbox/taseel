@@ -31,6 +31,9 @@ class SqliteWorkerClient {
 
   private ensureWorker(): Worker {
     if (!this.worker) {
+      if (typeof Worker === 'undefined') {
+        throw new Error('Worker environment is not available');
+      }
       this.worker = new Worker(new URL('../workers/sqlite.worker.ts', import.meta.url), {
         type: 'module'
       });
@@ -85,6 +88,10 @@ class SqliteWorkerClient {
     item: UserQuizHistoryItem
   ): Promise<boolean> {
     return this.call<boolean>('RECORD_QUIZ_ATTEMPT', { item });
+  }
+
+  public clearQuizAttempts(): Promise<boolean> {
+    return this.call<boolean>('CLEAR_QUIZ_ATTEMPTS');
   }
 }
 

@@ -9,35 +9,30 @@ import {
   UserState,
 } from '../types';
 import { matchesSearch, chapterLabelAr } from '../utils/arabic';
-import {
-  AnsweredQuestionsMap,
-  getAnsweredRecord,
-  getGroundedQuizCandidates,
-  isQuestionAnswered,
-  pickRandomQuizQuestion,
-} from '../utils/quizTracker';
+import { AnsweredQuestionsMap } from '../utils/quizTracker';
 import { FatwaReader } from './FatwaReader';
 import { QuizPane } from './QuizPane';
 import { BrowseIndex } from './BrowseIndex';
+import { useLearnerProgress } from '../hooks/useLearnerProgress';
 
-interface AppShellProps {
+export interface AppShellProps {
   fatwas: Fatwa[];
   principles: Principle[];
   fatwaPrinciples: FatwaPrinciple[];
-  userState: UserState;
-  answeredQuestions: AnsweredQuestionsMap;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   bootLabel?: string | null;
   opfsReady: boolean;
-  onRecordQuizAttempt: (
+  userState?: UserState;
+  answeredQuestions?: AnsweredQuestionsMap;
+  onRecordQuizAttempt?: (
     fatwaId: string,
     principleId: string,
     selectedId: string,
     isCorrect: boolean,
     timeSpentMs: number
   ) => void;
-  onToggleBookmark: (fatwaId: string) => void;
+  onToggleBookmark?: (fatwaId: string) => void;
   onResetQuizProgress?: () => void;
 }
 
@@ -45,8 +40,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   fatwas,
   principles,
   fatwaPrinciples,
-  userState,
-  answeredQuestions,
   searchQuery,
   setSearchQuery,
   bootLabel,
@@ -55,6 +48,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   onToggleBookmark,
   onResetQuizProgress,
 }) => {
+  const learner = useLearnerProgress();
   const [mode, setMode] = useState<AppMode>('quiz');
   const [selectedScholar, setSelectedScholar] = useState<Scholar | 'ALL'>('ALL');
   const [selectedChapter, setSelectedChapter] = useState<string>('ALL');
@@ -67,70 +61,32 @@ export const AppShell: React.FC<AppShellProps> = ({
     return new URLSearchParams(window.location.search).get('fatwa');
   }, []);
 
-  const seededRef = useRef(false);
-
-  // Present a random question on visit/page load (or honor ?fatwa= if provided)
   const [activeFatwaId, setActiveFatwaId] = useState<string>(() => {
     if (requestedFatwaId && fatwas.some(f => f.id === requestedFatwaId)) {
-      seededRef.current = true;
       return requestedFatwaId;
     }
-    const initialPick = pickRandomQuizQuestion({
-      fatwas,
-      fatwaPrinciples,
-      answered: answeredQuestions,
-    });
-    if (initialPick) {
-      seededRef.current = true;
-      return initialPick.fatwa.id;
-    }
-    return fatwas[0]?.id || '';
+    return learner.currentQuestion?.fatwa.id || fatwas[0]?.id || '';
   });
 
   const [activePrincipleId, setActivePrincipleId] = useState<string | null>(() => {
-    const initialPick = pickRandomQuizQuestion({
-      fatwas,
-      fatwaPrinciples,
-      answered: answeredQuestions,
-    });
-    return initialPick?.fatwaPrinciple.principle_id || null;
+    return learner.currentQuestion?.principle.id || null;
   });
 
-  // Seed initial random question once pool hydrates if initial pick was empty
+  // Synchronize with URL parameter or learner store's initial selection
   useEffect(() => {
-    if (seededRef.current) return;
-    if (fatwas.length === 0 || fatwaPrinciples.length === 0) return;
-
     if (requestedFatwaId && fatwas.some(f => f.id === requestedFatwaId)) {
       setActiveFatwaId(requestedFatwaId);
-      seededRef.current = true;
-      return;
+      learner.selectQuestion(requestedFatwaId);
     }
+  }, [requestedFatwaId, fatwas, learner]);
 
-    const randomPick = pickRandomQuizQuestion({
-      fatwas,
-      fatwaPrinciples,
-      answered: answeredQuestions,
-    });
-    if (randomPick) {
-      setActiveFatwaId(randomPick.fatwa.id);
-      setActivePrincipleId(randomPick.fatwaPrinciple.principle_id);
-      seededRef.current = true;
-    }
-  }, [fatwas, fatwaPrinciples, answeredQuestions, requestedFatwaId]);
-
-  // Keep activeFatwaId valid if fatwas array updates from background OPFS
+  // Synchronize when store's current question changes
   useEffect(() => {
-    if (!activeFatwaId && fatwas[0]?.id) {
-      const pick = pickRandomQuizQuestion({
-        fatwas,
-        fatwaPrinciples,
-        answered: answeredQuestions,
-      });
-      setActiveFatwaId(pick?.fatwa.id || fatwas[0].id);
-      if (pick) setActivePrincipleId(pick.fatwaPrinciple.principle_id);
+    if (learner.currentQuestion) {
+      setActiveFatwaId(learner.currentQuestion.fatwa.id);
+      setActivePrincipleId(learner.currentQuestion.principle.id);
     }
-  }, [fatwas, fatwaPrinciples, answeredQuestions, activeFatwaId]);
+  }, [learner.currentQuestion]);
 
   const chapters = useMemo(
     () => Array.from(new Set(fatwas.map(f => f.topic_chapter))).sort(),
@@ -141,13 +97,13 @@ export const AppShell: React.FC<AppShellProps> = ({
     return fatwas.filter(f => {
       if (selectedScholar !== 'ALL' && f.scholar_name !== selectedScholar) return false;
       if (selectedChapter !== 'ALL' && f.topic_chapter !== selectedChapter) return false;
-      if (filterUnansweredOnly && isQuestionAnswered(answeredQuestions, f.id)) return false;
+      if (filterUnansweredOnly && learner.isQuestionAnswered(f.id)) return false;
       if (!searchQuery.trim()) return true;
       return (
         matchesSearch(searchQuery, f.question_norm) || matchesSearch(searchQuery, f.answer_norm)
       );
     });
-  }, [fatwas, selectedScholar, selectedChapter, filterUnansweredOnly, answeredQuestions, searchQuery]);
+  }, [fatwas, selectedScholar, selectedChapter, filterUnansweredOnly, learner, searchQuery]);
 
   const activeFatwa =
     fatwas.find(f => f.id === activeFatwaId) || filteredFatwas[0] || fatwas[0];
@@ -164,75 +120,33 @@ export const AppShell: React.FC<AppShellProps> = ({
 
   const currentPrinciple = principles.find(p => p.id === selectedFatwaPrinciple?.principle_id);
 
-  // Grounded quiz candidates and progress stats
-  const groundedCandidates = useMemo(
-    () => getGroundedQuizCandidates(fatwas, fatwaPrinciples),
-    [fatwas, fatwaPrinciples]
-  );
-
-  const answeredCount = useMemo(() => {
-    let count = 0;
-    for (const c of groundedCandidates) {
-      if (isQuestionAnswered(answeredQuestions, c.fatwa.id, c.fatwaPrinciple.principle_id)) {
-        count++;
-      }
-    }
-    return count;
-  }, [groundedCandidates, answeredQuestions]);
-
-  const isCurrentQuestionAnswered = useMemo(() => {
-    if (!activeFatwa) return false;
-    return isQuestionAnswered(
-      answeredQuestions,
-      activeFatwa.id,
-      selectedFatwaPrinciple?.principle_id
-    );
-  }, [answeredQuestions, activeFatwa, selectedFatwaPrinciple]);
-
-  const currentAnsweredRecord = useMemo(() => {
-    if (!activeFatwa) return undefined;
-    return getAnsweredRecord(
-      answeredQuestions,
-      activeFatwa.id,
-      selectedFatwaPrinciple?.principle_id
-    );
-  }, [answeredQuestions, activeFatwa, selectedFatwaPrinciple]);
+  const answeredCount = learner.stats.answeredCount;
 
   const handleNextRandomQuestion = useCallback(() => {
-    const next = pickRandomQuizQuestion({
-      fatwas,
-      fatwaPrinciples,
-      answered: answeredQuestions,
-      excludeFatwaId: activeFatwaId,
-      filter: {
-        scholar: selectedScholar,
-        chapter: selectedChapter,
-      },
+    learner.nextQuestion({
+      scholar: selectedScholar,
+      chapter: selectedChapter,
     });
-    if (next) {
-      setActiveFatwaId(next.fatwa.id);
-      setActivePrincipleId(next.fatwaPrinciple.principle_id);
-    }
-  }, [
-    fatwas,
-    fatwaPrinciples,
-    answeredQuestions,
-    activeFatwaId,
-    selectedScholar,
-    selectedChapter,
-  ]);
+  }, [learner, selectedScholar, selectedChapter]);
 
   const handleFatwaSelect = (fatwaId: string) => {
     setActiveFatwaId(fatwaId);
     setActivePrincipleId(null);
+    learner.selectQuestion(fatwaId);
   };
 
   const handlePrincipleSelect = (principleId: string) => {
     setActivePrincipleId(principleId);
+    if (activeFatwa) {
+      learner.selectQuestion(activeFatwa.id, principleId);
+    }
   };
 
   const handleBrowsePrinciple = (principleId: string) => {
     setActivePrincipleId(principleId);
+    if (activeFatwa) {
+      learner.selectQuestion(activeFatwa.id, principleId);
+    }
   };
 
   const isSidebarVisible = mode === 'browse' || showSidebarInQuiz;
@@ -287,10 +201,10 @@ export const AppShell: React.FC<AppShellProps> = ({
                 </button>
               </div>
 
-              {userState.bookmarks.length > 0 && (
+              {learner.userState.bookmarks.length > 0 && (
                 <span className="inline-flex items-center gap-1 text-[11px] text-ink-muted px-2 py-0.5 bg-page-sunken rounded-md border border-page-line">
                   <BookmarkCheck className="w-3.5 h-3.5 text-accent" />
-                  <span>{userState.bookmarks.length}</span>
+                  <span>{learner.userState.bookmarks.length}</span>
                 </span>
               )}
 
@@ -399,8 +313,8 @@ export const AppShell: React.FC<AppShellProps> = ({
               <div className="space-y-1 max-h-[calc(100vh-14rem)] overflow-y-auto">
                 {filteredFatwas.map(fatwa => {
                   const isActive = fatwa.id === activeFatwa?.id;
-                  const isSaved = userState.bookmarks.includes(fatwa.id);
-                  const isAnswered = isQuestionAnswered(answeredQuestions, fatwa.id);
+                  const isSaved = learner.isBookmarked(fatwa.id);
+                  const isAnswered = learner.isQuestionAnswered(fatwa.id);
                   return (
                     <button
                       key={fatwa.id}
@@ -446,9 +360,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             principles={principles}
             fatwaPrinciples={currentFatwaPrinciples}
             activePrincipleId={activePrincipleId}
-            isBookmarked={!!activeFatwa && userState.bookmarks.includes(activeFatwa.id)}
             showExtractedPrinciples={mode === 'browse'}
-            onToggleBookmark={onToggleBookmark}
             onSelectPrinciple={handlePrincipleSelect}
           />
         </div>
@@ -462,13 +374,7 @@ export const AppShell: React.FC<AppShellProps> = ({
               fatwa={activeFatwa}
               principle={currentPrinciple}
               fatwaPrinciple={selectedFatwaPrinciple}
-              isAnswered={isCurrentQuestionAnswered}
-              lastAttempt={currentAnsweredRecord}
-              totalGroundedCount={groundedCandidates.length}
-              answeredCount={answeredCount}
-              onRecordQuizAttempt={onRecordQuizAttempt}
               onNextQuestion={handleNextRandomQuestion}
-              onResetProgress={onResetQuizProgress}
             />
           ) : (
             <BrowseIndex
