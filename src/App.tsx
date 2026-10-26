@@ -9,6 +9,13 @@ import {
 } from './data/mockData';
 import { Fatwa, Principle, FatwaPrinciple, UserState } from './types';
 import { sqliteClient, BootProgressEvent } from './services/sqliteClient';
+import {
+  AnsweredQuestionsMap,
+  loadAnsweredQuestions,
+  recordAnsweredQuestion,
+  resetAnsweredQuestions,
+  syncHistoryWithAnswered,
+} from './utils/quizTracker';
 
 function useDebugMode(): boolean {
   return useMemo(() => {
@@ -42,9 +49,20 @@ export function App() {
     return INITIAL_USER_STATE;
   });
 
+  const [answeredQuestions, setAnsweredQuestions] = useState<AnsweredQuestionsMap>(() =>
+    loadAnsweredQuestions()
+  );
+
   useEffect(() => {
     localStorage.setItem('taseel_user_state_v1', JSON.stringify(userState));
   }, [userState]);
+
+  // Synchronize historical quiz attempts with the answered questions map
+  useEffect(() => {
+    if (userState.history.length > 0) {
+      setAnsweredQuestions(prev => syncHistoryWithAnswered(prev, userState.history));
+    }
+  }, [userState.history]);
 
   useEffect(() => {
     const unsub = sqliteClient.onBootProgress(ev => {
@@ -138,6 +156,11 @@ export function App() {
       isCorrect: boolean,
       timeSpentMs: number
     ) => {
+      // 1. Record in local storage quiz tracker
+      const updated = recordAnsweredQuestion(fatwaId, principleId, selectedId, isCorrect);
+      setAnsweredQuestions({ ...updated });
+
+      // 2. Record in UserState and SQLite worker
       setUserState(prev => {
         const newHistoryItem = {
           id: `quiz-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
@@ -188,6 +211,11 @@ export function App() {
     []
   );
 
+  const handleResetQuizProgress = useCallback(() => {
+    const cleared = resetAnsweredQuestions();
+    setAnsweredQuestions(cleared);
+  }, []);
+
   const bootLabel =
     bootProgress?.stage === 'DECOMPRESSING_OPFS'
       ? bootProgress.detail || 'تحميل الأرشيف…'
@@ -221,12 +249,14 @@ export function App() {
         principles={principles}
         fatwaPrinciples={fatwaPrinciples}
         userState={userState}
+        answeredQuestions={answeredQuestions}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         bootLabel={bootLabel}
         opfsReady={opfsReady}
         onRecordQuizAttempt={handleRecordQuizAttempt}
         onToggleBookmark={handleToggleBookmark}
+        onResetQuizProgress={handleResetQuizProgress}
       />
 
       {debugMode && (

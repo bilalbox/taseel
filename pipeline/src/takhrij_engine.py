@@ -275,9 +275,9 @@ def evaluate_fatwa(fatwa: dict, candidate_ids: List[str], ontology: OntologyGrap
                     0.96, "beginner")
 
     # 18. General Fiqh: Jahalah & Nisyan in Mahzur
-    if "fiqh.dabit.jahalah_nisyan" in cand_set and ("ناسيا" in combined_norm or "جاهلا" in combined_norm or "مكرها" in combined_norm):
-        if ("لا اثم عليه ولا كفاره" in norm_ans or "لا فديه" in norm_ans or "معفو عنه" in norm_ans or "لا شيء عليه" in norm_ans) and ("محظور" in combined_norm or "اكل" in combined_norm or "صيام" in combined_norm or "احرام" in combined_norm or "طيب" in combined_norm):
-            q = find_clause(["ناسيا", "جاهلا", "لا شيء عليه", "لا كفاره", "لا فديه"])
+    if "fiqh.dabit.jahalah_nisyan" in cand_set and any(k in combined_norm for k in ("ناسيا", "ناسيه", "نسيت", "جاهلا", "جاهله", "مكرها")):
+        if ("لا اثم عليه ولا كفاره" in norm_ans or "لا فديه" in norm_ans or "معفو عنه" in norm_ans or "لا شيء عليه" in norm_ans) and ("محظور" in combined_norm or "اكل" in combined_norm or "صيام" in combined_norm or "احرام" in combined_norm or "طيب" in combined_norm or "شجر" in combined_norm):
+            q = find_clause(["ناسيا", "ناسيه", "جاهلا", "جاهله", "لا شيء عليه", "لا كفاره", "لا فديه"])
             add_inv("fiqh.dabit.jahalah_nisyan", "explicit_paraphrase", q,
                     "أسقط الشيخ الإثم والكفارة عن ارتكاب المحظور نسياناً أو جهلاً، إعمالاً لضابط عفو الشريعة عن الخطأ والنسيان.",
                     0.92, "intermediate")
@@ -299,12 +299,12 @@ def evaluate_fatwa(fatwa: dict, candidate_ids: List[str], ontology: OntologyGrap
 
     # 21. Universal Maxim: Al-Adah Muhakkamah
     if "fiqh.adah" in cand_set:
-        has_urf_keyword = ("عرفا" in norm_ans or "العرف" in norm_ans or "في عرف الناس" in norm_ans or
+        has_urf_keyword = (bool(re.search(r'\bعرفا\b', norm_ans)) or "العرف" in norm_ans or "في عرف الناس" in norm_ans or
                            "المعروف بين الناس" in norm_ans or "عاده النساء" in norm_ans or
                            "عادتها المعروفه" in norm_ans or "جمله العاده" in norm_ans)
         # Avoid linking if routine or unrelated
         if has_urf_keyword:
-            q = find_clause(["عرفا", "العرف", "عاده النساء", "عادتها", "جمله العاده"])
+            q = find_clause(["العرف", "عاده النساء", "عادتها المعروفه", "جمله العاده", "في عرف الناس", "المعروف بين الناس"])
             add_inv("fiqh.adah", "explicit_paraphrase", q,
                     "أحال الشيخ في تقدير المسألة وضبطها إلى العرف والعادة المطردة، استناداً إلى قاعدة العادة محكمة.",
                     0.90, "intermediate")

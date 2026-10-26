@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import { BookmarkCheck, Filter, Layers, Search } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { BookmarkCheck, CheckCircle2, Filter, Layers, Search, Shuffle } from 'lucide-react';
 import {
   AppMode,
   Fatwa,
@@ -9,6 +9,13 @@ import {
   UserState,
 } from '../types';
 import { matchesSearch, chapterLabelAr } from '../utils/arabic';
+import {
+  AnsweredQuestionsMap,
+  getAnsweredRecord,
+  getGroundedQuizCandidates,
+  isQuestionAnswered,
+  pickRandomQuizQuestion,
+} from '../utils/quizTracker';
 import { FatwaReader } from './FatwaReader';
 import { QuizPane } from './QuizPane';
 import { BrowseIndex } from './BrowseIndex';
@@ -18,6 +25,7 @@ interface AppShellProps {
   principles: Principle[];
   fatwaPrinciples: FatwaPrinciple[];
   userState: UserState;
+  answeredQuestions: AnsweredQuestionsMap;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
   bootLabel?: string | null;
@@ -30,6 +38,7 @@ interface AppShellProps {
     timeSpentMs: number
   ) => void;
   onToggleBookmark: (fatwaId: string) => void;
+  onResetQuizProgress?: () => void;
 }
 
 export const AppShell: React.FC<AppShellProps> = ({
@@ -37,24 +46,90 @@ export const AppShell: React.FC<AppShellProps> = ({
   principles,
   fatwaPrinciples,
   userState,
+  answeredQuestions,
   searchQuery,
   setSearchQuery,
   bootLabel,
   opfsReady,
   onRecordQuizAttempt,
   onToggleBookmark,
+  onResetQuizProgress,
 }) => {
   const [mode, setMode] = useState<AppMode>('quiz');
   const [selectedScholar, setSelectedScholar] = useState<Scholar | 'ALL'>('ALL');
   const [selectedChapter, setSelectedChapter] = useState<string>('ALL');
-  const [activeFatwaId, setActiveFatwaId] = useState<string>(fatwas[0]?.id || '');
-  const [activePrincipleId, setActivePrincipleId] = useState<string | null>(null);
+  const [filterUnansweredOnly, setFilterUnansweredOnly] = useState(false);
 
+  // Parse optional ?fatwa= query parameter from URL
+  const requestedFatwaId = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    return new URLSearchParams(window.location.search).get('fatwa');
+  }, []);
+
+  const seededRef = useRef(false);
+
+  // Present a random question on visit/page load (or honor ?fatwa= if provided)
+  const [activeFatwaId, setActiveFatwaId] = useState<string>(() => {
+    if (requestedFatwaId && fatwas.some(f => f.id === requestedFatwaId)) {
+      seededRef.current = true;
+      return requestedFatwaId;
+    }
+    const initialPick = pickRandomQuizQuestion({
+      fatwas,
+      fatwaPrinciples,
+      answered: answeredQuestions,
+    });
+    if (initialPick) {
+      seededRef.current = true;
+      return initialPick.fatwa.id;
+    }
+    return fatwas[0]?.id || '';
+  });
+
+  const [activePrincipleId, setActivePrincipleId] = useState<string | null>(() => {
+    const initialPick = pickRandomQuizQuestion({
+      fatwas,
+      fatwaPrinciples,
+      answered: answeredQuestions,
+    });
+    return initialPick?.fatwaPrinciple.principle_id || null;
+  });
+
+  // Seed initial random question once pool hydrates if initial pick was empty
+  useEffect(() => {
+    if (seededRef.current) return;
+    if (fatwas.length === 0 || fatwaPrinciples.length === 0) return;
+
+    if (requestedFatwaId && fatwas.some(f => f.id === requestedFatwaId)) {
+      setActiveFatwaId(requestedFatwaId);
+      seededRef.current = true;
+      return;
+    }
+
+    const randomPick = pickRandomQuizQuestion({
+      fatwas,
+      fatwaPrinciples,
+      answered: answeredQuestions,
+    });
+    if (randomPick) {
+      setActiveFatwaId(randomPick.fatwa.id);
+      setActivePrincipleId(randomPick.fatwaPrinciple.principle_id);
+      seededRef.current = true;
+    }
+  }, [fatwas, fatwaPrinciples, answeredQuestions, requestedFatwaId]);
+
+  // Keep activeFatwaId valid if fatwas array updates from background OPFS
   useEffect(() => {
     if (!activeFatwaId && fatwas[0]?.id) {
-      setActiveFatwaId(fatwas[0].id);
+      const pick = pickRandomQuizQuestion({
+        fatwas,
+        fatwaPrinciples,
+        answered: answeredQuestions,
+      });
+      setActiveFatwaId(pick?.fatwa.id || fatwas[0].id);
+      if (pick) setActivePrincipleId(pick.fatwaPrinciple.principle_id);
     }
-  }, [fatwas, activeFatwaId]);
+  }, [fatwas, fatwaPrinciples, answeredQuestions, activeFatwaId]);
 
   const chapters = useMemo(
     () => Array.from(new Set(fatwas.map(f => f.topic_chapter))).sort(),
@@ -65,12 +140,13 @@ export const AppShell: React.FC<AppShellProps> = ({
     return fatwas.filter(f => {
       if (selectedScholar !== 'ALL' && f.scholar_name !== selectedScholar) return false;
       if (selectedChapter !== 'ALL' && f.topic_chapter !== selectedChapter) return false;
+      if (filterUnansweredOnly && isQuestionAnswered(answeredQuestions, f.id)) return false;
       if (!searchQuery.trim()) return true;
       return (
         matchesSearch(searchQuery, f.question_norm) || matchesSearch(searchQuery, f.answer_norm)
       );
     });
-  }, [fatwas, selectedScholar, selectedChapter, searchQuery]);
+  }, [fatwas, selectedScholar, selectedChapter, filterUnansweredOnly, answeredQuestions, searchQuery]);
 
   const activeFatwa =
     fatwas.find(f => f.id === activeFatwaId) || filteredFatwas[0] || fatwas[0];
@@ -86,6 +162,64 @@ export const AppShell: React.FC<AppShellProps> = ({
     ) || currentFatwaPrinciples[0];
 
   const currentPrinciple = principles.find(p => p.id === selectedFatwaPrinciple?.principle_id);
+
+  // Grounded quiz candidates and progress stats
+  const groundedCandidates = useMemo(
+    () => getGroundedQuizCandidates(fatwas, fatwaPrinciples),
+    [fatwas, fatwaPrinciples]
+  );
+
+  const answeredCount = useMemo(() => {
+    let count = 0;
+    for (const c of groundedCandidates) {
+      if (isQuestionAnswered(answeredQuestions, c.fatwa.id, c.fatwaPrinciple.principle_id)) {
+        count++;
+      }
+    }
+    return count;
+  }, [groundedCandidates, answeredQuestions]);
+
+  const isCurrentQuestionAnswered = useMemo(() => {
+    if (!activeFatwa) return false;
+    return isQuestionAnswered(
+      answeredQuestions,
+      activeFatwa.id,
+      selectedFatwaPrinciple?.principle_id
+    );
+  }, [answeredQuestions, activeFatwa, selectedFatwaPrinciple]);
+
+  const currentAnsweredRecord = useMemo(() => {
+    if (!activeFatwa) return undefined;
+    return getAnsweredRecord(
+      answeredQuestions,
+      activeFatwa.id,
+      selectedFatwaPrinciple?.principle_id
+    );
+  }, [answeredQuestions, activeFatwa, selectedFatwaPrinciple]);
+
+  const handleNextRandomQuestion = useCallback(() => {
+    const next = pickRandomQuizQuestion({
+      fatwas,
+      fatwaPrinciples,
+      answered: answeredQuestions,
+      excludeFatwaId: activeFatwaId,
+      filter: {
+        scholar: selectedScholar,
+        chapter: selectedChapter,
+      },
+    });
+    if (next) {
+      setActiveFatwaId(next.fatwa.id);
+      setActivePrincipleId(next.fatwaPrinciple.principle_id);
+    }
+  }, [
+    fatwas,
+    fatwaPrinciples,
+    answeredQuestions,
+    activeFatwaId,
+    selectedScholar,
+    selectedChapter,
+  ]);
 
   const handleFatwaSelect = (fatwaId: string) => {
     setActiveFatwaId(fatwaId);
@@ -218,17 +352,34 @@ export const AppShell: React.FC<AppShellProps> = ({
       <main className="max-w-7xl mx-auto px-4 mt-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
         <aside aria-label="فهرس الفتاوى" className="lg:col-span-3 order-3 lg:order-1">
           <div className="bg-page-raised border border-page-line rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2 pb-2 border-b border-page-line">
+            <div className="flex items-center justify-between mb-2 pb-2 border-b border-page-line gap-2 flex-wrap">
               <h2 className="font-semibold text-xs text-ink flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-accent" />
                 الفتاوى
                 <span className="text-ink-faint font-normal">({filteredFatwas.length})</span>
               </h2>
+
+              {answeredCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setFilterUnansweredOnly(prev => !prev)}
+                  title={filterUnansweredOnly ? 'إظهار جميع الفتاوى' : 'إظهار غير المُجاب فقط'}
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border transition ${
+                    filterUnansweredOnly
+                      ? 'bg-accent text-white border-accent'
+                      : 'bg-page text-ink-muted border-page-line hover:text-ink'
+                  }`}
+                >
+                  <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                  <span>{answeredCount} مُجاب</span>
+                </button>
+              )}
             </div>
             <div className="space-y-1 max-h-[calc(100vh-14rem)] overflow-y-auto">
               {filteredFatwas.map(fatwa => {
                 const isActive = fatwa.id === activeFatwa?.id;
                 const isSaved = userState.bookmarks.includes(fatwa.id);
+                const isAnswered = isQuestionAnswered(answeredQuestions, fatwa.id);
                 return (
                   <button
                     key={fatwa.id}
@@ -242,8 +393,13 @@ export const AppShell: React.FC<AppShellProps> = ({
                   >
                     <div className="flex items-center justify-between text-[10px] text-ink-faint mb-1">
                       <span className="font-medium text-accent-mid">{fatwa.scholar_name}</span>
-                      <span className="inline-flex items-center gap-1">
+                      <span className="inline-flex items-center gap-1.5">
                         #{fatwa.episode_number}
+                        {isAnswered && (
+                          <span title="تمت الإجابة على سؤال هذه الفتوى">
+                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                          </span>
+                        )}
                         {isSaved && <BookmarkCheck className="w-3 h-3 text-accent" />}
                       </span>
                     </div>
@@ -254,7 +410,9 @@ export const AppShell: React.FC<AppShellProps> = ({
                 );
               })}
               {filteredFatwas.length === 0 && (
-                <p className="text-center text-ink-faint text-xs py-6">لا نتائج مطابقة</p>
+                <p className="text-center text-ink-faint text-xs py-6">
+                  {filterUnansweredOnly ? 'أجبت على جميع الفتاوى المطابقة!' : 'لا نتائج مطابقة'}
+                </p>
               )}
             </div>
           </div>
@@ -282,7 +440,13 @@ export const AppShell: React.FC<AppShellProps> = ({
               fatwa={activeFatwa}
               principle={currentPrinciple}
               fatwaPrinciple={selectedFatwaPrinciple}
+              isAnswered={isCurrentQuestionAnswered}
+              lastAttempt={currentAnsweredRecord}
+              totalGroundedCount={groundedCandidates.length}
+              answeredCount={answeredCount}
               onRecordQuizAttempt={onRecordQuizAttempt}
+              onNextQuestion={handleNextRandomQuestion}
+              onResetProgress={onResetQuizProgress}
             />
           ) : (
             <BrowseIndex
