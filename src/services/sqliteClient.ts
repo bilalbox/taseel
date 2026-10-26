@@ -1,5 +1,15 @@
-import { Fatwa, Principle, FatwaPrinciple, UserQuizHistoryItem } from '../types';
+import {
+  BrowseFatwasParams,
+  BrowseFatwasResult,
+  Fatwa,
+  FatwaDetail,
+  FatwaPrinciple,
+  Principle,
+  PrincipleTreeNode,
+  UserQuizHistoryItem,
+} from '../types';
 import type { ManifestData } from '../workers/sqlite.worker';
+import { mockArchiveAdapter } from '../data/mockArchiveAdapter';
 
 export interface BootProgressEvent {
   stage: string;
@@ -14,9 +24,9 @@ export interface WorkerInitPayload {
   manifest: ManifestData | null;
   totalFatwasCount: number;
   totalGroundedCount: number;
-  principles: Principle[];
-  fatwas: Fatwa[];
-  fatwaPrinciples: FatwaPrinciple[];
+  principles?: Principle[];
+  fatwas?: Fatwa[];
+  fatwaPrinciples?: FatwaPrinciple[];
   userState: {
     bookmarks: string[];
     history: UserQuizHistoryItem[];
@@ -64,6 +74,9 @@ class SqliteWorkerClient {
   }
 
   private call<T>(action: string, payload: Record<string, any> = {}): Promise<T> {
+    if (typeof Worker === 'undefined') {
+      return Promise.reject(new Error('Web Worker environment unavailable'));
+    }
     const worker = this.ensureWorker();
     const id = ++this.reqId;
     return new Promise<T>((resolve, reject) => {
@@ -74,6 +87,27 @@ class SqliteWorkerClient {
 
   public init(): Promise<WorkerInitPayload> {
     return this.call<WorkerInitPayload>('INIT');
+  }
+
+  public getPrinciplesTree(): Promise<PrincipleTreeNode[]> {
+    if (typeof Worker === 'undefined') {
+      return mockArchiveAdapter.getPrinciplesTree();
+    }
+    return this.call<PrincipleTreeNode[]>('GET_PRINCIPLES_TREE');
+  }
+
+  public browseFatwas(params: BrowseFatwasParams = {}): Promise<BrowseFatwasResult> {
+    if (typeof Worker === 'undefined') {
+      return mockArchiveAdapter.browseFatwas(params);
+    }
+    return this.call<BrowseFatwasResult>('BROWSE_FATWAS', params);
+  }
+
+  public getFatwaDetail(id: string): Promise<FatwaDetail | null> {
+    if (typeof Worker === 'undefined') {
+      return mockArchiveAdapter.getFatwaDetail(id);
+    }
+    return this.call<FatwaDetail | null>('GET_FATWA_DETAIL', { id });
   }
 
   public searchFatwas(query: string, limit = 80): Promise<{ fatwas: Fatwa[]; latencyMs: number }> {

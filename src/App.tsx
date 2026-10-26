@@ -40,13 +40,13 @@ export function App() {
     sqliteClient
       .init()
       .then(payload => {
-        if (payload.principles.length > 0) {
+        if (payload.principles && payload.principles.length > 0) {
           setPrinciples(payload.principles);
         }
-        if (payload.fatwas.length > 0) {
+        if (payload.fatwas && payload.fatwas.length > 0) {
           setFatwas(payload.fatwas);
         }
-        if (payload.fatwaPrinciples.length > 0) {
+        if (payload.fatwaPrinciples && payload.fatwaPrinciples.length > 0) {
           setFatwaPrinciples(payload.fatwaPrinciples);
         }
         setTotalArchiveCount(payload.totalFatwasCount);
@@ -55,9 +55,9 @@ export function App() {
 
         // Update corpus and hydrate store from canonical SQLite user_db
         learnerStore.setCorpus(
-          payload.fatwas.length > 0 ? payload.fatwas : FATWAS_DATA,
-          payload.principles.length > 0 ? payload.principles : PRINCIPLES_DATA,
-          payload.fatwaPrinciples.length > 0 ? payload.fatwaPrinciples : FATWA_PRINCIPLES_DATA
+          payload.fatwas && payload.fatwas.length > 0 ? payload.fatwas : FATWAS_DATA,
+          payload.principles && payload.principles.length > 0 ? payload.principles : PRINCIPLES_DATA,
+          payload.fatwaPrinciples && payload.fatwaPrinciples.length > 0 ? payload.fatwaPrinciples : FATWA_PRINCIPLES_DATA
         );
 
         if (

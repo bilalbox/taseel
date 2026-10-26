@@ -338,3 +338,6 @@ export const INITIAL_USER_STATE = {
   xp: 120,
   streak_days: 3
 };
+
+export { MockArchiveAdapter, mockArchiveAdapter, flattenPrinciplesTree } from './mockArchiveAdapter';
+

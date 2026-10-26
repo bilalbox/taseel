@@ -1,9 +1,11 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { BookmarkCheck, CheckCircle2, Filter, Layers, Search, Shuffle } from 'lucide-react';
 import {
   AppMode,
   Fatwa,
+  FatwaDetail,
   FatwaPrinciple,
+  FatwaSummary,
   Principle,
   Scholar,
   UserState,
@@ -13,6 +15,7 @@ import { AnsweredQuestionsMap } from '../utils/quizTracker';
 import { FatwaReader } from './FatwaReader';
 import { QuizPane } from './QuizPane';
 import { BrowseIndex } from './BrowseIndex';
+import { sqliteClient } from '../services/sqliteClient';
 import { useLearnerProgress } from '../hooks/useLearnerProgress';
 
 export interface AppShellProps {
@@ -93,6 +96,48 @@ export const AppShell: React.FC<AppShellProps> = ({
     [fatwas]
   );
 
+  const [browsedFatwas, setBrowsedFatwas] = useState<FatwaSummary[]>([]);
+  const [browseTotal, setBrowseTotal] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    sqliteClient
+      .browseFatwas({
+        scholar: selectedScholar,
+        chapter: selectedChapter,
+        query: searchQuery,
+        limit: 80,
+      })
+      .then(res => {
+        if (!cancelled && res.fatwas.length > 0) {
+          setBrowsedFatwas(res.fatwas);
+          setBrowseTotal(res.total);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedScholar, selectedChapter, searchQuery, opfsReady]);
+
+  const [activeDetail, setActiveDetail] = useState<FatwaDetail | null>(null);
+
+  useEffect(() => {
+    if (!activeFatwaId) return;
+    let cancelled = false;
+    sqliteClient
+      .getFatwaDetail(activeFatwaId)
+      .then(detail => {
+        if (!cancelled && detail) {
+          setActiveDetail(detail);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [activeFatwaId]);
+
   const filteredFatwas = useMemo(() => {
     return fatwas.filter(f => {
       if (selectedScholar !== 'ALL' && f.scholar_name !== selectedScholar) return false;
@@ -105,20 +150,36 @@ export const AppShell: React.FC<AppShellProps> = ({
     });
   }, [fatwas, selectedScholar, selectedChapter, filterUnansweredOnly, learner, searchQuery]);
 
-  const activeFatwa =
-    fatwas.find(f => f.id === activeFatwaId) || filteredFatwas[0] || fatwas[0];
+  const displayFatwas = useMemo(() => {
+    const base = browsedFatwas.length > 0 ? browsedFatwas : filteredFatwas;
+    if (filterUnansweredOnly) {
+      return base.filter(f => !learner.isQuestionAnswered(f.id));
+    }
+    return base;
+  }, [browsedFatwas, filteredFatwas, filterUnansweredOnly, learner]);
 
-  const currentFatwaPrinciples = useMemo(
-    () => fatwaPrinciples.filter(fp => fp.fatwa_id === activeFatwa?.id),
-    [fatwaPrinciples, activeFatwa]
-  );
+  const activeFatwa =
+    activeDetail?.fatwa ||
+    fatwas.find(f => f.id === activeFatwaId) ||
+    (displayFatwas[0] as Fatwa) ||
+    filteredFatwas[0] ||
+    fatwas[0];
+
+  const currentFatwaPrinciples = useMemo(() => {
+    if (activeDetail?.fatwaPrinciples && activeDetail.fatwaPrinciples.length > 0) {
+      return activeDetail.fatwaPrinciples;
+    }
+    return fatwaPrinciples.filter(fp => fp.fatwa_id === activeFatwa?.id);
+  }, [activeDetail, fatwaPrinciples, activeFatwa]);
 
   const selectedFatwaPrinciple =
     currentFatwaPrinciples.find(
       fp => fp.principle_id === (activePrincipleId || currentFatwaPrinciples[0]?.principle_id)
     ) || currentFatwaPrinciples[0];
 
-  const currentPrinciple = principles.find(p => p.id === selectedFatwaPrinciple?.principle_id);
+  const currentPrinciple =
+    activeDetail?.principles.find(p => p.id === selectedFatwaPrinciple?.principle_id) ||
+    principles.find(p => p.id === selectedFatwaPrinciple?.principle_id);
 
   const answeredCount = learner.stats.answeredCount;
 
@@ -162,17 +223,13 @@ export const AppShell: React.FC<AppShellProps> = ({
               <h1 className="font-amiri text-2xl sm:text-3xl font-bold text-ink tracking-wide leading-none">
                 تأصيل
               </h1>
-              <span className="text-[11px] text-ink-faint hidden sm:inline border-r border-page-line pr-3">
-                تخريج فتاوى نور على الدرب على القواعد الفقهية والأصولية
+              <span className="hidden sm:inline-block text-xs text-ink-muted border-r border-page-line pr-3">
+                محرك القواعد الفقهية والأصولية · نور على الدرب
               </span>
             </div>
 
             <div className="flex items-center gap-2">
-              <div
-                role="tablist"
-                aria-label="وضع الواجهة"
-                className="inline-flex p-0.5 rounded-lg border border-page-line bg-page-sunken text-xs font-semibold"
-              >
+              <div className="flex bg-page-sunken p-0.5 rounded-lg border border-page-line text-xs font-medium">
                 <button
                   type="button"
                   role="tab"
@@ -184,7 +241,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                       : 'text-ink-muted hover:text-ink'
                   }`}
                 >
-                  اختبار
+                  اختبار التخريج
                 </button>
                 <button
                   type="button"
@@ -221,77 +278,90 @@ export const AppShell: React.FC<AppShellProps> = ({
             </div>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            <div className="relative min-w-[180px] flex-1 max-w-md">
-              <Search className="w-3.5 h-3.5 absolute right-2.5 top-2 text-ink-faint" />
+          <div className="flex items-center gap-2 pt-1 border-t border-page-line/60 flex-wrap sm:flex-nowrap">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-ink-faint pointer-events-none" />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                placeholder="بحث في الأسئلة والأجوبة والقواعد…"
-                className="w-full bg-page border border-page-line rounded-md pr-8 pl-3 py-1.5 text-xs text-ink placeholder:text-ink-faint focus:outline-none focus:border-accent"
+                placeholder="ابحث في نص الفتوى أو السؤال (FTS5 محلي سريع)..."
+                className="w-full pl-3 pr-9 py-1.5 bg-page text-ink placeholder-ink-faint border border-page-line rounded-lg text-xs sm:text-sm focus:outline-none focus:border-accent"
               />
             </div>
 
-            <div className="inline-flex items-center gap-0.5 p-0.5 rounded-md border border-page-line bg-page">
-              <Filter className="w-3 h-3 text-ink-faint mx-1" />
-              {(['ALL', 'ابن باز', 'ابن عثيمين'] as const).map(s => (
+            <div className="flex items-center gap-2 flex-wrap">
+              <select
+                value={selectedScholar}
+                onChange={e => setSelectedScholar(e.target.value as any)}
+                aria-label="تصفية حسب الشيخ"
+                className="px-2.5 py-1.5 bg-page text-ink border border-page-line rounded-lg text-xs focus:outline-none focus:border-accent"
+              >
+                <option value="ALL">جميع المشايخ</option>
+                <option value="ابن باز">الشيخ ابن باز</option>
+                <option value="ابن عثيمين">الشيخ ابن عثيمين</option>
+              </select>
+
+              <select
+                value={selectedChapter}
+                onChange={e => setSelectedChapter(e.target.value)}
+                aria-label="تصفية حسب الكتاب الفقهي"
+                className="px-2.5 py-1.5 bg-page text-ink border border-page-line rounded-lg text-xs focus:outline-none focus:border-accent max-w-[140px] truncate"
+              >
+                <option value="ALL">جميع الأبواب</option>
+                {chapters.map(ch => (
+                  <option key={ch} value={ch}>
+                    كتاب {chapterLabelAr(ch)}
+                  </option>
+                ))}
+              </select>
+
+              {mode === 'quiz' && (
                 <button
-                  key={s}
                   type="button"
-                  onClick={() => setSelectedScholar(s)}
-                  className={`px-2 py-1 rounded text-xs transition ${
-                    selectedScholar === s
-                      ? 'bg-accent text-white font-semibold'
-                      : 'text-ink-muted hover:text-ink'
+                  onClick={() => setShowSidebarInQuiz(prev => !prev)}
+                  title={showSidebarInQuiz ? 'إخفاء قائمة الفتاوى' : 'إظهار قائمة الفتاوى'}
+                  className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border text-xs transition ${
+                    showSidebarInQuiz
+                      ? 'bg-accent text-white border-accent'
+                      : 'bg-page text-ink-muted border-page-line hover:text-ink'
                   }`}
                 >
-                  {s === 'ALL' ? 'الكل' : s}
+                  <Filter className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">القائمة</span>
                 </button>
-              ))}
+              )}
+
+              {mode === 'quiz' && (
+                <button
+                  type="button"
+                  onClick={handleNextRandomQuestion}
+                  title="عرض سؤال عشوائي جديد"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-accent text-white rounded-lg text-xs font-semibold hover:bg-accent-mid shadow-xs transition"
+                >
+                  <Shuffle className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">سؤال عشوائي</span>
+                </button>
+              )}
             </div>
-
-            <select
-              value={selectedChapter}
-              onChange={e => setSelectedChapter(e.target.value)}
-              aria-label="تصفية حسب الباب"
-              className="bg-page border border-page-line text-ink rounded-md px-2.5 py-1.5 text-xs focus:outline-none focus:border-accent"
-            >
-              <option value="ALL">جميع الأبواب</option>
-              {chapters.map(ch => (
-                <option key={ch} value={ch}>
-                  كتاب {chapterLabelAr(ch)}
-                </option>
-              ))}
-            </select>
-
-            {mode === 'quiz' && (
-              <button
-                type="button"
-                onClick={() => setShowSidebarInQuiz(prev => !prev)}
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium border transition ${
-                  showSidebarInQuiz
-                    ? 'bg-accent text-white border-accent'
-                    : 'bg-page text-ink-muted border-page-line hover:text-ink'
-                }`}
-              >
-                <Layers className="w-3.5 h-3.5" />
-                <span>فهرس الفتاوى</span>
-              </button>
-            )}
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 mt-5 grid grid-cols-1 lg:grid-cols-12 gap-5">
+      <main className="max-w-7xl mx-auto px-4 pt-4 grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
         {isSidebarVisible && (
-          <aside aria-label="فهرس الفتاوى" className="lg:col-span-3 order-3 lg:order-1 animate-fade-pane">
+          <aside
+            aria-label="قائمة الفتاوى"
+            className="lg:col-span-3 order-3 lg:order-1 transition-all"
+          >
             <div className="bg-page-raised border border-page-line rounded-lg p-3">
               <div className="flex items-center justify-between mb-2 pb-2 border-b border-page-line gap-2 flex-wrap">
                 <h2 className="font-semibold text-xs text-ink flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5 text-accent" />
                   الفتاوى
-                  <span className="text-ink-faint font-normal">({filteredFatwas.length})</span>
+                  <span className="text-ink-faint font-normal">
+                    ({browseTotal > 0 ? browseTotal : displayFatwas.length})
+                  </span>
                 </h2>
 
                 {answeredCount > 0 && (
@@ -311,7 +381,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 )}
               </div>
               <div className="space-y-1 max-h-[calc(100vh-14rem)] overflow-y-auto">
-                {filteredFatwas.map(fatwa => {
+                {displayFatwas.map(fatwa => {
                   const isActive = fatwa.id === activeFatwa?.id;
                   const isSaved = learner.isBookmarked(fatwa.id);
                   const isAnswered = learner.isQuestionAnswered(fatwa.id);
@@ -344,7 +414,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                     </button>
                   );
                 })}
-                {filteredFatwas.length === 0 && (
+                {displayFatwas.length === 0 && (
                   <p className="text-center text-ink-faint text-xs py-6">
                     {filterUnansweredOnly ? 'أجبت على جميع الفتاوى المطابقة!' : 'لا نتائج مطابقة'}
                   </p>
@@ -356,6 +426,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
         <div className={`${readerColSpan} space-y-4 order-1 lg:order-2 transition-all`}>
           <FatwaReader
+            fatwaId={activeFatwaId}
             fatwa={activeFatwa}
             principles={principles}
             fatwaPrinciples={currentFatwaPrinciples}
@@ -378,7 +449,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             />
           ) : (
             <BrowseIndex
-              fatwas={filteredFatwas}
+              fatwas={displayFatwas}
               principles={principles}
               fatwaPrinciples={fatwaPrinciples}
               activeFatwaId={activeFatwa?.id}

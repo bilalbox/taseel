@@ -1,6 +1,20 @@
 /// <reference lib="webworker" />
 import sqlite3InitModule, { Database, SAHPoolUtil } from '@sqlite.org/sqlite-wasm';
 import { normalizeArabic } from '../utils/arabic';
+import type {
+  BrowseFatwasParams,
+  BrowseFatwasResult,
+  Difficulty,
+  Fatwa,
+  FatwaDetail,
+  FatwaPrinciple,
+  FatwaSummary,
+  Principle,
+  PrincipleTreeNode,
+  Scholar,
+  TopicDomain,
+} from '../types';
+import { mockArchiveAdapter } from '../data/mockArchiveAdapter';
 
 export interface ManifestData {
   version: string;
@@ -64,7 +78,7 @@ function postProgress(stage: string, bytesProcessed = 0, totalExpected = 0, deta
 
 /** Drop dead IA placeholder URLs (`noor-ala-al-darb-samples` never existed). */
 function usableAudioUrl(
-  ...candidates: Array<string | null | undefined>
+  ...candidates: Array<any>
 ): string | undefined {
   for (const c of candidates) {
     if (c == null) continue;
@@ -234,101 +248,7 @@ function mapCategory(science: string, kind: string): 'fiqhiyyah' | 'usuliyyah' |
 function loadInitialUiPayload(manifest: ManifestData | null, bootMs: number) {
   if (!db) throw new Error('Database not initialized');
 
-  // 1. Load all 44 principles from `principles`
-  const principleRows = db.selectObjects(`
-    SELECT id, parent_id, depth, science, domain_section, kind,
-           canonical_text_ar, canonical_text_norm, summary_ar, textual_evidence_ar
-    FROM principles
-    ORDER BY depth ASC, id ASC
-  `);
-
-  const principles = principleRows.map((r: any) => ({
-    id: String(r.id),
-    parent_id: r.parent_id ? String(r.parent_id) : null,
-    depth: Number(r.depth),
-    science: String(r.science),
-    domain_section: String(r.domain_section),
-    kind: String(r.kind),
-    canonical_text_ar: String(r.canonical_text_ar),
-    canonical_text_norm: String(r.canonical_text_norm),
-    category: mapCategory(String(r.science), String(r.kind)),
-    general_explanation_ar: String(r.summary_ar) + (r.textual_evidence_ar ? ` — الدليل: «${r.textual_evidence_ar}»` : '')
-  }));
-
-  const principlesById = new Map(principles.map(p => [p.id, p]));
-
-  // 2. Load grounded fatwas (along with episode metadata) for immediate interactive browsing & quizzing
-  const fatwaRows = db.selectObjects(`
-    SELECT f.id, f.episode_id, f.scholar_name, f.question_text, f.answer_text,
-           f.topic_domain, f.topic_chapter, f.topic_subtopic, f.audio_start_sec,
-           f.audio_url AS fatwa_audio_url,
-           e.episode_number, e.audio_url AS episode_audio_url, e.source_url
-    FROM fatwas f
-    JOIN episodes e ON e.id = f.episode_id
-    WHERE EXISTS (SELECT 1 FROM fatwa_principles fp WHERE fp.fatwa_id = f.id)
-    ORDER BY
-      CASE
-        WHEN COALESCE(NULLIF(f.audio_url, ''), NULLIF(e.audio_url, '')) IS NOT NULL
-             AND COALESCE(f.audio_url, e.audio_url) NOT LIKE '%archive.org%' THEN 0
-        WHEN COALESCE(NULLIF(f.audio_url, ''), NULLIF(e.audio_url, '')) IS NOT NULL THEN 1
-        ELSE 2
-      END,
-      CASE WHEN f.id LIKE 'fatwa-%' THEN 1 ELSE 0 END,
-      f.rowid ASC
-    LIMIT 250
-  `);
-
-  const fatwas = fatwaRows.map((r: any) => {
-    const clip = usableAudioUrl(r.fatwa_audio_url, r.episode_audio_url);
-    return {
-      id: String(r.id),
-      episode_id: String(r.episode_id),
-      question_text: String(r.question_text),
-      answer_text: String(r.answer_text),
-      question_norm: normalizeArabic(String(r.question_text)),
-      answer_norm: normalizeArabic(String(r.answer_text)),
-      topic_domain: String(r.topic_domain) as any,
-      topic_chapter: String(r.topic_chapter),
-      topic_subtopic: String(r.topic_subtopic || 'فتاوى نور على الدرب'),
-      scholar_name: String(r.scholar_name) as any,
-      episode_number: Number(r.episode_number || 1),
-      audio_url: clip,
-      audio_timestamp: Number(r.audio_start_sec || 0),
-    };
-  });
-
-  // 3. Load fatwa_principles for loaded fatwas and synthesize distractors from sibling/same-science principles
-  const fpRows = db.selectObjects(`
-    SELECT fp.id, fp.fatwa_id, fp.principle_id, fp.invocation_type,
-           fp.evidence_quote_ar, fp.application_explanation_ar, fp.confidence_score
-    FROM fatwa_principles fp
-  `);
-
-  const fatwaPrinciples = fpRows.map((r: any) => {
-    const pid = String(r.principle_id);
-    const targetPrinciple = principlesById.get(pid);
-    const distractors = principles
-      .filter(p => p.id !== pid && (p.science === targetPrinciple?.science || p.depth === targetPrinciple?.depth))
-      .slice(0, 3)
-      .map(d => ({
-        id: d.id,
-        canonical_text_ar: d.canonical_text_ar,
-        category: d.category,
-        reason_incorrect: `هذه القاعدة (${d.canonical_text_ar}) تتعلق بـ: ${d.general_explanation_ar.slice(0, 95)}... وليست مناط الحكم في هذه الفتوى.`
-      }));
-
-    return {
-      id: String(r.id),
-      fatwa_id: String(r.fatwa_id),
-      principle_id: pid,
-      explicitly_stated: r.invocation_type !== 'implicit_application',
-      application_explanation_ar: `${r.application_explanation_ar} — محل الشاهد: «${r.evidence_quote_ar}»`,
-      distractor_principles_json: JSON.stringify(distractors),
-      difficulty: (targetPrinciple && targetPrinciple.depth >= 2 ? 'advanced' : targetPrinciple?.depth === 1 ? 'intermediate' : 'beginner') as any
-    };
-  });
-
-  // 4. Load UserState from attached `user_db`
+  // Load UserState from attached `user_db`
   const bookmarkRows = db.selectObjects('SELECT fatwa_id FROM user_db.bookmarks ORDER BY created_at DESC');
   const historyRows = db.selectObjects('SELECT * FROM user_db.quiz_attempts ORDER BY timestamp DESC LIMIT 100');
 
@@ -345,9 +265,9 @@ function loadInitialUiPayload(manifest: ManifestData | null, bootMs: number) {
     manifest,
     totalFatwasCount,
     totalGroundedCount,
-    principles,
-    fatwas,
-    fatwaPrinciples,
+    principles: [],
+    fatwas: [],
+    fatwaPrinciples: [],
     userState: {
       bookmarks: bookmarkRows.map((b: any) => String(b.fatwa_id)),
       history: historyRows.map((h: any) => ({
@@ -361,6 +281,278 @@ function loadInitialUiPayload(manifest: ManifestData | null, bootMs: number) {
         difficulty: String(h.difficulty) as any
       }))
     }
+  };
+}
+
+function getPrinciplesTreeWorker(): PrincipleTreeNode[] {
+  if (!db) throw new Error('Database not initialized');
+  const rows = db.selectObjects(`
+    SELECT p.id, p.parent_id, p.depth, p.science, p.domain_section, p.kind,
+           p.canonical_text_ar, p.canonical_text_norm, p.summary_ar, p.textual_evidence_ar,
+           (SELECT COUNT(*) FROM fatwa_principles fp WHERE fp.principle_id = p.id) AS fatwas_count
+    FROM principles p
+    ORDER BY p.depth ASC, p.id ASC
+  `);
+
+  const nodeMap = new Map<string, PrincipleTreeNode>();
+  const roots: PrincipleTreeNode[] = [];
+
+  for (const r of rows) {
+    const node: PrincipleTreeNode = {
+      id: String(r.id),
+      parent_id: r.parent_id ? String(r.parent_id) : null,
+      depth: Number(r.depth || 0),
+      science: String(r.science || ''),
+      domain_section: String(r.domain_section || ''),
+      kind: String(r.kind || ''),
+      canonical_text_ar: String(r.canonical_text_ar),
+      canonical_text_norm: String(r.canonical_text_norm),
+      category: mapCategory(String(r.science), String(r.kind)),
+      general_explanation_ar:
+        String(r.summary_ar) + (r.textual_evidence_ar ? ` — الدليل: «${r.textual_evidence_ar}»` : ''),
+      fatwas_count: Number(r.fatwas_count || 0),
+      children: [],
+    };
+    nodeMap.set(node.id, node);
+  }
+
+  for (const node of nodeMap.values()) {
+    if (node.parent_id && nodeMap.has(node.parent_id)) {
+      nodeMap.get(node.parent_id)!.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+
+  return roots;
+}
+
+function browseFatwasWorker(params: BrowseFatwasParams = {}): BrowseFatwasResult {
+  if (!db) throw new Error('Database not initialized');
+  const t0 = performance.now();
+  const {
+    query,
+    scholar = 'ALL',
+    chapter = 'ALL',
+    subtopic,
+    principleId,
+    limit = 20,
+    offset = 0,
+  } = params;
+
+  const conditions: string[] = [];
+  const bindings: any[] = [];
+
+  const rawQuery = (query || '').trim();
+  const norm = normalizeArabic(rawQuery);
+
+  let fromClause = '';
+  if (norm) {
+    const ftsQuery = norm
+      .split(/\s+/)
+      .filter(Boolean)
+      .map(tok => `"${tok.replace(/"/g, '')}"*`)
+      .join(' AND ');
+
+    fromClause = `
+      FROM fatwas_fts fts
+      JOIN fatwas f ON f.rowid = fts.rowid
+      JOIN episodes e ON e.id = f.episode_id
+    `;
+    conditions.push('fatwas_fts MATCH ?');
+    bindings.push(ftsQuery);
+  } else {
+    fromClause = `
+      FROM fatwas f
+      JOIN episodes e ON e.id = f.episode_id
+    `;
+  }
+
+  if (scholar && scholar !== 'ALL') {
+    conditions.push('f.scholar_name = ?');
+    bindings.push(scholar);
+  }
+
+  if (chapter && chapter !== 'ALL') {
+    conditions.push('f.topic_chapter = ?');
+    bindings.push(chapter);
+  }
+
+  if (subtopic) {
+    conditions.push('f.topic_subtopic = ?');
+    bindings.push(subtopic);
+  }
+
+  if (principleId) {
+    conditions.push('EXISTS (SELECT 1 FROM fatwa_principles fp WHERE fp.fatwa_id = f.id AND fp.principle_id = ?)');
+    bindings.push(principleId);
+  }
+
+  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+  const countSql = `SELECT COUNT(*) ${fromClause} ${whereClause}`;
+  const total = Number(db.selectValue(countSql, bindings) || 0);
+
+  const pageBindings = [...bindings, limit, offset];
+  const pageSql = `
+    SELECT f.id, f.episode_id, f.scholar_name, f.question_text,
+           f.topic_domain, f.topic_chapter, f.topic_subtopic, f.audio_start_sec,
+           f.audio_url AS fatwa_audio_url,
+           e.episode_number, e.audio_url AS episode_audio_url,
+           (SELECT COUNT(*) FROM fatwa_principles fp WHERE fp.fatwa_id = f.id) AS linked_principles_count
+    ${fromClause}
+    ${whereClause}
+    ORDER BY
+      CASE
+        WHEN COALESCE(NULLIF(f.audio_url, ''), NULLIF(e.audio_url, '')) IS NOT NULL
+             AND COALESCE(f.audio_url, e.audio_url) NOT LIKE '%archive.org%' THEN 0
+        WHEN COALESCE(NULLIF(f.audio_url, ''), NULLIF(e.audio_url, '')) IS NOT NULL THEN 1
+        ELSE 2
+      END,
+      f.rowid ASC
+    LIMIT ? OFFSET ?
+  `;
+
+  const rows = db.selectObjects(pageSql, pageBindings);
+  const fatwas: FatwaSummary[] = rows.map((r: any) => {
+    const clip = usableAudioUrl(r.fatwa_audio_url, r.episode_audio_url);
+    return {
+      id: String(r.id),
+      episode_id: String(r.episode_id),
+      scholar_name: String(r.scholar_name) as any,
+      episode_number: Number(r.episode_number || 1),
+      question_text: String(r.question_text),
+      topic_domain: String(r.topic_domain) as any,
+      topic_chapter: String(r.topic_chapter),
+      topic_subtopic: String(r.topic_subtopic || 'فتاوى نور على الدرب'),
+      audio_url: clip,
+      audio_timestamp: Number(r.audio_start_sec || 0),
+      linked_principles_count: Number(r.linked_principles_count || 0),
+    };
+  });
+
+  const latencyMs = Number((performance.now() - t0).toFixed(2));
+  const hasMore = offset + limit < total;
+
+  return {
+    fatwas,
+    total,
+    hasMore,
+    latencyMs,
+  };
+}
+
+function getFatwaDetailWorker(id: string): FatwaDetail | null {
+  if (!db) throw new Error('Database not initialized');
+
+  const fatwaRows = db.selectObjects(
+    `
+    SELECT f.id, f.episode_id, f.scholar_name, f.question_text, f.answer_text,
+           f.topic_domain, f.topic_chapter, f.topic_subtopic, f.audio_start_sec,
+           f.audio_url AS fatwa_audio_url,
+           e.episode_number, e.audio_url AS episode_audio_url, e.source_url
+    FROM fatwas f
+    JOIN episodes e ON e.id = f.episode_id
+    WHERE f.id = ?
+    LIMIT 1
+    `,
+    [id]
+  );
+
+  if (fatwaRows.length === 0) {
+    return null;
+  }
+
+  const r = fatwaRows[0];
+  const clip = usableAudioUrl(r.fatwa_audio_url, r.episode_audio_url);
+  const fatwa: Fatwa = {
+    id: String(r.id),
+    episode_id: String(r.episode_id),
+    question_text: String(r.question_text),
+    answer_text: String(r.answer_text),
+    question_norm: normalizeArabic(String(r.question_text)),
+    answer_norm: normalizeArabic(String(r.answer_text)),
+    topic_domain: String(r.topic_domain) as any,
+    topic_chapter: String(r.topic_chapter),
+    topic_subtopic: String(r.topic_subtopic || 'فتاوى نور على الدرب'),
+    scholar_name: String(r.scholar_name) as any,
+    episode_number: Number(r.episode_number || 1),
+    audio_url: clip,
+    audio_timestamp: Number(r.audio_start_sec || 0),
+  };
+
+  const fpRows = db.selectObjects(
+    `
+    SELECT fp.id, fp.fatwa_id, fp.principle_id, fp.invocation_type,
+           fp.evidence_quote_ar, fp.application_explanation_ar, fp.confidence_score, fp.difficulty,
+           p.id AS p_id, p.parent_id, p.depth, p.science, p.domain_section, p.kind,
+           p.canonical_text_ar, p.canonical_text_norm, p.summary_ar, p.textual_evidence_ar
+    FROM fatwa_principles fp
+    JOIN principles p ON p.id = fp.principle_id
+    WHERE fp.fatwa_id = ?
+    `,
+    [id]
+  );
+
+  const principles: Principle[] = [];
+  const fatwaPrinciples: FatwaPrinciple[] = [];
+
+  for (const fpRow of fpRows) {
+    const principle: Principle = {
+      id: String(fpRow.p_id),
+      parent_id: fpRow.parent_id ? String(fpRow.parent_id) : null,
+      depth: Number(fpRow.depth || 0),
+      science: String(fpRow.science),
+      domain_section: String(fpRow.domain_section),
+      kind: String(fpRow.kind),
+      canonical_text_ar: String(fpRow.canonical_text_ar),
+      canonical_text_norm: String(fpRow.canonical_text_norm),
+      category: mapCategory(String(fpRow.science), String(fpRow.kind)),
+      general_explanation_ar:
+        String(fpRow.summary_ar) +
+        (fpRow.textual_evidence_ar ? ` — الدليل: «${fpRow.textual_evidence_ar}»` : ''),
+    };
+    principles.push(principle);
+
+    const distractorRows = db.selectObjects(
+      `
+      SELECT id, canonical_text_ar, science, kind, summary_ar
+      FROM principles
+      WHERE id != ?
+      ORDER BY (CASE WHEN science = ? THEN 0 ELSE 1 END), RANDOM()
+      LIMIT 3
+      `,
+      [fpRow.p_id, fpRow.science]
+    );
+
+    const distractors = distractorRows.map((d: any) => ({
+      id: String(d.id),
+      canonical_text_ar: String(d.canonical_text_ar),
+      category: mapCategory(String(d.science), String(d.kind)),
+      reason_incorrect: `هذه القاعدة (${d.canonical_text_ar}) تتعلق بـ: ${String(d.summary_ar).slice(0, 95)}... وليست مناط الحكم في هذه الفتوى.`,
+    }));
+
+    fatwaPrinciples.push({
+      id: String(fpRow.id),
+      fatwa_id: String(fpRow.fatwa_id),
+      principle_id: String(fpRow.principle_id),
+      explicitly_stated: fpRow.invocation_type !== 'implicit_application',
+      application_explanation_ar: `${fpRow.application_explanation_ar} — محل الشاهد: «${fpRow.evidence_quote_ar}»`,
+      distractor_principles_json: JSON.stringify(distractors),
+      difficulty: (fpRow.difficulty ||
+        (principle.depth && principle.depth >= 2
+          ? 'advanced'
+          : principle.depth === 1
+          ? 'intermediate'
+          : 'beginner')) as any,
+    });
+  }
+
+  return {
+    ...fatwa,
+    fatwa,
+    principles,
+    fatwaPrinciples,
   };
 }
 
@@ -423,6 +615,15 @@ if (typeof self !== 'undefined') {
     try {
       if (action === 'INIT') {
         const result = await initEngines();
+        self.postMessage({ id, ok: true, result });
+      } else if (action === 'GET_PRINCIPLES_TREE') {
+        const result = db ? getPrinciplesTreeWorker() : await mockArchiveAdapter.getPrinciplesTree();
+        self.postMessage({ id, ok: true, result });
+      } else if (action === 'BROWSE_FATWAS') {
+        const result = db ? browseFatwasWorker(payload) : await mockArchiveAdapter.browseFatwas(payload);
+        self.postMessage({ id, ok: true, result });
+      } else if (action === 'GET_FATWA_DETAIL') {
+        const result = db ? getFatwaDetailWorker(payload?.id) : await mockArchiveAdapter.getFatwaDetail(payload?.id);
         self.postMessage({ id, ok: true, result });
       } else if (action === 'SEARCH_FATWAS') {
         const result = searchFatwasFts(payload.query, payload.limit || 80);
