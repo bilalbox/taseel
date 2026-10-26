@@ -5,6 +5,7 @@ import { AudioPlayerStub } from './AudioPlayerStub';
 import { CATEGORY_LABELS, chapterLabelAr } from '../utils/arabic';
 import { FeedbackModal } from './FeedbackModal';
 import { sqliteClient } from '../services/sqliteClient';
+import { useLearnerProgress } from '../hooks/useLearnerProgress';
 
 interface FatwaReaderProps {
   fatwaId?: string;
@@ -12,10 +13,10 @@ interface FatwaReaderProps {
   principles?: Principle[];
   fatwaPrinciples?: FatwaPrinciple[];
   activePrincipleId: string | null;
-  isBookmarked: boolean;
+  isBookmarked?: boolean;
   /** Hide linked-principle chips in quiz mode so they do not spoil the answer. */
   showExtractedPrinciples?: boolean;
-  onToggleBookmark: (fatwaId: string) => void;
+  onToggleBookmark?: (fatwaId: string) => void;
   onSelectPrinciple: (principleId: string) => void;
 }
 
@@ -25,11 +26,12 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
   principles = [],
   fatwaPrinciples = [],
   activePrincipleId,
-  isBookmarked,
+  isBookmarked: propIsBookmarked,
   showExtractedPrinciples = true,
-  onToggleBookmark,
+  onToggleBookmark: propOnToggleBookmark,
   onSelectPrinciple,
 }) => {
+  const learner = useLearnerProgress();
   const targetId = fatwaId || fatwa?.id;
   const [detail, setDetail] = useState<FatwaDetail | null>(null);
 
@@ -55,11 +57,28 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
   }, [targetId]);
 
   const activeFatwa = detail?.fatwa || detail || fatwa;
-  const activePrinciples = detail?.principles && detail.principles.length > 0 ? detail.principles : principles;
+  const activePrinciples =
+    detail?.principles && detail.principles.length > 0 ? detail.principles : principles;
   const activeFatwaPrinciples =
     detail?.fatwaPrinciples && detail.fatwaPrinciples.length > 0
       ? detail.fatwaPrinciples
       : fatwaPrinciples;
+
+  const isBookmarked =
+    propIsBookmarked !== undefined
+      ? propIsBookmarked
+      : activeFatwa
+        ? learner.isBookmarked(activeFatwa.id)
+        : false;
+
+  const handleToggleBookmark = () => {
+    if (!activeFatwa) return;
+    if (propOnToggleBookmark) {
+      propOnToggleBookmark(activeFatwa.id);
+    } else {
+      learner.toggleBookmark(activeFatwa.id);
+    }
+  };
 
   if (!activeFatwa) {
     return (
@@ -98,7 +117,7 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
           </button>
           <button
             type="button"
-            onClick={() => onToggleBookmark(activeFatwa.id)}
+            onClick={handleToggleBookmark}
             className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs transition ${
               isBookmarked
                 ? 'bg-accent text-white border-accent'
@@ -178,7 +197,7 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
       <FeedbackModal
         isOpen={isFeedbackOpen}
         onClose={() => setIsFeedbackOpen(false)}
-        fatwa={activeFatwa}
+        fatwa={activeFatwa as Fatwa}
         principle={currentPrinciple}
         fatwaPrinciple={currentFP}
       />

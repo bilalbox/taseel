@@ -1,21 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AppShell } from './components/AppShell';
 import { StateSurfaceDrawer } from './components/StateSurfaceDrawer';
 import {
   FATWAS_DATA,
   PRINCIPLES_DATA,
   FATWA_PRINCIPLES_DATA,
-  INITIAL_USER_STATE,
 } from './data/mockData';
-import { Fatwa, Principle, FatwaPrinciple, UserState } from './types';
+import { Fatwa, Principle, FatwaPrinciple } from './types';
 import { sqliteClient, BootProgressEvent } from './services/sqliteClient';
-import {
-  AnsweredQuestionsMap,
-  loadAnsweredQuestions,
-  recordAnsweredQuestion,
-  resetAnsweredQuestions,
-  syncHistoryWithAnswered,
-} from './utils/quizTracker';
+import { learnerStore } from './stores/learnerStore';
+import { useLearnerProgress } from './hooks/useLearnerProgress';
 
 function useDebugMode(): boolean {
   return useMemo(() => {
@@ -26,6 +20,7 @@ function useDebugMode(): boolean {
 
 export function App() {
   const debugMode = useDebugMode();
+  const { userState } = useLearnerProgress();
   const [searchQuery, setSearchQuery] = useState('');
 
   const [fatwas, setFatwas] = useState<Fatwa[]>(FATWAS_DATA);
@@ -36,33 +31,6 @@ export function App() {
   const [bootProgress, setBootProgress] = useState<BootProgressEvent | null>(null);
   const [totalArchiveCount, setTotalArchiveCount] = useState(19301);
   const [lastFtsLatencyMs, setLastFtsLatencyMs] = useState(1.2);
-
-  const [userState, setUserState] = useState<UserState>(() => {
-    const local = localStorage.getItem('taseel_user_state_v1');
-    if (local) {
-      try {
-        return JSON.parse(local);
-      } catch {
-        return INITIAL_USER_STATE;
-      }
-    }
-    return INITIAL_USER_STATE;
-  });
-
-  const [answeredQuestions, setAnsweredQuestions] = useState<AnsweredQuestionsMap>(() =>
-    loadAnsweredQuestions()
-  );
-
-  useEffect(() => {
-    localStorage.setItem('taseel_user_state_v1', JSON.stringify(userState));
-  }, [userState]);
-
-  // Synchronize historical quiz attempts with the answered questions map
-  useEffect(() => {
-    if (userState.history.length > 0) {
-      setAnsweredQuestions(prev => syncHistoryWithAnswered(prev, userState.history));
-    }
-  }, [userState.history]);
 
   useEffect(() => {
     const unsub = sqliteClient.onBootProgress(ev => {
@@ -85,20 +53,18 @@ export function App() {
         setOpfsReady(true);
         setBootProgress(null);
 
+        // Update corpus and hydrate store from canonical SQLite user_db
+        learnerStore.setCorpus(
+          payload.fatwas && payload.fatwas.length > 0 ? payload.fatwas : FATWAS_DATA,
+          payload.principles && payload.principles.length > 0 ? payload.principles : PRINCIPLES_DATA,
+          payload.fatwaPrinciples && payload.fatwaPrinciples.length > 0 ? payload.fatwaPrinciples : FATWA_PRINCIPLES_DATA
+        );
+
         if (
           payload.userState.bookmarks.length > 0 ||
           payload.userState.history.length > 0
         ) {
-          setUserState(prev => ({
-            ...prev,
-            bookmarks: Array.from(
-              new Set([...prev.bookmarks, ...payload.userState.bookmarks])
-            ),
-            history:
-              payload.userState.history.length > 0
-                ? payload.userState.history
-                : prev.history,
-          }));
+          learnerStore.hydrate(payload.userState);
         }
       })
       .catch(err => {
@@ -107,61 +73,6 @@ export function App() {
       });
 
     return unsub;
-  }, []);
-
-  const handleToggleBookmark = useCallback((fatwaId: string) => {
-    sqliteClient.toggleBookmark(fatwaId).catch(() => {});
-    setUserState(prev => {
-      const exists = prev.bookmarks.includes(fatwaId);
-      return {
-        ...prev,
-        bookmarks: exists
-          ? prev.bookmarks.filter(id => id !== fatwaId)
-          : [...prev.bookmarks, fatwaId],
-      };
-    });
-  }, []);
-
-  const handleRecordQuizAttempt = useCallback(
-    (
-      fatwaId: string,
-      principleId: string,
-      selectedId: string,
-      isCorrect: boolean,
-      timeSpentMs: number
-    ) => {
-      // 1. Record in local storage quiz tracker
-      const updated = recordAnsweredQuestion(fatwaId, principleId, selectedId, isCorrect);
-      setAnsweredQuestions({ ...updated });
-
-      // 2. Record in UserState and SQLite worker
-      setUserState(prev => {
-        const newHistoryItem = {
-          id: `quiz-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          fatwa_id: fatwaId,
-          principle_id: principleId,
-          selected_principle_id: selectedId,
-          is_correct: isCorrect,
-          timestamp: Date.now(),
-          time_spent_ms: timeSpentMs,
-          difficulty: 'intermediate' as const,
-        };
-
-        sqliteClient.recordQuizAttempt(newHistoryItem).catch(() => {});
-
-        return {
-          ...prev,
-          history: [...prev.history, newHistoryItem],
-          xp: prev.xp + (isCorrect ? 20 : 5),
-        };
-      });
-    },
-    []
-  );
-
-  const handleResetQuizProgress = useCallback(() => {
-    const cleared = resetAnsweredQuestions();
-    setAnsweredQuestions(cleared);
   }, []);
 
   const bootLabel =
@@ -196,16 +107,11 @@ export function App() {
         fatwas={fatwas}
         principles={principles}
         fatwaPrinciples={fatwaPrinciples}
-        userState={userState}
-        answeredQuestions={answeredQuestions}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
         onSearchLatency={setLastFtsLatencyMs}
         bootLabel={bootLabel}
         opfsReady={opfsReady}
-        onRecordQuizAttempt={handleRecordQuizAttempt}
-        onToggleBookmark={handleToggleBookmark}
-        onResetQuizProgress={handleResetQuizProgress}
       />
 
       {debugMode && (

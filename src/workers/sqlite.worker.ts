@@ -553,6 +553,11 @@ if (typeof self !== 'undefined') {
           });
         }
         self.postMessage({ id, ok: true, result: true });
+      } else if (action === 'CLEAR_QUIZ_ATTEMPTS') {
+        if (db) {
+          db.exec('DELETE FROM user_db.quiz_attempts;');
+        }
+        self.postMessage({ id, ok: true, result: true });
       }
     } catch (error: any) {
       self.postMessage({
