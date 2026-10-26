@@ -1,8 +1,9 @@
-import React from 'react';
-import { Bookmark, BookmarkCheck, HelpCircle, Sparkles } from 'lucide-react';
+import React, { useState } from 'react';
+import { Bookmark, BookmarkCheck, Flag, HelpCircle, Sparkles } from 'lucide-react';
 import { Fatwa, FatwaPrinciple, Principle } from '../types';
 import { AudioPlayerStub } from './AudioPlayerStub';
 import { CATEGORY_LABELS, chapterLabelAr } from '../utils/arabic';
+import { FeedbackModal } from './FeedbackModal';
 
 interface FatwaReaderProps {
   fatwa: Fatwa | undefined;
@@ -34,8 +35,11 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
     );
   }
 
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const linked = fatwaPrinciples.filter(fp => fp.fatwa_id === fatwa.id);
   const currentPrincipleId = activePrincipleId || linked[0]?.principle_id;
+  const currentPrinciple = principles.find(p => p.id === currentPrincipleId);
+  const currentFP = linked.find(fp => fp.principle_id === currentPrincipleId);
 
   return (
     <article className="bg-page-raised border border-page-line rounded-lg overflow-hidden animate-fade-pane">
@@ -48,49 +52,57 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
           <span className="text-ink-faint">·</span>
           <span className="text-ink-muted">الشيخ {fatwa.scholar_name}</span>
         </div>
-        <button
-          type="button"
-          onClick={() => onToggleBookmark(fatwa.id)}
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs transition ${
-            isBookmarked
-              ? 'bg-accent text-white border-accent'
-              : 'bg-page text-ink-soft border-page-line hover:border-accent/40'
-          }`}
-        >
-          {isBookmarked ? (
-            <BookmarkCheck className="w-3.5 h-3.5" />
-          ) : (
-            <Bookmark className="w-3.5 h-3.5" />
-          )}
-          {isBookmarked ? 'محفوظة' : 'حفظ'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsFeedbackOpen(true)}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs bg-page text-ink-soft border-page-line hover:border-amber-500/40 hover:bg-amber-500/10 hover:text-amber-800 transition"
+            title="إبلاغ عن ملاحظة في هذه الفتوى أو تخريجها"
+          >
+            <Flag className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden sm:inline">إبلاغ عن ملاحظة</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => onToggleBookmark(fatwa.id)}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-xs transition ${
+              isBookmarked
+                ? 'bg-accent text-white border-accent'
+                : 'bg-page text-ink-soft border-page-line hover:border-accent/40'
+            }`}
+          >
+            {isBookmarked ? (
+              <BookmarkCheck className="w-3.5 h-3.5" />
+            ) : (
+              <Bookmark className="w-3.5 h-3.5" />
+            )}
+            {isBookmarked ? 'محفوظة' : 'حفظ'}
+          </button>
+        </div>
       </div>
 
-      <div className="p-3 bg-ink border-b border-ink-soft">
-        <AudioPlayerStub
-          key={fatwa.id}
-          fatwaId={fatwa.id}
-          scholar={fatwa.scholar_name}
-          episodeNumber={fatwa.episode_number}
-          initialTimestamp={fatwa.audio_timestamp}
-          audioUrl={fatwa.audio_url}
-        />
-      </div>
+      {Boolean(fatwa.audio_url) && (
+        <div className="p-3 bg-ink border-b border-ink-soft">
+          <AudioPlayerStub
+            key={fatwa.id}
+            fatwaId={fatwa.id}
+            scholar={fatwa.scholar_name}
+            episodeNumber={fatwa.episode_number}
+            initialTimestamp={fatwa.audio_timestamp}
+            audioUrl={fatwa.audio_url}
+          />
+        </div>
+      )}
 
       <div className="p-5 sm:p-6 space-y-6">
-        <div className="pr-3 border-r-[3px] border-accent">
-          <div className="text-xs font-semibold text-accent mb-1.5 flex items-center gap-1.5">
-            <HelpCircle className="w-3.5 h-3.5" />
-            السؤال
-          </div>
-          <p className="font-amiri text-lg text-ink leading-relaxed">«{fatwa.question_text}»</p>
+        <div className="bg-page-sunken/40 rounded-lg p-4 sm:p-5 border border-page-line/60">
+          <p className="font-amiri text-lg sm:text-xl font-bold text-ink leading-relaxed">
+            «{fatwa.question_text}»
+          </p>
         </div>
 
-        <div className="space-y-2">
-          <div className="text-xs font-semibold text-ink-muted border-b border-page-line pb-1.5">
-            جواب الشيخ {fatwa.scholar_name}
-          </div>
-          <div className="font-amiri text-lg text-ink leading-loose text-justify whitespace-pre-wrap">
+        <div className="space-y-3 pt-1">
+          <div className="font-amiri text-lg sm:text-[19px] text-ink leading-[2.2] text-justify whitespace-pre-wrap">
             {fatwa.answer_text}
           </div>
         </div>
@@ -128,6 +140,14 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
           </div>
         )}
       </div>
+
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        fatwa={fatwa}
+        principle={currentPrinciple}
+        fatwaPrinciple={currentFP}
+      />
     </article>
   );
 };

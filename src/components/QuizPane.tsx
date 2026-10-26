@@ -1,8 +1,9 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { ArrowLeft, BookOpen, CheckCircle, CheckCircle2, HelpCircle, RotateCcw, Shuffle } from 'lucide-react';
+import { ArrowLeft, BookOpen, CheckCircle, CheckCircle2, Flag, HelpCircle, RotateCcw, Shuffle } from 'lucide-react';
 import { Fatwa, Principle, FatwaPrinciple, DistractorItem } from '../types';
 import { CATEGORY_LABELS } from '../utils/arabic';
 import { AnsweredQuestionRecord } from '../utils/quizTracker';
+import { FeedbackModal } from './FeedbackModal';
 
 interface QuizPaneProps {
   fatwa: Fatwa | undefined;
@@ -38,6 +39,7 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
   const [selectedQuizChoice, setSelectedQuizChoice] = useState<string | null>(null);
   const [hasSubmittedQuiz, setHasSubmittedQuiz] = useState(false);
   const [quizStartTime, setQuizStartTime] = useState(() => Date.now());
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   useEffect(() => {
     setSelectedQuizChoice(null);
@@ -124,64 +126,54 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
         : 'متقدم';
 
   return (
-    <div className="bg-page-raised border border-page-line rounded-lg p-5 space-y-4 animate-fade-pane">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="font-semibold text-sm text-ink flex items-center gap-1.5">
-          <HelpCircle className="w-4 h-4 text-accent shrink-0" />
-          <span>ما القاعدة التي بُني عليها الحكم في هذه الفتوى؟</span>
-        </div>
-        {onNextQuestion && (
-          <button
-            type="button"
-            onClick={onNextQuestion}
-            title="الانتقال إلى سؤال عشوائي آخر"
-            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-page-line bg-page hover:bg-page-sunken hover:border-accent/40 text-ink-muted hover:text-ink transition"
-          >
-            <Shuffle className="w-3.5 h-3.5 text-accent" />
-            <span>سؤال عشوائي</span>
-          </button>
-        )}
-      </div>
-
-      {(totalGroundedCount > 0 || isAnswered) && (
-        <div className="flex items-center justify-between gap-2 text-[11px] text-ink-muted px-2.5 py-1.5 rounded-md bg-page-sunken/60 border border-page-line/60 flex-wrap">
-          <span className="flex items-center gap-1.5">
-            <CheckCircle2 className="w-3.5 h-3.5 text-accent" />
-            <span>
-              الأسئلة المُجابة:{' '}
-              <strong className="text-ink font-semibold">{answeredCount}</strong> من{' '}
-              <strong className="text-ink font-semibold">{totalGroundedCount}</strong>
+    <div className="bg-page-raised border border-page-line rounded-xl p-5 sm:p-6 space-y-4 animate-fade-pane">
+      <div className="flex items-center justify-between gap-3 pb-3 border-b border-page-line flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-ink">سؤال في التخريج</span>
+          {totalGroundedCount > 0 && (
+            <span className="text-[11px] text-ink-faint">
+              ({answeredCount} من {totalGroundedCount} مُجاب)
             </span>
-          </span>
+          )}
           {isAnswered && (
             <span
-              className={`px-2 py-0.5 rounded-full font-medium border text-[10px] ${
+              className={`px-1.5 py-0.2 rounded text-[10px] font-medium ${
                 lastAttempt?.isCorrect
-                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
-                  : 'bg-amber-50 text-amber-800 border-amber-200'
+                  ? 'text-emerald-700 bg-emerald-50'
+                  : 'text-amber-700 bg-amber-50'
               }`}
             >
-              {lastAttempt?.isCorrect ? '✓ تمت إجابته بصواب' : 'تمت الإجابة سابقاً'}
+              {lastAttempt?.isCorrect ? '✓ صواب' : 'سابق'}
             </span>
           )}
         </div>
-      )}
-
-      {totalGroundedCount > 0 && answeredCount >= totalGroundedCount && (
-        <div className="p-3 bg-accent-soft/60 border border-accent/30 rounded-lg text-xs text-accent-deep flex items-center justify-between gap-2">
-          <span>🎉 رائع! أجبت على جميع الأسئلة المتوفرة في الأرشيف ({totalGroundedCount}).</span>
-          {onResetProgress && (
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setIsFeedbackOpen(true)}
+            title="إبلاغ عن خطأ في السؤال أو التخريج أو الخيارات"
+            className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-ink-muted hover:text-amber-700 hover:bg-amber-500/10 transition"
+          >
+            <Flag className="w-3.5 h-3.5 text-amber-600" />
+            <span className="hidden sm:inline">إبلاغ</span>
+          </button>
+          {onNextQuestion && (
             <button
               type="button"
-              onClick={onResetProgress}
-              className="text-[11px] underline hover:text-ink font-semibold flex items-center gap-1"
+              onClick={onNextQuestion}
+              title="الانتقال إلى سؤال عشوائي آخر"
+              className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-page-line bg-page hover:bg-page-sunken text-ink-muted hover:text-ink transition"
             >
-              <RotateCcw className="w-3 h-3" />
-              <span>بدء دورة جديدة</span>
+              <Shuffle className="w-3.5 h-3.5 text-accent" />
+              <span>سؤال آخر</span>
             </button>
           )}
         </div>
-      )}
+      </div>
+
+      <h2 className="font-semibold text-sm sm:text-base text-ink leading-snug">
+        ما القاعدة التي بُني عليها الحكم في هذه الفتوى؟
+      </h2>
 
       <div className="space-y-2">
         {quizChoices.map(choice => {
@@ -242,11 +234,9 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
       )}
 
       {hasSubmittedQuiz && (
-        <div className="space-y-3 pt-3 border-t border-page-line animate-fade-pane">
-          <div className="flex items-center justify-between gap-2 flex-wrap">
-            <span
-              className={`text-[11px] font-medium px-2 py-0.5 rounded border ${CATEGORY_LABELS[principle.category]?.color}`}
-            >
+        <div className="pt-4 border-t border-page-line space-y-4 animate-fade-pane">
+          <div className="flex items-center justify-between gap-2 text-xs">
+            <span className="font-semibold text-accent">
               {CATEGORY_LABELS[principle.category]?.badge}
             </span>
             <span className="text-[11px] text-ink-faint">{difficultyLabel}</span>
@@ -256,55 +246,64 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
             «{principle.canonical_text_ar}»
           </h3>
 
-          <div className="bg-page-sunken/60 p-3 rounded-md border border-page-line text-sm text-ink-soft leading-relaxed">
-            <div className="font-semibold text-ink mb-1 flex items-center gap-1.5 text-xs">
-              <BookOpen className="w-3.5 h-3.5 text-accent" />
-              <span>بيان القاعدة</span>
-            </div>
+          <div className="space-y-3 text-sm leading-relaxed text-ink-soft">
             <p className="font-amiri text-[15px] leading-relaxed">
               {principle.general_explanation_ar}
             </p>
-          </div>
 
-          <div className="bg-accent-soft/70 p-3 rounded-md border border-accent/20 text-sm text-accent-deep leading-relaxed">
-            <div className="font-semibold mb-1 flex items-center gap-1.5 text-xs">
-              <CheckCircle className="w-3.5 h-3.5 text-accent" />
-              <span>تخريج هذه المسألة</span>
-            </div>
-            <p className="font-amiri text-[15px] leading-relaxed">
-              {fatwaPrinciple.application_explanation_ar}
-            </p>
-            <p className="mt-2 text-[11px] text-accent-mid">
-              {fatwaPrinciple.explicitly_stated
-                ? 'مصرّح بها في كلام الشيخ'
-                : 'مستنبطة من تعليل الحكم'}
-            </p>
-          </div>
-
-          <div className="flex items-center justify-between gap-2 pt-2 border-t border-page-line/60 flex-wrap">
-            <span className="text-xs text-ink-muted">حُفظت محاولتك محلياً</span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={handleRetry}
-                className="px-3 py-1.5 bg-page-sunken border border-page-line text-ink-soft rounded-md text-xs hover:bg-page hover:text-ink transition"
-              >
-                إعادة المحاولة
-              </button>
-              {onNextQuestion && (
+            <div className="pt-3 border-t border-page-line/60 space-y-1.5">
+              <p className="font-amiri text-[15px] text-accent-deep font-medium leading-relaxed">
+                {fatwaPrinciple.application_explanation_ar}
+              </p>
+              <div className="flex items-center justify-between text-[11px] text-ink-faint pt-1">
+                <span>
+                  {fatwaPrinciple.explicitly_stated
+                    ? 'مصرّح بها في كلام الشيخ'
+                    : 'مستنبطة من تعليل الحكم'}
+                </span>
                 <button
                   type="button"
-                  onClick={onNextQuestion}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-accent text-white font-semibold rounded-md text-xs hover:bg-accent-mid shadow-sm transition"
+                  onClick={() => setIsFeedbackOpen(true)}
+                  className="text-amber-700 hover:text-amber-800 hover:underline flex items-center gap-1"
                 >
-                  <span>السؤال التالي</span>
-                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <Flag className="w-3 h-3 text-amber-600" />
+                  <span>ملاحظة على هذا التخريج؟</span>
                 </button>
-              )}
+              </div>
             </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-3 pt-3 border-t border-page-line flex-wrap">
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="text-xs text-ink-muted hover:text-ink transition underline-offset-4 hover:underline"
+            >
+              إعادة المحاولة
+            </button>
+            {onNextQuestion && (
+              <button
+                type="button"
+                onClick={onNextQuestion}
+                className="inline-flex items-center gap-2 px-5 py-2 bg-accent text-white font-semibold rounded-lg text-sm hover:bg-accent-mid shadow-sm transition"
+              >
+                <span>السؤال التالي</span>
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+            )}
           </div>
         </div>
       )}
+
+      <FeedbackModal
+        isOpen={isFeedbackOpen}
+        onClose={() => setIsFeedbackOpen(false)}
+        fatwa={fatwa}
+        principle={principle}
+        fatwaPrinciple={fatwaPrinciple}
+        quizChoices={quizChoices}
+        selectedChoiceId={selectedQuizChoice}
+      />
     </div>
   );
 };

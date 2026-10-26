@@ -1,0 +1,19 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "taseel",
+  "compatibility_date": "2025-10-01",
+  "pages_build_output_dir": "dist",
+  "d1_databases": [
+    {
+      "binding": "FEEDBACK_DB",
+      "database_name": "taseel_feedback",
+      "database_id": "YOUR_D1_DATABASE_ID"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "FEEDBACK_KV",
+      "id": "YOUR_KV_NAMESPACE_ID"
+    }
+  ]
+}

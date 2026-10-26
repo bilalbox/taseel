@@ -103,3 +103,34 @@ export interface UserState {
   xp: number;
   streak_days: number;
 }
+
+export type FeedbackReason =
+  | 'wrong_principle'
+  | 'wrong_explanation'
+  | 'clerical_error'
+  | 'no_correct_option';
+
+export interface FeedbackSubmission {
+  fatwa_id: string;
+  scholar_name?: string;
+  topic_chapter?: string;
+  topic_subtopic?: string;
+  question_excerpt?: string;
+  principle_id?: string;
+  principle_text?: string;
+  reason: FeedbackReason;
+  user_comment?: string;
+  options_shown?: { id: string; text: string; is_correct?: boolean }[];
+  user_selected_id?: string | null;
+  turnstile_token: string;
+}
+
+export interface FeedbackRecord extends Omit<FeedbackSubmission, 'turnstile_token'> {
+  id: string;
+  status: 'open' | 'reviewed' | 'resolved' | 'dismissed';
+  created_at: string;
+  ip_country?: string;
+  user_agent?: string;
+  resolution_notes?: string;
+  reviewed_at?: string;
+}

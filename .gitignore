@@ -16,6 +16,9 @@ public/content.sqlite3.gz
 
 # Cloudflare / secrets
 .wrangler/
+wrangler.json
+wrangler.jsonc
+!wrangler.jsonc.example
 .env
 .env.*
 !.env.example

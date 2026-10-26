@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build:db": "python3 pipeline/src/compile_sqlite.py",
+    "feedback": "python3 pipeline/src/fetch_feedback.py",
     "deploy": "pnpm build && npx wrangler pages deploy dist --project-name=taseel --commit-dirty=true",
     "deploy:pages": "pnpm deploy",
     "preview": "vite preview"
