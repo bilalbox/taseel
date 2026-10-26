@@ -10,7 +10,8 @@ import {
   Scholar,
   UserState,
 } from '../types';
-import { matchesSearch, chapterLabelAr } from '../utils/arabic';
+import { chapterLabelAr } from '../utils/arabic';
+import { toFatwaSummary } from '../data/mockArchiveAdapter';
 import {
   AnsweredQuestionsMap,
   getAnsweredRecord,
@@ -31,6 +32,7 @@ interface AppShellProps {
   answeredQuestions: AnsweredQuestionsMap;
   searchQuery: string;
   setSearchQuery: (q: string) => void;
+  onSearchLatency?: (latencyMs: number) => void;
   bootLabel?: string | null;
   opfsReady: boolean;
   onRecordQuizAttempt: (
@@ -52,6 +54,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   answeredQuestions,
   searchQuery,
   setSearchQuery,
+  onSearchLatency,
   bootLabel,
   opfsReady,
   onRecordQuizAttempt,
@@ -140,8 +143,10 @@ export const AppShell: React.FC<AppShellProps> = ({
     [fatwas]
   );
 
-  const [browsedFatwas, setBrowsedFatwas] = useState<FatwaSummary[]>([]);
-  const [browseTotal, setBrowseTotal] = useState<number>(0);
+  const [browsedFatwas, setBrowsedFatwas] = useState<FatwaSummary[]>(() =>
+    fatwas.map(f => toFatwaSummary(f, fatwaPrinciples))
+  );
+  const [browseTotal, setBrowseTotal] = useState<number>(() => fatwas.length);
 
   useEffect(() => {
     let cancelled = false;
@@ -153,16 +158,19 @@ export const AppShell: React.FC<AppShellProps> = ({
         limit: 80,
       })
       .then(res => {
-        if (!cancelled && res.fatwas.length > 0) {
+        if (!cancelled) {
           setBrowsedFatwas(res.fatwas);
           setBrowseTotal(res.total);
+          if (typeof res.latencyMs === 'number') {
+            onSearchLatency?.(res.latencyMs);
+          }
         }
       })
       .catch(() => {});
     return () => {
       cancelled = true;
     };
-  }, [selectedScholar, selectedChapter, searchQuery, opfsReady]);
+  }, [selectedScholar, selectedChapter, searchQuery, opfsReady, onSearchLatency]);
 
   const [activeDetail, setActiveDetail] = useState<FatwaDetail | null>(null);
 
@@ -182,31 +190,17 @@ export const AppShell: React.FC<AppShellProps> = ({
     };
   }, [activeFatwaId]);
 
-  const filteredFatwas = useMemo(() => {
-    return fatwas.filter(f => {
-      if (selectedScholar !== 'ALL' && f.scholar_name !== selectedScholar) return false;
-      if (selectedChapter !== 'ALL' && f.topic_chapter !== selectedChapter) return false;
-      if (filterUnansweredOnly && isQuestionAnswered(answeredQuestions, f.id)) return false;
-      if (!searchQuery.trim()) return true;
-      return (
-        matchesSearch(searchQuery, f.question_norm) || matchesSearch(searchQuery, f.answer_norm)
-      );
-    });
-  }, [fatwas, selectedScholar, selectedChapter, filterUnansweredOnly, answeredQuestions, searchQuery]);
-
   const displayFatwas = useMemo(() => {
-    const base = browsedFatwas.length > 0 ? browsedFatwas : filteredFatwas;
     if (filterUnansweredOnly) {
-      return base.filter(f => !isQuestionAnswered(answeredQuestions, f.id));
+      return browsedFatwas.filter(f => !isQuestionAnswered(answeredQuestions, f.id));
     }
-    return base;
-  }, [browsedFatwas, filteredFatwas, filterUnansweredOnly, answeredQuestions]);
+    return browsedFatwas;
+  }, [browsedFatwas, filterUnansweredOnly, answeredQuestions]);
 
   const activeFatwa =
     activeDetail?.fatwa ||
     fatwas.find(f => f.id === activeFatwaId) ||
-    (displayFatwas[0] as Fatwa) ||
-    filteredFatwas[0] ||
+    (displayFatwas[0] as Fatwa | undefined) ||
     fatwas[0];
 
   const currentFatwaPrinciples = useMemo(() => {

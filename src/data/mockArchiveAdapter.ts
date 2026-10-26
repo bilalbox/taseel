@@ -1,3 +1,4 @@
+import sqlite3InitModule, { Database } from '@sqlite.org/sqlite-wasm';
 import {
   ArchiveQueryAdapter,
   BrowseFatwasParams,
@@ -9,8 +10,9 @@ import {
   Principle,
   PrincipleTreeNode,
 } from '../types';
-import { matchesSearch, normalizeArabic } from '../utils/arabic';
-import { FATWA_PRINCIPLES_DATA, FATWAS_DATA, PRINCIPLES_DATA } from './mockData';
+import { normalizeArabic } from '../utils/arabic';
+import { EPISODES_DATA, FATWA_PRINCIPLES_DATA, FATWAS_DATA, PRINCIPLES_DATA } from './mockData';
+import { createInMemoryArchiveDb, executeBrowseFatwas } from './archiveQuery';
 
 export function flattenPrinciplesTree(nodes: PrincipleTreeNode[]): PrincipleTreeNode[] {
   const result: PrincipleTreeNode[] = [];
@@ -50,6 +52,8 @@ export class MockArchiveAdapter implements ArchiveQueryAdapter {
   private fatwas: Fatwa[];
   private principles: Principle[];
   private fatwaPrinciples: FatwaPrinciple[];
+  private db: Database | null = null;
+  private dbInitPromise: Promise<Database | null> | null = null;
 
   constructor(
     fatwas: Fatwa[] = FATWAS_DATA,
@@ -59,6 +63,29 @@ export class MockArchiveAdapter implements ArchiveQueryAdapter {
     this.fatwas = fatwas;
     this.principles = principles;
     this.fatwaPrinciples = fatwaPrinciples;
+  }
+
+  private async ensureDb(): Promise<Database | null> {
+    if (this.db) return this.db;
+    if (this.dbInitPromise) return this.dbInitPromise;
+
+    this.dbInitPromise = (async () => {
+      try {
+        const sqlite3 = await sqlite3InitModule();
+        this.db = createInMemoryArchiveDb(sqlite3, {
+          episodes: EPISODES_DATA,
+          fatwas: this.fatwas,
+          principles: this.principles,
+          fatwaPrinciples: this.fatwaPrinciples,
+        });
+        return this.db;
+      } catch (err) {
+        console.warn('[MockArchiveAdapter] SQLite WASM unavailable, falling back:', err);
+        return null;
+      }
+    })();
+
+    return this.dbInitPromise;
   }
 
   public async getPrinciplesTree(): Promise<PrincipleTreeNode[]> {
@@ -93,6 +120,12 @@ export class MockArchiveAdapter implements ArchiveQueryAdapter {
   }
 
   public async browseFatwas(params: BrowseFatwasParams = {}): Promise<BrowseFatwasResult> {
+    const db = await this.ensureDb();
+    if (db) {
+      return executeBrowseFatwas(db, params);
+    }
+
+    // Pure in-memory fallback without matchesSearch
     const t0 = performance.now();
     const {
       query,
@@ -128,13 +161,17 @@ export class MockArchiveAdapter implements ArchiveQueryAdapter {
     }
 
     if (query && query.trim()) {
-      const trimmed = query.trim();
-      filtered = filtered.filter(
-        f =>
-          matchesSearch(trimmed, f.question_norm) ||
-          matchesSearch(trimmed, f.answer_norm) ||
-          matchesSearch(trimmed, normalizeArabic(f.topic_subtopic || ''))
-      );
+      const normTokens = normalizeArabic(query.trim())
+        .split(/\s+/)
+        .map(t => t.replace(/["*(){}:^]/g, '').trim())
+        .filter(Boolean);
+
+      if (normTokens.length > 0) {
+        filtered = filtered.filter(f => {
+          const haystack = `${f.question_norm} ${f.answer_norm} ${normalizeArabic(f.topic_subtopic || '')}`;
+          return normTokens.every(tok => haystack.includes(tok));
+        });
+      }
     }
 
     const total = filtered.length;

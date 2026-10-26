@@ -109,28 +109,6 @@ export function App() {
     return unsub;
   }, []);
 
-  useEffect(() => {
-    if (!opfsReady || searchQuery.trim().length < 2) return;
-    let cancelled = false;
-    sqliteClient
-      .searchFatwas(searchQuery, 60)
-      .then(({ fatwas: ftsResults, latencyMs }) => {
-        if (cancelled) return;
-        setLastFtsLatencyMs(latencyMs);
-        if (ftsResults.length > 0) {
-          setFatwas(prev => {
-            const seen = new Set(prev.map(f => f.id));
-            const additions = ftsResults.filter(f => !seen.has(f.id));
-            return additions.length > 0 ? [...prev, ...additions] : prev;
-          });
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [searchQuery, opfsReady]);
-
   const handleToggleBookmark = useCallback((fatwaId: string) => {
     sqliteClient.toggleBookmark(fatwaId).catch(() => {});
     setUserState(prev => {
@@ -222,6 +200,7 @@ export function App() {
         answeredQuestions={answeredQuestions}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        onSearchLatency={setLastFtsLatencyMs}
         bootLabel={bootLabel}
         opfsReady={opfsReady}
         onRecordQuizAttempt={handleRecordQuizAttempt}

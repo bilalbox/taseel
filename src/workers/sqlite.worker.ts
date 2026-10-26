@@ -15,6 +15,7 @@ import type {
   TopicDomain,
 } from '../types';
 import { mockArchiveAdapter } from '../data/mockArchiveAdapter';
+import { executeBrowseFatwas } from '../data/archiveQuery';
 
 export interface ManifestData {
   version: string;
@@ -329,117 +330,7 @@ function getPrinciplesTreeWorker(): PrincipleTreeNode[] {
 
 function browseFatwasWorker(params: BrowseFatwasParams = {}): BrowseFatwasResult {
   if (!db) throw new Error('Database not initialized');
-  const t0 = performance.now();
-  const {
-    query,
-    scholar = 'ALL',
-    chapter = 'ALL',
-    subtopic,
-    principleId,
-    limit = 20,
-    offset = 0,
-  } = params;
-
-  const conditions: string[] = [];
-  const bindings: any[] = [];
-
-  const rawQuery = (query || '').trim();
-  const norm = normalizeArabic(rawQuery);
-
-  let fromClause = '';
-  if (norm) {
-    const ftsQuery = norm
-      .split(/\s+/)
-      .filter(Boolean)
-      .map(tok => `"${tok.replace(/"/g, '')}"*`)
-      .join(' AND ');
-
-    fromClause = `
-      FROM fatwas_fts fts
-      JOIN fatwas f ON f.rowid = fts.rowid
-      JOIN episodes e ON e.id = f.episode_id
-    `;
-    conditions.push('fatwas_fts MATCH ?');
-    bindings.push(ftsQuery);
-  } else {
-    fromClause = `
-      FROM fatwas f
-      JOIN episodes e ON e.id = f.episode_id
-    `;
-  }
-
-  if (scholar && scholar !== 'ALL') {
-    conditions.push('f.scholar_name = ?');
-    bindings.push(scholar);
-  }
-
-  if (chapter && chapter !== 'ALL') {
-    conditions.push('f.topic_chapter = ?');
-    bindings.push(chapter);
-  }
-
-  if (subtopic) {
-    conditions.push('f.topic_subtopic = ?');
-    bindings.push(subtopic);
-  }
-
-  if (principleId) {
-    conditions.push('EXISTS (SELECT 1 FROM fatwa_principles fp WHERE fp.fatwa_id = f.id AND fp.principle_id = ?)');
-    bindings.push(principleId);
-  }
-
-  const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
-
-  const countSql = `SELECT COUNT(*) ${fromClause} ${whereClause}`;
-  const total = Number(db.selectValue(countSql, bindings) || 0);
-
-  const pageBindings = [...bindings, limit, offset];
-  const pageSql = `
-    SELECT f.id, f.episode_id, f.scholar_name, f.question_text,
-           f.topic_domain, f.topic_chapter, f.topic_subtopic, f.audio_start_sec,
-           f.audio_url AS fatwa_audio_url,
-           e.episode_number, e.audio_url AS episode_audio_url,
-           (SELECT COUNT(*) FROM fatwa_principles fp WHERE fp.fatwa_id = f.id) AS linked_principles_count
-    ${fromClause}
-    ${whereClause}
-    ORDER BY
-      CASE
-        WHEN COALESCE(NULLIF(f.audio_url, ''), NULLIF(e.audio_url, '')) IS NOT NULL
-             AND COALESCE(f.audio_url, e.audio_url) NOT LIKE '%archive.org%' THEN 0
-        WHEN COALESCE(NULLIF(f.audio_url, ''), NULLIF(e.audio_url, '')) IS NOT NULL THEN 1
-        ELSE 2
-      END,
-      f.rowid ASC
-    LIMIT ? OFFSET ?
-  `;
-
-  const rows = db.selectObjects(pageSql, pageBindings);
-  const fatwas: FatwaSummary[] = rows.map((r: any) => {
-    const clip = usableAudioUrl(r.fatwa_audio_url, r.episode_audio_url);
-    return {
-      id: String(r.id),
-      episode_id: String(r.episode_id),
-      scholar_name: String(r.scholar_name) as any,
-      episode_number: Number(r.episode_number || 1),
-      question_text: String(r.question_text),
-      topic_domain: String(r.topic_domain) as any,
-      topic_chapter: String(r.topic_chapter),
-      topic_subtopic: String(r.topic_subtopic || 'فتاوى نور على الدرب'),
-      audio_url: clip,
-      audio_timestamp: Number(r.audio_start_sec || 0),
-      linked_principles_count: Number(r.linked_principles_count || 0),
-    };
-  });
-
-  const latencyMs = Number((performance.now() - t0).toFixed(2));
-  const hasMore = offset + limit < total;
-
-  return {
-    fatwas,
-    total,
-    hasMore,
-    latencyMs,
-  };
+  return executeBrowseFatwas(db, params);
 }
 
 function getFatwaDetailWorker(id: string): FatwaDetail | null {
