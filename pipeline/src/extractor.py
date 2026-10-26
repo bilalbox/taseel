@@ -117,6 +117,27 @@ def extract_and_ground_fatwa(
                 and "وسيله الواجب" not in norm_answer
             ):
                 continue
+        if nid == "fiqh.yaqeen.baqaa":
+            # Guardrail: Requires actual Istishab phrasing or doubt/certainty tension.
+            # Pure mention of "بقاء" (e.g. بقاء النكاح as hikmah, or بقاء الأظافر) is NOT Istishab.
+            has_istishab_phrase = any(
+                p in norm_answer
+                for p in (
+                    "بقاء ما كان",
+                    "استصحاب",
+                    "استمرار الحكم",
+                    "الاصل بقاء الطهاره",
+                    "الاصل استمرار",
+                    "يبني علي الاقل",
+                    "يبني علي اليقين",
+                )
+            )
+            has_doubt_context = any(
+                d in norm_answer
+                for d in ("شك", "الشك", "مشكوك", "ريب", "تردد", "تيقن", "اليقين")
+            )
+            if not (has_istishab_phrase or (has_doubt_context and "الاصل بقاء" in norm_answer)):
+                continue
 
         matched_alias_id: Optional[str] = None
         invocation_type = "implicit_application"
@@ -135,7 +156,8 @@ def extract_and_ground_fatwa(
                 break
 
         distinctive_tokens = node["distinctive_tokens"]
-        if distinctive_tokens:
+        # Do not allow a single common token (len < 2) to trigger implicit matching by itself
+        if distinctive_tokens and len(distinctive_tokens) >= 2:
             hits = sum(1 for t in distinctive_tokens if t in answer_tokens or t in norm_answer)
             token_ratio = hits / len(distinctive_tokens)
             if token_ratio >= 0.70:

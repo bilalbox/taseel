@@ -18,7 +18,7 @@ pnpm dev        # http://localhost:3000/
 pnpm build
 pnpm preview
 # Cloudflare Pages:
-pnpm deploy:pages
+pnpm deploy
 ```
 
 Content SQLite and `pipeline/data/` are gitignored (large). Generate them locally before `dev` / deploy.
