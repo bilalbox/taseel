@@ -1,0 +1,146 @@
+{
+  "episodes": [
+    {
+      "id": "ep-ibn-baz-104",
+      "scholar_name": "ابن باز",
+      "episode_number": 104,
+      "source_url": "https://binbaz.org.sa/fatwas/episodes/104",
+      "audio_url": "https://files.zadapps.info/binbaz.org.sa/fatawa/nour_3la_aldarb/nour_104/10401.mp3"
+    },
+    {
+      "id": "ep-ibn-baz-312",
+      "scholar_name": "ابن باز",
+      "episode_number": 312,
+      "source_url": "https://binbaz.org.sa/fatwas/episodes/312",
+      "audio_url": "https://files.zadapps.info/binbaz.org.sa/fatawa/nour_3la_aldarb/nour_312/31201.mp3"
+    },
+    {
+      "id": "ep-uthaymeen-45",
+      "scholar_name": "ابن عثيمين",
+      "episode_number": 45,
+      "source_url": "https://ibnothaimeen.net/fatwas/episodes/45",
+      "audio_url": null
+    },
+    {
+      "id": "ep-uthaymeen-211",
+      "scholar_name": "ابن عثيمين",
+      "episode_number": 211,
+      "source_url": "https://ibnothaimeen.net/fatwas/episodes/211",
+      "audio_url": null
+    }
+  ],
+  "fatwas": [
+    {
+      "id": "fatwa-101",
+      "episode_id": "ep-ibn-baz-104",
+      "scholar_name": "ابن باز",
+      "topic_domain": "Fiqh",
+      "topic_chapter": "Taharah",
+      "topic_subtopic": "الشك في الحدث بعد تيقن الطهارة",
+      "audio_url": "https://files.zadapps.info/binbaz.org.sa/fatawa/nour_3la_aldarb/nour_104/10401.mp3",
+      "audio_start_sec": 0,
+      "audio_end_sec": 215,
+      "question_text": "رجل توضأ لصلاة الظهر، ثم لما قام لصلاة العصر شك هل أحدث بعد الظهر أم لا زال على طهارته، فما الحكم هل يعيد الوضوء أم يصلي بذلك الوضوء؟",
+      "answer_text": "بسم الله الرحمن الرحيم، الحمد لله وصلى الله وسلم على رسول الله. هذا لا يلزمه الوضوء، ما دام توضأ بيقين فإن الطهارة مستمرة، ولا يزول هذا اليقين بمجرد الشك، لقول النبي ﷺ لما شُكي إليه الرجل يخيل إليه أنه يجد الشيء في الصلاة: «لا ينصرف حتى يسمع صوتاً أو يجد ريحاً». فالأصل بقاء الطهارة حتى يتيقن الحدث، فإذا تيقن أنه أحدث بعد الظهر توضأ، أما الشك المحض فلا يلتفت إليه ويبني على طهارته ويصلي ولا حرج عليه."
+    },
+    {
+      "id": "fatwa-201",
+      "episode_id": "ep-uthaymeen-211",
+      "scholar_name": "ابن عثيمين",
+      "topic_domain": "Fiqh",
+      "topic_chapter": "Taharah",
+      "topic_subtopic": "الشك في انتقاض الوضوء بعد تيقنه",
+      "audio_start_sec": 60,
+      "audio_end_sec": 135,
+      "question_text": "سائل يقول: توضأت لصلاة الظهر بيقين، وحين دخل وقت العصر شككت هل انتقض وضوئي أم أنا باقٍ على طهارتي، فهل أعيد الوضوء؟",
+      "answer_text": "الجواب: من تيقن الطهارة وشك في الحدث فهو متطهر ولا تلزمه إعادة الوضوء؛ بناءً على القاعدة الشرعية أن الأصل بقاء ما كان على ما كان، وهو استصحاب الحال الماضية، واليقين لا يرتفع بالشك."
+    },
+    {
+      "id": "fatwa-202",
+      "episode_id": "ep-uthaymeen-211",
+      "scholar_name": "ابن عثيمين",
+      "topic_domain": "Fiqh",
+      "topic_chapter": "Muamalat",
+      "topic_subtopic": "دعوى الدين أو الضمان بلا بينة",
+      "audio_start_sec": 180,
+      "audio_end_sec": 260,
+      "question_text": "ادعى علي شخص أني أتلفت سيارته قديماً ويطالبني بضمان مالي دون شهود أو بينة، فهل يلزمني الدفع؟",
+      "answer_text": "لا يلزمك شيء بمجرد الدعوى الخالية من البينة؛ لأن البراءة الأصلية تقتضي أن الذمة بريئة حتى يقوم الدليل على شغلها، وقد قال النبي ﷺ: «البينة على المدعي واليمين على من أنكر»."
+    },
+    {
+      "id": "fatwa-102",
+      "episode_id": "ep-uthaymeen-45",
+      "scholar_name": "ابن عثيمين",
+      "topic_domain": "Usul",
+      "topic_chapter": "Salat",
+      "topic_subtopic": "تخصيص الأذكار بأعداد وهيئات محدثة",
+      "audio_start_sec": 88,
+      "audio_end_sec": 190,
+      "question_text": "نرى بعض الإخوة يبتدعون في الأذكار صيغاً وأعداداً معينة لم ترد في السنة كأن يسبح ألف مرة بعد كل أذان بنية طيبة للتقرب إلى الله، فما توجيهكم؟",
+      "answer_text": "نقول لهؤلاء: نيتكم طيبة، ولكن الأمور بمقاصدها مشروطة بمتابعة السنة، والقاعدة المقررة أن الأصل في العبادات المنع والتوقيف، وتخصيص الأذكار بأعداد أو أوقات لم ترد بدعة إضافية مردودة لقوله ﷺ: «من عمل عملاً ليس عليه أمرنا فهو رد»."
+    },
+    {
+      "id": "fatwa-104",
+      "episode_id": "ep-ibn-baz-312",
+      "scholar_name": "ابن باز",
+      "topic_domain": "Fiqh",
+      "topic_chapter": "Taharah",
+      "topic_subtopic": "تيمم المريض عند خوف الضرر من الماء",
+      "audio_url": "https://files.zadapps.info/binbaz.org.sa/fatawa/nour_3la_aldarb/nour_312/31201.mp3",
+      "audio_start_sec": 0,
+      "audio_end_sec": 395,
+      "question_text": "مريض مصاب بجروح بالغة في يديه ووجهه، ويشق عليه استعمال الماء ويتضرر بذلك بشهادة الأطباء، فماذا يفعل في طهارته؟",
+      "answer_text": "إذا خاف المريض الضرر أو شدة الألم من استعمال الماء عدل إلى التيمم؛ لأن المشقة تجلب التيسير، والضرر يزال، لقوله سبحانه: ﴿وَمَا جَعَلَ عَلَيْكُمْ فِي الدِّينِ مِنْ حَرَجٍ﴾."
+    },
+    {
+      "id": "fatwa-401",
+      "episode_id": "ep-uthaymeen-45",
+      "scholar_name": "ابن عثيمين",
+      "topic_domain": "Usul",
+      "topic_chapter": "Salat",
+      "topic_subtopic": "عموم الأمر بتحية المسجد وعدم قصره على سبب الورود",
+      "audio_start_sec": 410,
+      "audio_end_sec": 502,
+      "question_text": "حديث «إذا دخل أحدكم المسجد فلا يجلس حتى يصلي ركعتين» ورد في رجل دخل والنبي ﷺ يخطب يوم الجمعة، فهل يختص بيوم الجمعة أم يعم كل وقت؟",
+      "answer_text": "يعم كل داخل للمسجد في أي وقت؛ لأن القاعدة الأصولية المقررة أن العبرة بعموم اللفظ لا بخصوص السبب، فلا يقصر اللفظ العام على سببه الخاص."
+    },
+    {
+      "id": "fatwa-402",
+      "episode_id": "ep-uthaymeen-211",
+      "scholar_name": "ابن عثيمين",
+      "topic_domain": "Usul",
+      "topic_chapter": "Taharah",
+      "topic_subtopic": "مخالفة الصحابي الراوي لما رواه في عدد غسلات ولوغ الكلب",
+      "audio_start_sec": 510,
+      "audio_end_sec": 600,
+      "question_text": "يُروى عن أبي هريرة رضي الله عنه أنه أفتى بغسل الإناء من ولوغ الكلب ثلاث مرات مع أنه روى حديث الغسل سبع مرات، فبأيهما نأخذ؟",
+      "answer_text": "الواجب الأخذ بالحديث المرفوع وهو الغسل سبع مرات؛ لأن القاعدة الأصولية أن العبرة بما روى الصحابي لا بما رأى، فالحجة في قول الرسول ﷺ المعصوم لا في اجتهاد الراوي المخالف لروايته."
+    },
+    {
+      "id": "fatwa-403",
+      "episode_id": "ep-ibn-baz-312",
+      "scholar_name": "ابن باز",
+      "topic_domain": "Usul",
+      "topic_chapter": "Muamalat",
+      "topic_subtopic": "حرمة خرق الإجماع المستقر بقول حادث",
+      "audio_url": "https://files.zadapps.info/binbaz.org.sa/fatawa/nour_3la_aldarb/nour_312/31201.mp3",
+      "audio_start_sec": 0,
+      "audio_end_sec": 710,
+      "question_text": "يخرج بعض الكتّاب المعاصرين بأقوال تبيح أموراً أجمع علماء القرون الماضية على تحريمها بدعوى تغير الزمان، فهل يسوغ ذلك؟",
+      "answer_text": "هذا باطل ومنكر عظيم؛ لأن الإجماع الثابت حجة قطعية تحرم مخالفته ولا يجوز لأحد من الناس نقضه أو إحداث قول يخرق ما اتفقت عليه الأمة."
+    },
+    {
+      "id": "fatwa-999-routine-citation",
+      "episode_id": "ep-ibn-baz-104",
+      "scholar_name": "ابن باز",
+      "topic_domain": "Fiqh",
+      "topic_chapter": "Salat",
+      "topic_subtopic": "عدد الصلوات المفروضة في اليوم والليلة",
+      "audio_url": "https://files.zadapps.info/binbaz.org.sa/fatawa/nour_3la_aldarb/nour_104/10401.mp3",
+      "audio_start_sec": 0,
+      "audio_end_sec": 775,
+      "question_text": "كم عدد الصلوات المفروضة على المسلم في اليوم والليلة؟",
+      "answer_text": "الصلوات المفروضة خمس صلوات في اليوم والليلة بالكتاب والسنة والإجماع."
+    }
+  ]
+}

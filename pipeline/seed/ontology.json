@@ -1,0 +1,1061 @@
+{
+  "version": "2026.10.26-full",
+  "principles": [
+    {
+      "id": "fiqh.yaqeen",
+      "parent_id": null,
+      "science": "fiqh",
+      "domain_section": "القواعد الخمس الكبرى",
+      "kind": "qa_idah_kubra",
+      "canonical_text_ar": "اليقين لا يزول بالشك",
+      "summary_ar": "الأمر الثابت بيقين لا يرتفع بمجرد ورود الشك الطارئ عليه، بل يستصحب حكم اليقين السابق حتى يثبت يقين آخر يزيله.",
+      "textual_evidence_ar": "حديث عبد الله بن زيد: «لا ينصرف حتى يسمع صوتاً أو يجد ريحاً» (متفق عليه).",
+      "matching_guardrail": "استعمل هذه القاعدة أو فروعها عند تعارض أمر متيقن سابق مع شك طارئ.",
+      "aliases": [
+        {
+          "id": "al.yaqeen.1",
+          "alias_text_ar": "الشك لا يرفع اليقين",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.yaqeen.2",
+          "alias_text_ar": "اليقين لا يزال بالشك",
+          "scholar_preference": null
+        },
+        {
+          "id": "al.yaqeen.3",
+          "alias_text_ar": "اليقين لا يرتفع بالشك",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.yaqeen.4",
+          "alias_text_ar": "الشك لا يلتفت إليه مع اليقين",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.yaqeen.5",
+          "alias_text_ar": "الشك بعد الفراغ من العبادة لا يؤثر",
+          "scholar_preference": "ابن عثيمين",
+          "is_colloquial_variant": false
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.baqaa",
+      "parent_id": "fiqh.yaqeen",
+      "science": "fiqh",
+      "domain_section": "القواعد الكلية المندرجة",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "الأصل بقاء ما كان على ما كان",
+      "summary_ar": "ما ثبت وجوده أو عدمه في زمن سابق يحكم باستمراره وبقائه على حالته حتى يقوم الدليل اليقيني على تغيره.",
+      "textual_evidence_ar": "استصحاب الحال الثابتة شرعاً أو حساً.",
+      "matching_guardrail": "اربط بها إذا كان المستفتي يستصحب حالة سابقة متحققة وطرأ شك في زوالها.",
+      "aliases": [
+        {
+          "id": "al.baqaa.1",
+          "alias_text_ar": "استصحاب الحال الماضية",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.baqaa.2",
+          "alias_text_ar": "بقاء الأمر على ما كان عليه",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.baqaa.3",
+          "alias_text_ar": "الأصل استمرار الحكم السابق",
+          "scholar_preference": null
+        },
+        {
+          "id": "al.baqaa.4",
+          "alias_text_ar": "الأصل بقاء الطهارة",
+          "scholar_preference": "ابن باز",
+          "is_colloquial_variant": false
+        },
+        {
+          "id": "al.baqaa.5",
+          "alias_text_ar": "الأصل بقاء النكاح",
+          "scholar_preference": "ابن عثيمين",
+          "is_colloquial_variant": false
+        },
+        {
+          "id": "al.baqaa.6",
+          "alias_text_ar": "يبني على الأقل",
+          "scholar_preference": "ابن باز",
+          "is_colloquial_variant": false
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.baqaa.taharah",
+      "parent_id": "fiqh.yaqeen.baqaa",
+      "science": "fiqh",
+      "domain_section": "Taharah",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "من تيقن الطهارة وشك في الحدث فهو متطهر",
+      "summary_ar": "ضابط فقهي في باب الطهارة يقضي بأن المتوضئ إذا شك هل انتقض وضوؤه أم لا فإنه يبني على يقين الطهارة ويصلي.",
+      "textual_evidence_ar": "حديث: «فلا ينصرف حتى يسمع صوتاً أو يجد ريحاً».",
+      "matching_guardrail": "يربط بها حصراً عندما يكون المتيقن السابق هو الوضوء/الطهارة والمشكوك فيه هو الحدث.",
+      "aliases": [
+        {
+          "id": "al.taharah.1",
+          "alias_text_ar": "الأصل بقاء الطهارة حتى يتيقن الحدث",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.taharah.2",
+          "alias_text_ar": "الطهارة لا تنتقض بالشك",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.baqaa.taharah.waswas",
+      "parent_id": "fiqh.yaqeen.baqaa.taharah",
+      "science": "fiqh",
+      "domain_section": "Taharah",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "كثير الشك كالوسواس يطرحه ويبني على اليقين ولا يلتفت إليه",
+      "summary_ar": "إذا كانت الشكوك وهمية متكررة على سبيل الوسوسة وجب الإعراض عنها كلياً في الطهارة والصلاة.",
+      "textual_evidence_ar": "أمر النبي ﷺ بطرح الوسوسة والاستعاذة بالله.",
+      "matching_guardrail": "يربط بها إذا ذكر السائل أو الشيخ كثرة الشكوك والوسواس القهري في الطهارة أو الصلاة.",
+      "aliases": [
+        {
+          "id": "al.waswas.1",
+          "alias_text_ar": "الوساوس لا يلتفت إليها",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.waswas.2",
+          "alias_text_ar": "أعرض عن الوسواس ولا تلتفت إليه",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.baqaa.hadath",
+      "parent_id": "fiqh.yaqeen.baqaa",
+      "science": "fiqh",
+      "domain_section": "Taharah",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "من تيقن الحدث وشك في الطهارة فهو محدث",
+      "summary_ar": "ضابط مقابل: إذا تيقن المكلف أنه أحدث ثم شك هل توضأ بعد الحدث أم لا، بنى على يقين الحدث ووجب عليه الوضوء.",
+      "textual_evidence_ar": "لأن شغل الذمة بالحدث متيقن فلا يرتفع إلا بطهارة متيقنة.",
+      "matching_guardrail": "يربط بها عندما يكون الحدث هو المتيقن السابق والوضوء هو المشكوك فيه.",
+      "aliases": [
+        {
+          "id": "al.hadath.1",
+          "alias_text_ar": "الأصل بقاء الحدث حتى يتيقن الوضوء",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.baqaa.taharah_miyab",
+      "parent_id": "fiqh.yaqeen.baqaa",
+      "science": "fiqh",
+      "domain_section": "Taharah",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "الأصل في المياه والأعيان والثياب الطهارة حتى تعلم النجاسة بيقين",
+      "summary_ar": "المياه والثياب والأواني والفرش الأصل فيها الطهارة فلا يحكم بنجاستها بمجرد الشك أو الوهم.",
+      "textual_evidence_ar": "حديث: «الماء طهور لا ينجسه شيء».",
+      "matching_guardrail": "يربط بها عند الشك في إصابة الثوب أو الماء أو المكان بنجاسة.",
+      "aliases": [
+        {
+          "id": "al.miyah.1",
+          "alias_text_ar": "الأصل في المياه الطهارة",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.miyah.2",
+          "alias_text_ar": "الأصل في الثياب الطهارة",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.baqaa.talaq",
+      "parent_id": "fiqh.yaqeen.baqaa",
+      "science": "fiqh",
+      "domain_section": "Nikah",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "من شك في وقوع الطلاق أو عدده بنى على اليقين وهو بقاء النكاح والأقل",
+      "summary_ar": "إذا شك الزوج هل طلق أم لا، أو شك هل طلق واحدة أو اثنتين، فالأصل بقاء النكاح وعدم وقوع الزائد المشكوك فيه.",
+      "textual_evidence_ar": "لأن عقد النكاح متيقن فلا يزول بالشك.",
+      "matching_guardrail": "يربط بها في مسائل الشك في وقوع الطلاق أو الشك في عدد الطلقات.",
+      "aliases": [
+        {
+          "id": "al.talaq_shakk.1",
+          "alias_text_ar": "الأصل بقاء النكاح فلا يقع الطلاق بالشك",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.talaq_shakk.2",
+          "alias_text_ar": "الطلاق لا يقع بالشك والظن",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.baqaa.salat_shakk",
+      "parent_id": "fiqh.yaqeen.baqaa",
+      "science": "fiqh",
+      "domain_section": "Salat",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "من شك في عدد الركعات ولم يترجح عنده شيء بنى على اليقين وهو الأقل وسجد للسهو",
+      "summary_ar": "إذا شك المصلي أصلى ثلاثاً أم أربعاً ولم يغلب على ظنه أحد الطرفين جعلها ثلاثاً وأتى بالرابعة وسجد قبل السلام.",
+      "textual_evidence_ar": "حديث أبي سعيد الخدري: «إذا شك أحدكم في صلاته فلم يدر كم صلى أثلثاً أم أربعاً فليطرح الشك وليبن على ما استيقن».",
+      "matching_guardrail": "يربط بها في مسائل الشك في عدد ركعات الصلاة وسجود السهو.",
+      "aliases": [
+        {
+          "id": "al.salat_shakk.1",
+          "alias_text_ar": "يبني على اليقين وهو الأقل ويسجد للسهو",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.salat_shakk.2",
+          "alias_text_ar": "فليطرح الشك وليبن على ما استيقن",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.baqaa.sawm_nahar",
+      "parent_id": "fiqh.yaqeen.baqaa",
+      "science": "fiqh",
+      "domain_section": "Sawm",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "من أكل شاكاً في طلوع الفجر صح صومه ومن أكل شاكاً في غروب الشمس بطل صومه",
+      "summary_ar": "لأن الأصل في الأول بقاء الليل، والأصل في الثاني بقاء النهار فلا يفطر حتى يتيقن الغروب أو يغلب على ظنه.",
+      "textual_evidence_ar": "قوله تعالى: ﴿حَتَّىٰ يَتَبَيَّنَ لَكُمُ الْخَيْطُ الْأَبْيَضُ...﴾.",
+      "matching_guardrail": "يربط بها في الشك في طلوع الفجر أو غروب الشمس في الصيام.",
+      "aliases": [
+        {
+          "id": "al.sawm_shakk.1",
+          "alias_text_ar": "الأصل بقاء الليل والأصل بقاء النهار",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.baraa",
+      "parent_id": "fiqh.yaqeen",
+      "science": "fiqh",
+      "domain_section": "القواعد الكلية المندرجة",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "الأصل براءة الذمة",
+      "summary_ar": "ذمة الإنسان بريئة من الديون والحقوق والتكاليف والضمانات حتى يقوم الدليل الشرعي أو البينة المعتبرة على شغلها.",
+      "textual_evidence_ar": "حديث: «البينة على المدعي واليمين على من أنكر».",
+      "matching_guardrail": "يربط بها في دعاوى الديون أو الضمان أو نفي وجوب تكليف لم يثبت دليله.",
+      "aliases": [
+        {
+          "id": "al.baraa.1",
+          "alias_text_ar": "البراءة الأصلية",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.baraa.2",
+          "alias_text_ar": "الذمة بريئة حتى يقوم الدليل على شغلها",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.baraa.3",
+          "alias_text_ar": "البينة على المدعي واليمين على من أنكر",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.baraa.4",
+          "alias_text_ar": "الأصل عدم الوجوب",
+          "scholar_preference": "ابن عثيمين",
+          "is_colloquial_variant": false
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.adam_sifat",
+      "parent_id": "fiqh.yaqeen",
+      "science": "fiqh",
+      "domain_section": "القواعد الكلية المندرجة",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "الأصل في الصفات والأمور العارضة العدم",
+      "summary_ar": "الأوصاف الطارئة كالعيوب في المبيع أو الشروط الزائدة أو التلف الحادث الأصل عدم وجودها حتى تثبت.",
+      "textual_evidence_ar": "استصحاب العدم في الصفات الطارئة.",
+      "matching_guardrail": "يربط بها في الاختلاف حول وجود عيب أو شرط طارئ في العقود والأعيان.",
+      "aliases": [
+        {
+          "id": "al.adam.1",
+          "alias_text_ar": "الأصل في الأمور العارضة العدم",
+          "scholar_preference": null
+        },
+        {
+          "id": "al.adam.2",
+          "alias_text_ar": "الأصل في العقود السلامة من العيوب",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.baad_faragh",
+      "parent_id": "fiqh.yaqeen",
+      "science": "fiqh",
+      "domain_section": "القواعد الكلية المندرجة",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "الشك بعد الفراغ من العبادة لا يؤثر",
+      "summary_ar": "إذا أتم المكلف عبادته كالصلاة أو الطواف أو الصيام ثم طرأ عليه شك هل أخل بركن أو شرط، لم يلتفت إلى شكه.",
+      "textual_evidence_ar": "لأن الظاهر مضي العبادة على الصحة والتمام.",
+      "matching_guardrail": "يربط بها متى كان الشك واقعاً بعد السلام من الصلاة أو انقضاء الطواف أو العبادة.",
+      "aliases": [
+        {
+          "id": "al.faragh.1",
+          "alias_text_ar": "لا يلتفت إلى الشك بعد الفراغ من العبادة",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.faragh.2",
+          "alias_text_ar": "الشك بعد الفراغ من الصلاة لا يلتفت إليه",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.yaqeen.rida_shakk",
+      "parent_id": "fiqh.yaqeen",
+      "science": "fiqh",
+      "domain_section": "Nikah",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "لا يثبت الرضاع المحرم إلا بيقين في حصوله وبلوغه خمس رضعات معلومات في الحولين",
+      "summary_ar": "إذا وقع الشك في حصول الرضاع أو في كونه خمس رضعات مشبعات لم ينتشر التحريم؛ لأن الأصل الحل وعدم التحريم بالشك.",
+      "textual_evidence_ar": "حديث عائشة: «كان فيما أنزل من القرآن عشر رضعات معلومات يحرمن ثم نسخن بخمس معلومات».",
+      "matching_guardrail": "يربط بها في مسائل الشك في الرضاع أو عدد الرضعات.",
+      "aliases": [
+        {
+          "id": "al.rida.1",
+          "alias_text_ar": "الشك في الرضاع أو في عدد الرضعات لا يحرم",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.rida.2",
+          "alias_text_ar": "لا بد من خمس رضعات معلومات في الحولين",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.mashaqqah",
+      "parent_id": null,
+      "science": "fiqh",
+      "domain_section": "القواعد الخمس الكبرى",
+      "kind": "qa_idah_kubra",
+      "canonical_text_ar": "المشقة تجلب التيسير",
+      "summary_ar": "إذا طرأت مشقة خارجة عن المعتاد في التكليف بسبب مرض أو سفر أو عذر شرعي، رخّص الشارع بما يدفع الحرج.",
+      "textual_evidence_ar": "قوله تعالى: ﴿وَمَا جَعَلَ عَلَيْكُمْ فِي الدِّينِ مِنْ حَرَجٍ﴾ وقوله: ﴿يُرِيدُ اللَّهُ بِكُمُ الْيُسْرَ﴾.",
+      "matching_guardrail": "يربط بها في الرخص الشرعية المبنية على المشقة والحرج.",
+      "aliases": [
+        {
+          "id": "al.mash.1",
+          "alias_text_ar": "الحرج مرفوع في الشريعة",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.mash.2",
+          "alias_text_ar": "يريد الله بكم اليسر ولا يريد بكم العسر",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.mashaqqah.3",
+          "alias_text_ar": "فاتقوا الله ما استطعتم",
+          "scholar_preference": "ابن باز",
+          "is_colloquial_variant": false
+        },
+        {
+          "id": "al.mashaqqah.4",
+          "alias_text_ar": "وما جعل عليكم في الدين من حرج",
+          "scholar_preference": "ابن باز",
+          "is_colloquial_variant": false
+        },
+        {
+          "id": "al.mashaqqah.5",
+          "alias_text_ar": "لا واجب مع العجز",
+          "scholar_preference": "ابن عثيمين",
+          "is_colloquial_variant": false
+        }
+      ]
+    },
+    {
+      "id": "fiqh.mashaqqah.idha_daqa",
+      "parent_id": "fiqh.mashaqqah",
+      "science": "fiqh",
+      "domain_section": "القواعد الكلية المندرجة",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "إذا ضاق الأمر اتسع وإذا اتسع ضاق",
+      "summary_ar": "كلما وجدت الضرورة أو المشقة اتسع الحكم بالتخفيف، فإذا زال العذر عاد الحكم إلى أصله.",
+      "textual_evidence_ar": "تقدير الرخص بقدر العذر.",
+      "matching_guardrail": "يربط بها عند بيان سعة الرخصة وقت العذر وزوالها بزواله.",
+      "aliases": []
+    },
+    {
+      "id": "fiqh.mashaqqah.idha_daqa.tayammum_marid",
+      "parent_id": "fiqh.mashaqqah.idha_daqa",
+      "science": "fiqh",
+      "domain_section": "Taharah",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "إذا خاف المريض الضرر أو شدة الألم من استعمال الماء عدل إلى التيمم",
+      "summary_ar": "ضابط فقهي يجمع بين قاعدة المشقة تجلب التيسير وقاعدة الضرر يزال في حق المريض والجريح.",
+      "textual_evidence_ar": "قوله تعالى: ﴿وَإِن كُنتُم مَّرْضَىٰ أَوْ عَلَىٰ سَفَرٍ... فَتَيَمَّمُوا﴾.",
+      "matching_guardrail": "يربط بها في مسائل تيمم المريض أو الجريح الذي يتضرر بالماء.",
+      "aliases": [
+        {
+          "id": "al.tayammum.1",
+          "alias_text_ar": "إذا كان يضره الماء يتيمم",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.mashaqqah.maysur",
+      "parent_id": "fiqh.mashaqqah",
+      "science": "fiqh",
+      "domain_section": "القواعد الكلية المندرجة",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "الميسور لا يسقط بالمعسور",
+      "summary_ar": "من عجز عن بعض المأمور به أو بعض شروطه وأركانه وجب عليه الإتيان بما يقدر عليه منه ولم يسقط عنه الكل.",
+      "textual_evidence_ar": "قوله تعالى: ﴿فَاتَّقُوا اللَّهَ مَا اسْتَطَعْتُمْ﴾ وحديث: «إذا أمرتكم بأمر فأتوا منه ما استطعتم».",
+      "matching_guardrail": "يربط بها فيمن عجز عن القيام في الصلاة أو غسل بعض الأعضاء فيأتي بما استطاع.",
+      "aliases": [
+        {
+          "id": "al.maysur.1",
+          "alias_text_ar": "فاتقوا الله ما استطعتم",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.maysur.2",
+          "alias_text_ar": "لا يكلف الله نفساً إلا وسعها",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.maysur.3",
+          "alias_text_ar": "لا واجب مع العجز ولا محرم مع الضرورة",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.mashaqqah.darurat",
+      "parent_id": "fiqh.mashaqqah",
+      "science": "fiqh",
+      "domain_section": "القواعد الكلية المندرجة",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "الضرورات تبيح المحظورات وتقدر بقدرها",
+      "summary_ar": "المحرمات الشرعية تباح عند الضرورة الملجئة لحفظ النفس أو الأعضاء بشرط عدم مجاوزة قدر الضرورة.",
+      "textual_evidence_ar": "قوله تعالى: ﴿فَمَنِ اضْطُرَّ غَيْرَ بَاغٍ وَلَا عَادٍ فَلَا إِثْمَ عَلَيْهِ﴾.",
+      "matching_guardrail": "يربط بها في التداوي أو كشف العورة للطبيب عند الضرورة.",
+      "aliases": [
+        {
+          "id": "al.darurat.1",
+          "alias_text_ar": "الضرورة تقدر بقدرها",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.darurat.2",
+          "alias_text_ar": "الضرورات تبيح المحظورات",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.darar",
+      "parent_id": null,
+      "science": "fiqh",
+      "domain_section": "القواعد الخمس الكبرى",
+      "kind": "qa_idah_kubra",
+      "canonical_text_ar": "الضرر يزال",
+      "summary_ar": "يحرم إحداث الضرر ابتداءً ويجب رفعه وإزالته بعد وقوعه بقدر الإمكان.",
+      "textual_evidence_ar": "حديث: «لا ضرر ولا ضرار».",
+      "matching_guardrail": "يربط بها عند التعليل بدفع الضرر البدني أو المالي أو الأسري.",
+      "aliases": [
+        {
+          "id": "al.darar.1",
+          "alias_text_ar": "لا ضرر ولا ضرار",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.darar.daf_mafsadah",
+      "parent_id": "fiqh.darar",
+      "science": "fiqh",
+      "domain_section": "القواعد الكلية المندرجة",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "درء المفاسد مقدم على جلب المصالح",
+      "summary_ar": "إذا تعارضت مصلحة ومفسدة ولم يمكن الجمع، قدّم دفع المفسدة على تحصيل المصلحة.",
+      "textual_evidence_ar": "ترك النبي ﷺ هدم الكعبة وبناءها على قواعد إبراهيم خشية فتنة قريش.",
+      "matching_guardrail": "يربط بها عند تقديم دفع الفتنة أو المفسدة على مصلحة مستحبة.",
+      "aliases": [
+        {
+          "id": "al.mafsadah.1",
+          "alias_text_ar": "دفع المضار مقدم على جلب المصالح",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.maqasid",
+      "parent_id": null,
+      "science": "fiqh",
+      "domain_section": "القواعد الخمس الكبرى",
+      "kind": "qa_idah_kubra",
+      "canonical_text_ar": "الأمور بمقاصدها",
+      "summary_ar": "تختلف أحكام التصرفات والأقوال والأفعال صحةً وفساداً وثواباً وعقاباً باختلاف نية المكلف وقصده.",
+      "textual_evidence_ar": "حديث عمر بن الخطاب: «إنما الأعمال بالنيات وإنما لكل امرئ ما نوى».",
+      "matching_guardrail": "يربط بها عندما يدور الحكم على قصد المكلف ونيته في العبادة أو الطلاق أو الأيمان أو العقود.",
+      "aliases": [
+        {
+          "id": "al.maq.1",
+          "alias_text_ar": "إنما الأعمال بالنيات",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.maq.2",
+          "alias_text_ar": "لكل امرئ ما نوى",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.maq.3",
+          "alias_text_ar": "على حسب نيته وقصده",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.maqasid.talaq_kinayah",
+      "parent_id": "fiqh.maqasid",
+      "science": "fiqh",
+      "domain_section": "Nikah",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "ألفاظ الكناية في الطلاق واليمين بطلاق التهديد والمنع يرجع فيها إلى نية المتكلم وقصده",
+      "summary_ar": "الكنايات لا يقع بها الطلاق إلا بنية، والطلاق المعلق على شرط إن قصد به المنع أو الحث ولم يقصد إيقاع الطلاق فحكمه حكم اليمين وفيه كفارة يمين.",
+      "textual_evidence_ar": "حديث: «إنما الأعمال بالنيات».",
+      "matching_guardrail": "يربط بها في الطلاق المعلق (إن قصد المنع والتهديد فعليه كفارة يمين، وإن قصد إيقاع الطلاق وقع).",
+      "aliases": [
+        {
+          "id": "al.talaq_niyyah.1",
+          "alias_text_ar": "إن قصد المنع أو التهديد ولم يقصد الطلاق فعليه كفارة يمين",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.talaq_niyyah.2",
+          "alias_text_ar": "حكمه حكم اليمين إذا لم يقصد إيقاع الطلاق",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.maqasid.uqud",
+      "parent_id": "fiqh.maqasid",
+      "science": "fiqh",
+      "domain_section": "Muamalat",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "العبرة في العقود بالمقاصد والمعاني لا بالألفاظ والمباني",
+      "summary_ar": "تكيف العقود المالية وتترتب أحكامها على حقيقتها ومقصود المتعاقدين، فتبطل الحيل الربوية كبيع العينة.",
+      "textual_evidence_ar": "تحريم الشارع للحيل على الربا والمحرمات.",
+      "matching_guardrail": "يربط بها في تحريم العينة والحيل الربوية وتكييف العقود.",
+      "aliases": [
+        {
+          "id": "al.uqud.1",
+          "alias_text_ar": "الحيل لا تبيح المحرمات",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.maqasid.wasail",
+      "parent_id": "fiqh.maqasid",
+      "science": "fiqh",
+      "domain_section": "القواعد الكلية المندرجة",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "الوسائل لها أحكام المقاصد",
+      "summary_ar": "وسيلة الواجب واجبة، ووسيلة المسنون مسنونة، ووسيلة المحرم محرمة.",
+      "textual_evidence_ar": "أمر الشارع بالمشي إلى الصلاة وسد الذرائع المفضية إلى الحرام.",
+      "matching_guardrail": "يربط بها عند إعطاء الوسيلة حكم الغاية المقصودة منها.",
+      "aliases": [
+        {
+          "id": "al.wasail.1",
+          "alias_text_ar": "ما أفضى إلى الحرام فهو حرام",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.adah",
+      "parent_id": null,
+      "science": "fiqh",
+      "domain_section": "القواعد الخمس الكبرى",
+      "kind": "qa_idah_kubra",
+      "canonical_text_ar": "العادة محكمة",
+      "summary_ar": "يرجع إلى العرف العام المستقر في تحديد معاني الألفاظ والنفقات والقبض والحرز مما لم يحدده الشارع بمقدار خاص.",
+      "textual_evidence_ar": "قوله تعالى: ﴿وَعَلَى الْمَوْلُودِ لَهُ رِزْقُهُنَّ وَكِسْوَتُهُنَّ بِالْمَعْرُوفِ﴾.",
+      "matching_guardrail": "يربط بها عندما يحيل الشيخ تقدير النفقة أو الكسوة أو الإطعام أو الشرط إلى عرف الناس.",
+      "aliases": [
+        {
+          "id": "al.adah.1",
+          "alias_text_ar": "المرجع فيما لم يرد تحديده شرعاً إلى العرف",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.adah.2",
+          "alias_text_ar": "بالمعروف على حسب العرف والعادة",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.dabit.qard_naf",
+      "parent_id": "fiqh.maqasid.uqud",
+      "science": "fiqh",
+      "domain_section": "Muamalat",
+      "kind": "dabit_fiqhi",
+      "canonical_text_ar": "كل قرض جر نفعاً مشروطاً فهو ربا",
+      "summary_ar": "ضابط فقهي إجماعي في باب القرض؛ فالقرض عقد إرفاق، فإذا شرط المقرض منفعة مالية أو عينية صار رباً محرماً.",
+      "textual_evidence_ar": "إجماع الصحابة والفقهاء على تحريم المنفعة المشروطة في القرض.",
+      "matching_guardrail": "يربط بها في اشتراط زيادة أو فائدة أو منفعة بسبب القرض.",
+      "aliases": [
+        {
+          "id": "al.qard.1",
+          "alias_text_ar": "كل قرض جر منفعة فهو ربا",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "fiqh.dabit.jahalah_nisyan",
+      "parent_id": "fiqh.mashaqqah",
+      "science": "fiqh",
+      "domain_section": "القواعد الكلية المندرجة",
+      "kind": "qa_idah_kulliyyah",
+      "canonical_text_ar": "من فعل محظوراً في العبادة ناسياً أو جاهلاً أو مكرهاً فلا إثم عليه ولا كفارة",
+      "summary_ar": "الأكل أو الشرب في الصيام ناسياً، أو ارتكاب محظور من محظورات الإحرام من قبيل الإتلاف أو اللباس ناسياً أو جاهلاً معفو عنه.",
+      "textual_evidence_ar": "قوله تعالى: ﴿رَبَّنَا لَا تُؤَاخِذْنَا إِن نَّسِينَا أَوْ أَخْطَأْنَا﴾ وحديث: «من نسي وهو صائم فأكل أو شرب فليتم صومه».",
+      "matching_guardrail": "يربط بها في رفع الإثم وبطلان العبادة عن الناسي والجاهل في الصيام والإحرام والصلاة.",
+      "aliases": [
+        {
+          "id": "al.nisyan.1",
+          "alias_text_ar": "ربنا لا تؤاخذنا إن نسينا أو أخطأنا",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.nisyan.2",
+          "alias_text_ar": "من نسي وهو صائم فأكل أو شرب فليتم صومه",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.nisyan.3",
+          "alias_text_ar": "رفع عن أمتي الخطأ والنسيان وما استكرهوا عليه",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.nisyan.4",
+          "alias_text_ar": "فليتم صومه فإنما أطعمه الله وسقاه",
+          "scholar_preference": "ابن باز",
+          "is_colloquial_variant": false
+        },
+        {
+          "id": "al.nisyan.5",
+          "alias_text_ar": "رفع عن أمتي الخطأ والنسيان وما استكرهوا عليه",
+          "scholar_preference": "ابن عثيمين",
+          "is_colloquial_variant": false
+        }
+      ]
+    },
+    {
+      "id": "usul.adillah.sunnah",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "الأدلة الشرعية الكلية",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "السنة النبوية الصحيحة حجة مستقلة في التشريع كالقرآن",
+      "summary_ar": "ما ثبت عن النبي ﷺ من قول أو فعل أو تقرير فهو وحي تشريعي يجب العمل به.",
+      "textual_evidence_ar": "قوله تعالى: ﴿وَمَا آتَاكُمُ الرَّسُولُ فَخُذُوهُ﴾.",
+      "matching_guardrail": "لا تربط بها لمجرد استشهاد الشيخ بحديث نبوي؛ بل اربط بها فقط عند الرد على من ينكر حجية السنة.",
+      "aliases": []
+    },
+    {
+      "id": "usul.adillah.sunnah.khabar_wahid",
+      "parent_id": "usul.adillah.sunnah",
+      "science": "usul",
+      "domain_section": "الأدلة الشرعية الكلية",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "خبر الواحد إذا صح عن رسول الله ﷺ أفاد العلم وأوجب العمل",
+      "summary_ar": "حديث الآحاد الصحيح حجة ملزمة في العقائد والأحكام الشرعية لا يجوز رده.",
+      "textual_evidence_ar": "إجماع الصحابة على قبول أخبار الآحاد في الأحكام والعقائد.",
+      "matching_guardrail": "اربط بها فقط عندما يناقش الشيخ حجية خبر الواحد أو يرد على من يتوقف فيه.",
+      "aliases": [
+        {
+          "id": "al.khabar.1",
+          "alias_text_ar": "خبر الواحد يفيد العمل",
+          "scholar_preference": null
+        },
+        {
+          "id": "al.khabar.2",
+          "alias_text_ar": "حديث الآحاد الصحيح حجة في العقائد والأحكام",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "usul.adillah.sunnah.khabar_wahid.muqaddam_qiyas",
+      "parent_id": "usul.adillah.sunnah.khabar_wahid",
+      "science": "usul",
+      "domain_section": "الأدلة الشرعية الكلية",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "خبر الواحد الصحيح مقدم على القياس والرأي وعمل الأكثر",
+      "summary_ar": "إذا ثبت النص الصحيح عن النبي ﷺ وجب تقديمه على الأقيسة العقلية وآراء الرجال.",
+      "textual_evidence_ar": "لا اجتهاد ولا قياس في مورد النص.",
+      "matching_guardrail": "يربط بها عند تقديم الحديث الصحيح على القياس أو قول الجمهور.",
+      "aliases": [
+        {
+          "id": "al.qiyas_nass.1",
+          "alias_text_ar": "لا قياس مع النص",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.qiyas_nass.2",
+          "alias_text_ar": "لا اجتهاد مع النص",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "usul.adillah.sunnah.khabar_wahid.riwayat_sahabi",
+      "parent_id": "usul.adillah.sunnah.khabar_wahid.muqaddam_qiyas",
+      "science": "usul",
+      "domain_section": "الأدلة الشرعية الكلية",
+      "kind": "dabit_usuli",
+      "canonical_text_ar": "إذا خالف الصحابي الراوي ما رواه فالعبرة بروايته المرفوعة لا برأيه",
+      "summary_ar": "ضابط أصولي: الحجة في كلام النبي ﷺ المعصوم الذي رواه الصحابي، لا في اجتهاد الصحابي المخالف لروايته.",
+      "textual_evidence_ar": "تقديم المرفوع المعصوم على الموقوف.",
+      "matching_guardrail": "يربط بها في المسائل التي روى فيها الصحابي حديثاً وعمل أو أفتى بخلافه.",
+      "aliases": [
+        {
+          "id": "al.rawi.1",
+          "alias_text_ar": "العبرة بما روى الصحابي لا بما رأى",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "usul.adillah.ijma",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "الأدلة الشرعية الكلية",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "الإجماع الثابت حجة قطعية تحرم مخالفته",
+      "summary_ar": "اتفاق مجتهدي الأمة بعد وفاة النبي ﷺ على حكم شرعي حجة قاطعة لا يجوز لأحد نقضها أو الخروج عنها.",
+      "textual_evidence_ar": "قوله تعالى: ﴿وَيَتَّبِعْ غَيْرَ سَبِيلِ الْمُؤْمِنِينَ نُوَلِّهِ مَا تَوَلَّىٰ﴾.",
+      "matching_guardrail": "لا تربط بهذه القاعدة لمجرد قول الشيخ 'هذا محرم بالإجماع'؛ بل اربط بها فقط عند الاحتجاج بقطعية الإجماع وحرمة خرقه.",
+      "aliases": [
+        {
+          "id": "al.ijma.1",
+          "alias_text_ar": "الإجماع حجة قطعية",
+          "scholar_preference": null
+        },
+        {
+          "id": "al.ijma.2",
+          "alias_text_ar": "لا يجوز خرق الإجماع",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "usul.adillah.istishab",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "الأدلة الشرعية الكلية",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "الاستصحاب حجة في إبقاء ما كان على ما كان ونفي ما لم يثبت",
+      "summary_ar": "دليل أصولي كلي يقضي باستمرار الحكم الثابت أو العدم الأصلي حتى يقوم الدليل الناقل عنه.",
+      "textual_evidence_ar": "بناء الأحكام على الأصل الثابت قبل ورود المغير.",
+      "matching_guardrail": "يربط بها عند التصريح بدليل الاستصحاب الأصولي.",
+      "aliases": [
+        {
+          "id": "al.istishab.1",
+          "alias_text_ar": "دليل الاستصحاب",
+          "scholar_preference": null
+        }
+      ]
+    },
+    {
+      "id": "usul.adillah.istishab.tawqeef_ibadat",
+      "parent_id": "usul.adillah.istishab",
+      "science": "usul",
+      "domain_section": "الأدلة الشرعية الكلية",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "الأصل في العبادات التوقيف والحظر حتى يقوم الدليل",
+      "summary_ar": "لا يشرع التقرب إلى الله بعبادة إلا بدليل صحيح؛ فما لم يرد به النص فهو بدعة مردودة.",
+      "textual_evidence_ar": "حديث عائشة: «من أحدث في أمرنا هذا ما ليس منه فهو رد».",
+      "matching_guardrail": "يربط بها عند إنكار عبادة أو ذكر أو صلاة لا دليل عليها.",
+      "aliases": [
+        {
+          "id": "al.tawqeef.1",
+          "alias_text_ar": "الأصل في العبادات المنع والتوقيف",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.tawqeef.2",
+          "alias_text_ar": "العبادات توقيفية",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.tawqeef.3",
+          "alias_text_ar": "من أحدث في أمرنا هذا ما ليس منه فهو رد",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.tawqeef.4",
+          "alias_text_ar": "الأصل في العبادات التوقيف",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.tawqeef.5",
+          "alias_text_ar": "ليس له أصل في الشرع",
+          "scholar_preference": "ابن باز",
+          "is_colloquial_variant": true
+        }
+      ]
+    },
+    {
+      "id": "usul.adillah.istishab.tawqeef_ibadat.takhsis",
+      "parent_id": "usul.adillah.istishab.tawqeef_ibadat",
+      "science": "usul",
+      "domain_section": "الأدلة الشرعية الكلية",
+      "kind": "dabit_usuli",
+      "canonical_text_ar": "تقييد العبادة المشروعة بزمان أو مكان أو عدد أو هيئة لم يرد بها الشرع بدعة إضافية",
+      "summary_ar": "ضابط تطبيقي: العبادة يجب أن توافق الشرع في ستة أمور (السبب، الجنس، القدر، الكيفية، الزمان، المكان).",
+      "textual_evidence_ar": "حديث: «من عمل عملاً ليس عليه أمرنا فهو رد».",
+      "matching_guardrail": "يربط بها عندما يكون أصل العمل مشروعاً كالذكر أو الدعاء لكن السائل خصصه بعدد معين أو وقت أو هيئة محدثة.",
+      "aliases": [
+        {
+          "id": "al.takhsis.1",
+          "alias_text_ar": "تخصيص الأذكار بأعداد أو أوقات لم ترد بدعة",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.takhsis.2",
+          "alias_text_ar": "تخصيص يوم أو ليلة بعبادة لم يرد بها دليل بدعة",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "usul.adillah.istishab.ibaha_muamalat",
+      "parent_id": "usul.adillah.istishab",
+      "science": "usul",
+      "domain_section": "الأدلة الشرعية الكلية",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "الأصل في الأعيان والعادات والمعاملات الإباحة والحل",
+      "summary_ar": "المطعومات والملبوسات والعقود الدنيوية الأصل فيها الجواز والحل حتى يقوم الدليل الصحيح على التحريم.",
+      "textual_evidence_ar": "قوله تعالى: ﴿هُوَ الَّذِي خَلَقَ لَكُم مَّا فِي الْأَرْضِ جَمِيعًا﴾.",
+      "matching_guardrail": "يربط بها في إباحة الأطعمة والألبسة والمعاملات المستحدثة الخالية من المحظور الشرعي.",
+      "aliases": [
+        {
+          "id": "al.ibaha.1",
+          "alias_text_ar": "الأصل في الأشياء الإباحة",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.ibaha.2",
+          "alias_text_ar": "الأصل في المعاملات الحل",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.ibaha.3",
+          "alias_text_ar": "الأصل في العقود والشروط الجواز والصحة",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.ibaha.4",
+          "alias_text_ar": "المسلمون على شروطهم إلا شرطاً أحل حراماً أو حرم حلالاً",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "usul.alfaz.umum",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "اللفظ العام يجب العمل بعمومه حتى يثبت المخصص",
+      "summary_ar": "النصوص الشرعية العامة تشمل جميع أفرادها ولا يخرج منها شيء إلا بدليل مخصص صحيح.",
+      "textual_evidence_ar": "إجماع الصحابة على الاحتجاج بعمومات الكتاب والسنة.",
+      "matching_guardrail": "يربط بها عند الاستدلال بشمول النص العام وعدم جواز تخصيصه بلا دليل.",
+      "aliases": [
+        {
+          "id": "al.umum.1",
+          "alias_text_ar": "حمل العام على عمومه حتى يرد المخصص",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "usul.alfaz.umum.sabab",
+      "parent_id": "usul.alfaz.umum",
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "العبرة بعموم اللفظ لا بخصوص السبب",
+      "summary_ar": "ورود النص الشرعي العام بسبب واقعة خاصة أو سؤال معين لا يقصر حكمه على تلك الواقعة بل يعم كل ما شمله اللفظ.",
+      "textual_evidence_ar": "تعميم آيات الظهار واللعان وأحاديث الأحكام الواردة على أسباب خاصة.",
+      "matching_guardrail": "يربط بها عندما يسأل السائل هل الحديث أو الآية خاصة بمن نزلت فيه أو وردت بسببه.",
+      "aliases": []
+    },
+    {
+      "id": "usul.alfaz.umum.sabab.istifsal",
+      "parent_id": "usul.alfaz.umum.sabab",
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "dabit_usuli",
+      "canonical_text_ar": "ترك الاستفصال في وقائع الأحوال مع قيام الاحتمال ينزل منزلة العموم في المقال",
+      "summary_ar": "إذا سئل النبي ﷺ عن واقعة تحتمل عدة أحوال فأجاب بحكم مطلق دون أن يستفصل عن التفاصيل، دل على عموم الحكم لجميع الأحوال.",
+      "textual_evidence_ar": "قاعدة الشافعي المشهورة في استنباط العموم من ترك الاستفصال.",
+      "matching_guardrail": "يربط بها عندما يعلل الشيخ عموم الحكم بأن النبي ﷺ لم يستفصل من السائل.",
+      "aliases": []
+    },
+    {
+      "id": "usul.alfaz.nahy",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "الأصل في النهي المطلق التحريم واقتضاء فساد المنهي عنه",
+      "summary_ar": "النهي الشرعي المجرد عن القرائن يفيد حرمة الفعل وبطلان العقد أو العبادة.",
+      "textual_evidence_ar": "حديث: «من عمل عملاً ليس عليه أمرنا فهو رد».",
+      "matching_guardrail": "يربط بها عند الاستدلال بالنهي الشرعي على التحريم أو فساد العقد والعبادة.",
+      "aliases": [
+        {
+          "id": "al.nahy.1",
+          "alias_text_ar": "النهي يقتضي الفساد",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.nahy.2",
+          "alias_text_ar": "الأصل في النهي التحريم",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "usul.alfaz.amr_wujub",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "الأصل في الأمر المطلق الوجوب والمبادرة إلا لصارف",
+      "summary_ar": "أمر الله ورسوله المجرد عن قرينة تصرفه إلى الاستحباب أو الإباحة يفيد الفرضية والوجوب.",
+      "textual_evidence_ar": "قوله تعالى: ﴿فَلْيَحْذَرِ الَّذِينَ يُخَالِفُونَ عَنْ أَمْرِهِ﴾.",
+      "matching_guardrail": "يربط بها عند الاستدلال بصيغة الأمر في الآية أو الحديث على الوجوب.",
+      "aliases": [
+        {
+          "id": "al.amr.1",
+          "alias_text_ar": "الأصل في الأوامر الوجوب",
+          "scholar_preference": "ابن باز"
+        },
+        {
+          "id": "al.amr.2",
+          "alias_text_ar": "الأصل في الأمر الوجوب",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    },
+    {
+      "id": "usul.ahkam.ma_la_yatimmu_wajib",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "الأحكام التكليفية والوضعية",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "ما لا يتم الواجب إلا به فهو واجب",
+      "summary_ar": "كل وسيلة أو مقدمة يتوقف عليها أداء الواجب الشرعي وهي في مقدور المكلف تصير واجبة تبعاً له.",
+      "textual_evidence_ar": "وجوب غسل جزء من الرأس أو العضد لتحقق استيعاب الوجه واليدين في الوضوء.",
+      "matching_guardrail": "يربط بها في إيجاب مقدمات الواجب ووسائله المتوقف عليها.",
+      "aliases": []
+    },
+    {
+      "id": "usul.ahkam.la_taah_makhluq",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "الأحكام التكليفية والوضعية",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "لا طاعة لمخلوق في معصية الخالق",
+      "summary_ar": "إذا أمر الوالد أو الزوج أو الرئيس بمعصية الله أو ترك واجب شرعي كالصلاة أو الحجاب حرمت طاعته في ذلك.",
+      "textual_evidence_ar": "حديث علي رضي الله عنه: «لا طاعة في معصية الله، إنما الطاعة في المعروف».",
+      "matching_guardrail": "يربط بها عندما يأمر الوالدان أو الزوج أو صاحب العمل بمعصية أو قطيعة رحم.",
+      "aliases": [
+        {
+          "id": "al.taah.1",
+          "alias_text_ar": "إنما الطاعة في المعروف",
+          "scholar_preference": "ابن باز"
+        }
+      ]
+    },
+    {
+      "id": "usul.taarud.jam_muqaddam",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "التعارض والترجيح",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "إعمال الدليلين والجمع بينهما مقدم على الترجيح والنسخ",
+      "summary_ar": "لا يمكن وقوع تعارض حقيقي بين نصين صحيحين؛ فالواجب أولاً الجمع بينهما بحمل العام على الخاص أو المطلق على المقيد.",
+      "textual_evidence_ar": "لأن إعمال النصوص كلها أولى من إهمال بعضها.",
+      "matching_guardrail": "يربط بها عند التوفيق والجمع بين آيتين أو حديثين ظاهرهما التعارض.",
+      "aliases": [
+        {
+          "id": "al.jam.1",
+          "alias_text_ar": "الجمع بين النصوص مقدم على الترجيح",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.jam.2",
+          "alias_text_ar": "لا تعارض بين نصين صحيحين",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "source_id": "fiqh.yaqeen",
+      "target_id": "usul.adillah.istishab",
+      "relation_type": "usul_foundation",
+      "explanation_ar": "قاعدة «اليقين لا يزول بالشك» وفروعها هي التطبيق الفقهي لدليل «الاستصحاب» الأصولي."
+    },
+    {
+      "source_id": "fiqh.yaqeen.baraa",
+      "target_id": "usul.adillah.istishab",
+      "relation_type": "usul_foundation",
+      "explanation_ar": "قاعدة «الأصل براءة الذمة» هي عين استصحاب العدم الأصلي في الأصول."
+    },
+    {
+      "source_id": "fiqh.mashaqqah.idha_daqa.tayammum_marid",
+      "target_id": "fiqh.darar",
+      "relation_type": "secondary_parent",
+      "explanation_ar": "هذا الضابط يتفرع عن قاعدتين كليتين معاً: «المشقة تجلب التيسير» و«الضرر يزال»."
+    },
+    {
+      "source_id": "fiqh.yaqeen.baqaa.taharah",
+      "target_id": "fiqh.yaqeen.baqaa.hadath",
+      "relation_type": "contrast_pair",
+      "explanation_ar": "التمييز الدقيق بين كون المتيقن السابق هو الطهارة أم الحدث."
+    },
+    {
+      "source_id": "fiqh.yaqeen.baqaa",
+      "target_id": "fiqh.yaqeen.baraa",
+      "relation_type": "contrast_pair",
+      "explanation_ar": "الأول استصحاب لوصف وجودي أو حكم ثبت سابقاً، والثاني استصحاب لعدم شغل الذمة ابتداءً."
+    },
+    {
+      "source_id": "usul.adillah.istishab.tawqeef_ibadat",
+      "target_id": "usul.adillah.istishab.ibaha_muamalat",
+      "relation_type": "contrast_pair",
+      "explanation_ar": "التفريق الأصولي الجوهري بين باب العبادات (التوقيف والمنع إلا بدليل) وباب المعاملات والعادات (الإباحة إلا بدليل)."
+    }
+  ]
+}

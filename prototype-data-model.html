@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Logic Prototype v2: Unified 3-Tier Fiqh/Usul Model & Multi-Select Quiz Controller</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f8f7f4;
+      --surface: #ffffff;
+      --surface-alt: #f1efe9;
+      --border: #dfdbd0;
+      --text: #1c1917;
+      --text-muted: #57534e;
+      --accent: #0f766e;
+      --accent-light: #ccfbf1;
+      --accent-border: #5eead4;
+      --amber: #b45309;
+      --amber-bg: #fef3c7;
+      --rose: #be123c;
+      --rose-bg: #ffe4e6;
+      --blue: #1d4ed8;
+      --blue-bg: #dbeafe;
+      --purple: #6d28d9;
+      --purple-bg: #ede9fe;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.55;
+      padding: 2rem 1.25rem 4rem;
+      max-width: 1320px;
+      margin: 0 auto;
+    }
+
+    .ar {
+      font-family: 'Amiri', serif;
+      direction: rtl;
+      font-size: 1.15em;
+      line-height: 1.75;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+    }
+
+    header {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 5px solid var(--accent);
+      border-radius: 10px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .prototype-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      background: var(--amber-bg);
+      color: var(--amber);
+      padding: 0.2rem 0.6rem;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+    }
+    header h1 {
+      font-size: 1.45rem;
+      font-weight: 700;
+      margin-bottom: 0.65rem;
+      color: var(--text);
+    }
+    .question-box {
+      background: var(--surface-alt);
+      border-radius: 8px;
+      padding: 0.9rem 1.1rem;
+      font-size: 0.9rem;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .question-box strong { color: var(--accent); }
+
+    .workspace-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 960px) {
+      .workspace-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem 1.4rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+      margin-bottom: 1.25rem;
+    }
+    .panel-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.6rem;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+    .tab-btn {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 0.5rem 0.8rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+    .tab-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+    .scenario-desc {
+      background: var(--surface-alt);
+      border-radius: 8px;
+      padding: 0.85rem 1rem;
+      font-size: 0.87rem;
+      margin-bottom: 1rem;
+      border-left: 3px solid var(--accent);
+    }
+    .step-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .step-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      width: 100%;
+      text-align: left;
+      padding: 0.65rem 0.9rem;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .step-btn:hover {
+      border-color: var(--accent);
+      background: #f0fdfa;
+    }
+    .step-btn.current-step {
+      border: 2px solid var(--accent);
+      background: #f0fdfa;
+      font-weight: 600;
+    }
+    .step-btn.done-step {
+      opacity: 0.65;
+      background: var(--surface-alt);
+    }
+    .step-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--surface-alt);
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .step-btn.current-step .step-num {
+      background: var(--accent);
+      color: white;
+    }
+
+    .control-group {
+      margin-bottom: 1rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px dashed var(--border);
+    }
+    .control-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .control-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.45rem;
+      display: block;
+    }
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+    button.action-btn {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.45rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      color: var(--text);
+      transition: all 0.12s;
+    }
+    button.action-btn:hover {
+      border-color: var(--accent);
+      background: #f0fdfa;
+      color: var(--accent);
+    }
+
+    .transition-banner {
+      background: #f0fdfa;
+      border: 1px solid var(--accent-border);
+      color: #115e59;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.87rem;
+      margin-bottom: 1rem;
+    }
+    .transition-banner strong { display: block; margin-bottom: 0.2rem; }
+
+    .state-card {
+      background: var(--surface-alt);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.9rem 1rem;
+      margin-bottom: 0.9rem;
+    }
+    .state-card h4 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.12rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+    }
+    .badge-foundation { background: var(--amber-bg); color: var(--amber); }
+    .badge-sub { background: var(--accent-light); color: var(--accent); }
+    .badge-criterion { background: var(--blue-bg); color: var(--blue); }
+    .badge-usul { background: var(--purple-bg); color: var(--purple); }
+    .badge-alias { background: #e7e5e4; color: #44403c; }
+
+    .tree-list {
+      list-style: none;
+      padding-left: 0;
+    }
+    .tree-node {
+      padding: 0.45rem 0.65rem;
+      margin: 0.25rem 0;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      background: var(--surface);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .tree-node.highlighted {
+      border-color: var(--accent);
+      background: #f0fdfa;
+      box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.12);
+    }
+    .tree-children {
+      list-style: none;
+      padding-left: 1.35rem;
+      border-left: 2px solid var(--border);
+      margin-left: 0.65rem;
+    }
+
+    .quiz-option {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 0.7rem 0.9rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .quiz-option.correct {
+      border-color: #10b981;
+      background: #ecfdf5;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. TITLE & EXPLICIT QUESTION -->
+  <header>
+    <span class="prototype-badge">Logic Prototype v2 • Unified 3-Tier Proposition Hierarchy &amp; Multi-Select Quizzes</span>
+    <h1>Noor 'ala al-Darb — Stress-Testing Unified 3-Tier Fiqh/Usul Ranks &amp; Multi-Select Principles</h1>
+    <div class="question-box">
+      <strong>Questions being stress-tested:</strong>
+      <br />
+      1. <strong>Unified 3-Tier Proposition Hierarchy vs. 4-Tier Topic Headers:</strong> Can both <em>Qawa'id Fiqhiyyah</em> and <em>Usul al-Fiqh</em> share 3 non-overloaded structural ranks (<code>foundation</code> → <code>sub_principle</code> → <code>criterion</code>) where <strong>every node is a testable legal proposition</strong>, while keeping the 4 classical Usul chapters (<em>Ahkam, Adillah, Dalalat al-Alfaz, Ta'arud</em>) and Fiqh chapters (<em>Taharah, Buyu'</em>) in a separate <code>domain_section</code> column?
+      <br />
+      2. <strong>"Select All Principles That Apply" Quiz Mode:</strong> When a fatwa rests on multiple principles (e.g., a multi-parent <em>Dabit</em> combining <em>Hardship</em> + <em>Harm</em>, or a fatwa combining an <em>Usuli</em> rule + a <em>Fiqhi</em> maxim), how does the Controller synthesize a multi-select quiz with all valid principles marked correct?
+    </div>
+  </header>
+
+  <!-- 2. PORTABLE PURE LOGIC MODULE -->
+  <script id="usul-domain-model">
+    /**
+     * PORTABLE DOMAIN MODEL & CONTROLLER MODULE (v2)
+     * - Unified 3-Tier Proposition Ranks: 'foundation' | 'sub_principle' | 'criterion'
+     * - Separate 'domain_section' column for classical book chapters (Dalalat al-Alfaz, Adillah, Taharah, etc.)
+     * - Multi-Select Quiz Synthesizer ("Select all principles that apply")
+     */
+    const UsulEngine = (() => {
+      function normalizeAr(text) {
+        if (!text) return '';
+        return text
+          .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+          .replace(/[أإآٱ]/g, 'ا')
+          .replace(/ة/g, 'ه')
+          .replace(/ى/g, 'ي')
+          .replace(/[ؤئ]/g, 'ء')
+          .replace(/\s+/g, ' ')
+          .trim();
+      }
+
+      /**
+       * Domain-specific classical Arabic label for the 3 structural tiers
+       * Avoids overloading Fiqh-specific terms ('kubra', 'dabit') onto Usul!
+       */
+      function getClassicalTierLabel(science, tier, domainSection) {
+        if (science === 'fiqh') {
+          if (tier === 'foundation') return { ar: 'قاعدة فقهية كبرى', en: 'Grand Maxim (Kubra)' };
+          if (tier === 'sub_principle') return { ar: 'قاعدة كلية مندرجة', en: 'Sub-Maxim (Kulliyyah)' };
+          return { ar: `ضابط فقهي (${domainSection || 'خاص بباب'})`, en: `Fiqh Dabit (${domainSection})` };
+        } else {
+          // science === 'usul'
+          if (tier === 'foundation') return { ar: 'أصل أصولي كلي (قاعدة أم)', en: 'Foundational Usul Principle' };
+          if (tier === 'sub_principle') return { ar: 'قاعدة أصولية متفرعة', en: 'Branching Usul Principle' };
+          return { ar: 'ضابط أصولي تطبيقي (قيد استدلالي)', en: 'Applied Usul Criterion' };
+        }
+      }
+
+      function createInitialDatabase() {
+        const principles = [
+          // =========================================================================
+          // TRACK A: USUL AL-FIQH (3-Tier Proposition Tree + domain_section)
+          // =========================================================================
+
+          // 1. Usul Section: 'dalalat_al_alfaz' (دلالات الألفاظ — العام والخاص / الأمر والنهي)
+          {
+            id: 'usul.umum',
+            parent_id: null,
+            science: 'usul',
+            tier: 'foundation',
+            domain_section: 'دلالات الألفاظ (العام والخاص)',
+            canonical_text_ar: 'اللفظ العام يجب العمل بعمومه حتى يثبت المخصص',
+            summary_ar: 'الأصل بقاء النصوص الشرعية العامة على شمولها لجميع أفرادها إلا بدليل مخصص.'
+          },
+          {
+            id: 'usul.umum.sabab',
+            parent_id: 'usul.umum',
+            science: 'usul',
+            tier: 'sub_principle',
+            domain_section: 'دلالات الألفاظ (العام والخاص)',
+            canonical_text_ar: 'العبرة بعموم اللفظ لا بخصوص السبب',
+            summary_ar: 'إذا ورد النص العام جواباً عن سؤال خاص أو حادثة معينة لم يقصر حكمه عليها بل يعم كل ما تناوله اللفظ.'
+          },
+          {
+            id: 'usul.umum.sabab.istifsal',
+            parent_id: 'usul.umum.sabab',
+            science: 'usul',
+            tier: 'criterion',
+            domain_section: 'دلالات الألفاظ (العام والخاص)',
+            canonical_text_ar: 'ترك الاستفصال في وقائع الأحوال مع قيام الاحتمال ينزل منزلة العموم في المقال',
+            summary_ar: 'قيد تطبيقي: إذا سئل النبي ﷺ عن واقعة تحتمل عدة صور فأجاب بحكم مطلق دون استفصال عمّ الحكم جميع الصور.'
+          },
+          {
+            id: 'usul.umum.nakirah',
+            parent_id: 'usul.umum',
+            science: 'usul',
+            tier: 'sub_principle',
+            domain_section: 'دلالات الألفاظ (العام والخاص)',
+            canonical_text_ar: 'النكرة في سياق النفي أو النهي أو الشرط تفيد العموم',
+            summary_ar: 'من صيغ العموم القياسية ورود الاسم النكرة بعد نفي أو نهي أو أداة شرط.'
+          },
+
+          // Usul: Commands & Prohibitions (الأمر والنهي)
+          {
+            id: 'usul.nahy',
+            parent_id: null,
+            science: 'usul',
+            tier: 'foundation',
+            domain_section: 'دلالات الألفاظ (الأمر والنهي)',
+            canonical_text_ar: 'الأصل في النهي المطلق التحريم واقتضاء فساد المنهي عنه',
+            summary_ar: 'النهي الشرعي المجرد عن القرائن يفيد حرمة الفعل وبطلان العقد أو العبادة.'
+          },
+          {
+            id: 'usul.nahy.dhat_aw_shart',
+            parent_id: 'usul.nahy',
+            science: 'usul',
+            tier: 'criterion',
+            domain_section: 'دلالات الألفاظ (الأمر والنهي)',
+            canonical_text_ar: 'النهي إذا عاد إلى ذات العبادة أو العقد أو شرطهما اقتضى البطلان',
+            summary_ar: 'ضابط تفصيلي يفرق فيه ابن عثيمين وابن باز بين النهي العائد لذات العمل (يبطله) والعائد لأمر خارج.'
+          },
+          {
+            id: 'usul.nahy.amr_kharij',
+            parent_id: 'usul.nahy',
+            science: 'usul',
+            tier: 'criterion',
+            domain_section: 'دلالات الألفاظ (الأمر والنهي)',
+            canonical_text_ar: 'النهي إذا عاد إلى أمر خارج غير لازم لم يقتض بطلان العبادة مع الإثم',
+            summary_ar: 'ضابط مقابل: كالوضوء بماء مغصوب أو الصلاة في ثوب محرم عند من يرى انفكاك الجهة.'
+          },
+
+          // 2. Usul Section: 'al_adillah' (الأدلة الشرعية الكلية — الاستصحاب)
+          {
+            id: 'usul.istishab',
+            parent_id: null,
+            science: 'usul',
+            tier: 'foundation',
+            domain_section: 'الأدلة الشرعية الكلية (الاستصحاب)',
+            canonical_text_ar: 'الاستصحاب حجة في إبقاء ما كان على ما كان ونفي ما لم يثبت',
+            summary_ar: 'دليل أصولي كلي تتفرع عنه قواعد الإباحة الأصلية والتوقيف في العبادات واليقين الفقهي.'
+          },
+          {
+            id: 'usul.istishab.tawqeef_ibadat',
+            parent_id: 'usul.istishab',
+            science: 'usul',
+            tier: 'sub_principle',
+            domain_section: 'الأدلة الشرعية الكلية (الاستصحاب)',
+            canonical_text_ar: 'الأصل في العبادات التوقيف والحظر حتى يقوم الدليل',
+            summary_ar: 'استصحاب عدم المشروعية في القربات حتى يثبت النص الصحيح.'
+          },
+          {
+            id: 'usul.istishab.tawqeef_ibadat.takhsis',
+            parent_id: 'usul.istishab.tawqeef_ibadat',
+            science: 'usul',
+            tier: 'criterion',
+            domain_section: 'الأدلة الشرعية الكلية (الاستصحاب)',
+            canonical_text_ar: 'تقييد العبادة المشروعة بزمان أو مكان أو عدد أو هيئة لم يرد بها الشرع بدعة إضافية',
+            summary_ar: 'ضابط تطبيقي للابتداع في صفة العبادة أو عددها مع كون أصلها مشروعاً.'
+          },
+          {
+            id: 'usul.istishab.ibaha_muamalat',
+            parent_id: 'usul.istishab',
+            science: 'usul',
+            tier: 'sub_principle',
+            domain_section: 'الأدلة الشرعية الكلية (الاستصحاب)',
+            canonical_text_ar: 'الأصل في الأعيان والعادات والمعاملات الإباحة والحل',
+            summary_ar: 'استصحاب الإباحة الأصلية في المنافع الدنيوية والعقود حتى يرد دليل التحريم.'
+          },
+
+          // =========================================================================
+          // TRACK B: AL-QAWA'ID AL-FIQHIYYAH (3-Tier Proposition Tree + domain_section)
+          // =========================================================================
+          {
+            id: 'fiqh.yaqeen',
+            parent_id: null,
+            science: 'fiqh',
+            tier: 'foundation',
+            domain_section: 'القواعد الخمس الكبرى',
+            canonical_text_ar: 'اليقين لا يزول بالشك',
+            summary_ar: 'الأمر المتيقن ثبوته أو عدمه لا يرتفع بمجرد الشك الطارئ عليه.'
+          },
+          {
+            id: 'fiqh.mashaqqah',
+            parent_id: null,
+            science: 'fiqh',
+            tier: 'foundation',
+            domain_section: 'القواعد الخمس الكبرى',
+            canonical_text_ar: 'المشقة تجلب التيسير',
+            summary_ar: 'المشقة الخارجة عن المعتاد سبب للرخص والتخفيف الشرعي.'
+          },
+          {
+            id: 'fiqh.darar',
+            parent_id: null,
+            science: 'fiqh',
+            tier: 'foundation',
+            domain_section: 'القواعد الخمس الكبرى',
+            canonical_text_ar: 'الضرر يزال',
+            summary_ar: 'تحريم إيقاع الضرر ابتداءً ووجوب رفعه بعد وقوعه.'
+          },
+          {
+            id: 'fiqh.maqasid',
+            parent_id: null,
+            science: 'fiqh',
+            tier: 'foundation',
+            domain_section: 'القواعد الخمس الكبرى',
+            canonical_text_ar: 'الأمور بمقاصدها',
+            summary_ar: 'تترتب الأحكام الشرعية في الأعمال والعقود على نيات المكلفين ومقاصدهم.'
+          },
+          {
+            id: 'fiqh.adah',
+            parent_id: null,
+            science: 'fiqh',
+            tier: 'foundation',
+            domain_section: 'القواعد الخمس الكبرى',
+            canonical_text_ar: 'العادة محكمة',
+            summary_ar: 'يرجع إلى العرف المستقر في ضبط ما لم يحدده الشارع بمقدار معين.'
+          },
+
+          // Sub-Principles under Al-Yaqeen
+          {
+            id: 'fiqh.yaqeen.baqaa',
+            parent_id: 'fiqh.yaqeen',
+            science: 'fiqh',
+            tier: 'sub_principle',
+            domain_section: 'القواعد الكلية المندرجة',
+            canonical_text_ar: 'الأصل بقاء ما كان على ما كان',
+            summary_ar: 'ما ثبت وجوده أو عدمه في زمن سابق يحكم باستمراره حتى يثبت خلافه بيقين.'
+          },
+          {
+            id: 'fiqh.yaqeen.baraa',
+            parent_id: 'fiqh.yaqeen',
+            science: 'fiqh',
+            tier: 'sub_principle',
+            domain_section: 'القواعد الكلية المندرجة',
+            canonical_text_ar: 'الأصل براءة الذمة',
+            summary_ar: 'ذمة الإنسان بريئة من التكاليف والديون والحقوق حتى يقوم الدليل اليقيني على شغلها.'
+          },
+          {
+            id: 'fiqh.yaqeen.adam_sifat',
+            parent_id: 'fiqh.yaqeen',
+            science: 'fiqh',
+            tier: 'sub_principle',
+            domain_section: 'القواعد الكلية المندرجة',
+            canonical_text_ar: 'الأصل في الصفات والأمور العارضة العدم',
+            summary_ar: 'الأوصاف الطارئة كالعيوب في البيع أو الشروط المشكوك فيها الأصل عدم وجودها.'
+          },
+
+          // Criteria (Dawabit) under Baqaa Ma Kan
+          {
+            id: 'fiqh.yaqeen.baqaa.taharah',
+            parent_id: 'fiqh.yaqeen.baqaa',
+            science: 'fiqh',
+            tier: 'criterion',
+            domain_section: 'Taharah',
+            canonical_text_ar: 'من تيقن الطهارة وشك في الحدث فهو متطهر',
+            summary_ar: 'ضابط فقهي في باب الطهارة يبني على يقين الوضوء السابق ويطرح الشك في النقض.'
+          },
+          {
+            id: 'fiqh.yaqeen.baqaa.hadath',
+            parent_id: 'fiqh.yaqeen.baqaa',
+            science: 'fiqh',
+            tier: 'criterion',
+            domain_section: 'Taharah',
+            canonical_text_ar: 'من تيقن الحدث وشك في الطهارة فهو محدث',
+            summary_ar: 'ضابط مقابل: إذا كان المتيقن هو الحدث وشك هل توضأ أم لا وجب عليه الوضوء.'
+          },
+
+          // Multi-Parent Dabit under Mashaqqah + Darar
+          {
+            id: 'fiqh.mashaqqah.tayammum_marid',
+            parent_id: 'fiqh.mashaqqah',
+            science: 'fiqh',
+            tier: 'criterion',
+            domain_section: 'Taharah',
+            canonical_text_ar: 'إذا خاف المريض الضرر أو شدة الألم من استعمال الماء عدل إلى التيمم',
+            summary_ar: 'ضابط يجمع بين قاعدة المشقة تجلب التيسير وقاعدة الضرر يزال.'
+          }
+        ].map(p => ({ ...p, canonical_text_norm: normalizeAr(p.canonical_text_ar) }));
+
+        const principle_aliases = [
+          { id: 'al-1', principle_id: 'fiqh.yaqeen', alias_text_ar: 'الشك لا يرفع اليقين', scholar_preference: 'ابن باز' },
+          { id: 'al-2', principle_id: 'fiqh.yaqeen', alias_text_ar: 'اليقين لا يزال بالشك', scholar_preference: 'عام' },
+          { id: 'al-3', principle_id: 'fiqh.yaqeen.baqaa', alias_text_ar: 'استصحاب الحال الماضية', scholar_preference: 'ابن عثيمين' },
+          { id: 'al-4', principle_id: 'fiqh.yaqeen.baqaa', alias_text_ar: 'بقاء الأمر على ما كان عليه', scholar_preference: 'ابن باز' },
+          { id: 'al-5', principle_id: 'fiqh.yaqeen.baraa', alias_text_ar: 'البراءة الأصلية', scholar_preference: 'ابن عثيمين' },
+          { id: 'al-7', principle_id: 'usul.istishab', alias_text_ar: 'دليل الاستصحاب', scholar_preference: 'عام' }
+        ].map(a => ({ ...a, alias_text_norm: normalizeAr(a.alias_text_ar) }));
+
+        const principle_relations = [
+          {
+            source_id: 'fiqh.yaqeen',
+            target_id: 'usul.istishab',
+            relation_type: 'usul_foundation',
+            explanation_ar: 'قاعدة «اليقين لا يزول بالشك» هي التطبيق الفقهي لدليل «الاستصحاب» الأصولي.'
+          },
+          {
+            source_id: 'fiqh.mashaqqah.tayammum_marid',
+            target_id: 'fiqh.darar',
+            relation_type: 'secondary_parent',
+            explanation_ar: 'هذا الضابط متفرع عن قاعدتين كليتين معاً: «المشقة تجلب التيسير» و«الضرر يزال».'
+          },
+          {
+            source_id: 'fiqh.yaqeen.baqaa.taharah',
+            target_id: 'fiqh.yaqeen.baqaa.hadath',
+            relation_type: 'contrast_pair',
+            explanation_ar: 'المقارنة الدقيقة بين كون المتيقن السابق هو الطهارة أم الحدث.'
+          },
+          {
+            source_id: 'usul.nahy.dhat_aw_shart',
+            target_id: 'usul.nahy.amr_kharij',
+            relation_type: 'contrast_pair',
+            explanation_ar: 'التفريق الأصولي بين النهي العائد لذات العبادة أو شرطها وبين العائد لأمر خارج.'
+          },
+          {
+            source_id: 'usul.istishab.tawqeef_ibadat',
+            target_id: 'usul.istishab.ibaha_muamalat',
+            relation_type: 'contrast_pair',
+            explanation_ar: 'التفريق الأصولي الجوهري بين باب العبادات (التوقيف) وباب المعاملات والعادات (الإباحة).'
+          }
+        ];
+
+        const fatwas = [
+          {
+            id: 'fatwa-104',
+            scholar: 'ابن باز',
+            episode: 312,
+            question_ar: 'مريض بجروح بالغة يتضرر باستعمال الماء ويشق عليه غسل أعضائه؟',
+            answer_ar: 'يعدل إلى التيمم؛ لأن المشقة تجلب التيسير، والضرر يزال، فلا يكلف الله نفساً إلا وسعها.'
+          },
+          {
+            id: 'fatwa-102',
+            scholar: 'ابن عثيمين',
+            episode: 45,
+            question_ar: 'ما حكم تخصيص التسبيح بعد الأذان بألف مرة بنية التقرب إلى الله، مع أن أصل الذكر مشروع في آيات كثيرة؟',
+            answer_ar: 'هذا التخصيص بدعة؛ فالأصل في العبادات التوقيف، وتخصيص العبادة المشروعة بعدد أو زمان لم يرد به الشرع بدعة، ولا تشفع له النية الحسنة لأن الأمور بمقاصدها مشروطة بالاتباع.'
+          },
+          {
+            id: 'fatwa-401',
+            scholar: 'ابن عثيمين',
+            episode: 156,
+            question_ar: 'حديث «إذا دخل أحدكم المسجد فلا يجلس حتى يصلي ركعتين» ورد في رجل دخل والنبي ﷺ يخطب يوم الجمعة، فهل يختص بيوم الجمعة أم يعم كل داخل في أي وقت؟',
+            answer_ar: 'يعم كل داخل للمسجد في أي وقت؛ لأن القاعدة الأصولية المقررة أن العبرة بعموم اللفظ لا بخصوص السبب، وقد ترك النبي ﷺ الاستفصال فعمّ الحكم.'
+          }
+        ];
+
+        // Notice fatwa-102 has TWO rows in fatwa_principles (Usul + Fiqh intersection)!
+        // And fatwa-104 links to a multi-parent Dabit (Mashaqqah + Darar)!
+        const fatwa_principles = [
+          {
+            id: 'fp-104',
+            fatwa_id: 'fatwa-104',
+            principle_id: 'fiqh.mashaqqah.tayammum_marid',
+            evidence_quote_ar: 'لأن المشقة تجلب التيسير، والضرر يزال'
+          },
+          {
+            id: 'fp-102-a',
+            fatwa_id: 'fatwa-102',
+            principle_id: 'usul.istishab.tawqeef_ibadat.takhsis',
+            evidence_quote_ar: 'الأصل في العبادات التوقيف، وتخصيص العبادة المشروعة بعدد لم يرد به الشرع بدعة'
+          },
+          {
+            id: 'fp-102-b',
+            fatwa_id: 'fatwa-102',
+            principle_id: 'fiqh.maqasid',
+            evidence_quote_ar: 'ولا تشفع له النية الحسنة'
+          },
+          {
+            id: 'fp-401',
+            fatwa_id: 'fatwa-401',
+            principle_id: 'usul.umum.sabab',
+            evidence_quote_ar: 'لأن القاعدة الأصولية المقررة أن العبرة بعموم اللفظ لا بخصوص السبب'
+          }
+        ];
+
+        return { principles, principle_aliases, principle_relations, fatwas, fatwa_principles };
+      }
+
+      // Resolve all parents & secondary parents at a target tier
+      function resolveAncestorsAtTier(db, principleId, targetTier) {
+        const results = [];
+        const visited = new Set([principleId]);
+        const queue = [principleId];
+
+        while (queue.length > 0) {
+          const currId = queue.shift();
+          const node = db.principles.find(p => p.id === currId);
+          if (!node) continue;
+
+          if (node.tier === targetTier) {
+            results.push(node);
+          }
+
+          if (node.parent_id && !visited.has(node.parent_id)) {
+            visited.add(node.parent_id);
+            queue.push(node.parent_id);
+          }
+
+          // Traverse secondary_parent edges too!
+          const secEdges = db.principle_relations.filter(
+            r => r.source_id === currId && r.relation_type === 'secondary_parent'
+          );
+          for (const edge of secEdges) {
+            if (!visited.has(edge.target_id)) {
+              visited.add(edge.target_id);
+              queue.push(edge.target_id);
+            }
+          }
+        }
+        return results.length > 0 ? results : [db.principles.find(p => p.id === principleId)];
+      }
+
+      /**
+       * MULTI-SELECT & 3-TIER QUIZ SYNTHESIZER
+       * Automatically switches to "Select all that apply" when >1 principle applies!
+       */
+      function synthesizeQuiz(db, fatwaId, requestedTier) {
+        const fatwa = db.fatwas.find(f => f.id === fatwaId);
+        const fpRows = db.fatwa_principles.filter(r => r.fatwa_id === fatwaId);
+
+        // Collect all valid target nodes at the requested tier (across all fpRows and secondary_parent edges!)
+        const correctNodesMap = new Map();
+        for (const row of fpRows) {
+          const resolved = resolveAncestorsAtTier(db, row.principle_id, requestedTier);
+          for (const node of resolved) {
+            correctNodesMap.set(node.id, node);
+          }
+        }
+        const correctNodes = Array.from(correctNodesMap.values());
+        const isMultiSelect = correctNodes.length > 1;
+
+        // Gather all ancestor/descendant IDs of the correct nodes so we never pick a valid relative as a wrong distractor
+        const forbiddenIds = new Set(correctNodes.map(n => n.id));
+        for (const row of fpRows) {
+          forbiddenIds.add(row.principle_id);
+          for (const tierName of ['foundation', 'sub_principle', 'criterion']) {
+            for (const anc of resolveAncestorsAtTier(db, row.principle_id, tierName)) {
+              forbiddenIds.add(anc.id);
+            }
+          }
+        }
+
+        // Build Distractors based on Tier
+        const primaryTarget = correctNodes[0];
+        let distractors = [];
+
+        if (requestedTier === 'foundation') {
+          distractors = db.principles
+            .filter(p => p.tier === 'foundation' && !forbiddenIds.has(p.id))
+            .slice(0, 4 - Math.min(2, correctNodes.length))
+            .map(p => ({
+              node: p,
+              reason: `قاعدة كبرى (${getClassicalTierLabel(p.science, p.tier, p.domain_section).ar}) لا مدخل لها في تعليل هذه الفتوى.`
+            }));
+        } else if (requestedTier === 'sub_principle') {
+          // Prefer siblings sharing the same parent_id, then other sub_principles in the same science
+          const siblings = db.principles.filter(
+            p => p.parent_id === primaryTarget.parent_id && !forbiddenIds.has(p.id)
+          );
+          const sameScienceSubs = db.principles.filter(
+            p => p.science === primaryTarget.science && p.tier === 'sub_principle' && !forbiddenIds.has(p.id) && !siblings.includes(p)
+          );
+          distractors = [...siblings, ...sameScienceSubs].slice(0, 3).map(p => ({
+            node: p,
+            reason: p.parent_id === primaryTarget.parent_id
+              ? `قاعدة متفرعة شقيقة تحت نفس الأصل الكلي، لكن شرطها ومناطها مختلف.`
+              : `قاعدة متفرعة في مبحث آخر (${p.domain_section}).`
+          }));
+        } else {
+          // Criterion (Level 3): prioritize contrast_pair edges
+          const contrastRels = db.principle_relations.filter(
+            r => (r.source_id === primaryTarget.id || r.target_id === primaryTarget.id) && r.relation_type === 'contrast_pair'
+          );
+          const contrastNodes = contrastRels.map(r => {
+            const otherId = r.source_id === primaryTarget.id ? r.target_id : r.source_id;
+            return {
+              node: db.principles.find(p => p.id === otherId),
+              reason: `ضابط مقابل دقيق (Contrast Pair): ${r.explanation_ar}`
+            };
+          });
+          const fallbackCriteria = db.principles
+            .filter(p => p.tier === 'criterion' && !forbiddenIds.has(p.id) && !contrastNodes.some(c => c.node.id === p.id))
+            .slice(0, 3 - contrastNodes.length)
+            .map(p => ({
+              node: p,
+              reason: `ضابط تطبيقي في مسألة مغايرة (${p.domain_section}).`
+            }));
+          distractors = [...contrastNodes, ...fallbackCriteria];
+        }
+
+        return {
+          fatwa,
+          requestedTier,
+          questionMode: isMultiSelect ? 'MULTI_SELECT ("Select all principles that apply")' : 'SINGLE_SELECT',
+          promptAr: isMultiSelect
+            ? `اختر جميع القواعد والأصول التي اجتمعت في تعليل الشيخ ${fatwa.scholar} لهذه الفتوى (${correctNodes.length} قواعد صحيحة):`
+            : `ما هي القاعدة المعتمدة في تعليل الشيخ ${fatwa.scholar} لهذه الفتوى على مستوى (${getClassicalTierLabel(primaryTarget.science, primaryTarget.tier, primaryTarget.domain_section).ar})؟`,
+          correctNodes,
+          distractors,
+          explanation: isMultiSelect
+            ? `Multi-Select Triggered! Resolved ${correctNodes.length} co-applicable principles at tier "${requestedTier}": ${correctNodes.map(c => '«' + c.canonical_text_ar + '»').join(' + ')}.`
+            : `Single-Select on Unified Tier "${requestedTier}" (${getClassicalTierLabel(primaryTarget.science, primaryTarget.tier, primaryTarget.domain_section).en}): Target «${primaryTarget.canonical_text_ar}» with ${distractors.length} sibling/contrast distractors.`
+        };
+      }
+
+      return {
+        createInitialDatabase,
+        getClassicalTierLabel,
+        synthesizeQuiz
+      };
+    })();
+  </script>
+
+  <!-- 3. WORKSPACE -->
+  <div class="workspace-grid">
+    <!-- LEFT COLUMN -->
+    <div>
+      <section class="panel">
+        <div class="panel-title">
+          <span>Guided Stress-Test Walkthroughs (Q1 &amp; Q2)</span>
+        </div>
+        <div class="tabs" id="scenario-tabs"></div>
+        <div class="scenario-desc" id="scenario-description"></div>
+        <div class="step-list" id="scenario-steps"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-title">
+          <span>Free-Play Controller Matrix</span>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">Q1: "Select All Principles That Apply" (Multi-Parent &amp; Multi-Principle Fatwas)</span>
+          <div class="btn-row">
+            <button class="action-btn" onclick="triggerQuiz('fatwa-104', 'foundation')">
+              Fatwa #104 (Sick Tayammum) → Multi-Select Grand Maxims (Mashaqqah + Darar)
+            </button>
+            <button class="action-btn" onclick="triggerQuiz('fatwa-102', 'foundation')">
+              Fatwa #102 (Innovated Dhikr) → Multi-Select Usul + Fiqh Intersection
+            </button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <span class="control-label">Q2: Stress-Testing Usul al-Fiqh Across the Unified 3 Tiers (Fatwa #401 &amp; #102)</span>
+          <div class="btn-row">
+            <button class="action-btn" onclick="triggerQuiz('fatwa-401', 'foundation')">
+              Usul Tier 1 (Foundation): «اللفظ العام يجب العمل بعمومه»
+            </button>
+            <button class="action-btn" onclick="triggerQuiz('fatwa-401', 'sub_principle')">
+              Usul Tier 2 (Sub-Principle): «العبرة بعموم اللفظ لا بخصوص السبب» vs Siblings
+            </button>
+            <button class="action-btn" onclick="triggerQuiz('fatwa-102', 'criterion')">
+              Usul Tier 3 (Applied Criterion): «تقييد العبادة المشروعة بعدد أو هيئة لم ترد بدعة إضافية»
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <section class="panel">
+        <div class="panel-title">
+          <span>Live Controller Output &amp; 3-Tier Tree State</span>
+          <span class="mono" id="metrics-badge"></span>
+        </div>
+
+        <div class="transition-banner">
+          <strong>Controller Trace:</strong>
+          <span id="trace-text"></span>
+        </div>
+
+        <div id="quiz-output"></div>
+
+        <div class="state-card">
+          <h4>Unified 3-Tier Tree: Usul al-Fiqh &amp; Qawa'id Fiqhiyyah Side-by-Side</h4>
+          <div id="tree-output"></div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- 4. UI WIRING -->
+  <script>
+    const db = UsulEngine.createInitialDatabase();
+    let currentScenarioIdx = 0;
+    let currentStepIdx = 0;
+    let activeQuiz = UsulEngine.synthesizeQuiz(db, 'fatwa-104', 'foundation');
+
+    const SCENARIOS = [
+      {
+        title: 'Q1: "Select All That Apply" (Multi-Parent & Cross-Science)',
+        description: 'Tests how the Quiz Controller automatically turns a question into a Multi-Select prompt when a fatwa invokes either (a) a Dabit with two parent Grand Maxims (Mashaqqah + Darar) or (b) both an Usul principle and a Fiqh maxim together.',
+        steps: [
+          {
+            label: 'Case A (Co-Parent Maxims): Fatwa #104 (Sick patient Tayammum) at Tier 1 → Both «المشقة تجلب التيسير» AND «الضرر يزال» are marked ✓ Correct!',
+            run: () => triggerQuiz('fatwa-104', 'foundation')
+          },
+          {
+            label: 'Case B (Usul + Fiqh Intersection): Fatwa #102 (Innovated Dhikr count) → Combines Usul («الاستصحاب / التوقيف في العبادات») + Fiqh («الأمور بمقاصدها»)',
+            run: () => triggerQuiz('fatwa-102', 'foundation')
+          }
+        ]
+      },
+      {
+        title: 'Q2: Usul al-Fiqh in 3 Tiers + Domain Section',
+        description: 'Tests putting Usul al-Fiqh into the exact same 3 structural tiers as Fiqh (foundation → sub_principle → criterion) while keeping book chapters like "دلالات الألفاظ" in the domain_section column so chapter titles never leak into quiz choices.',
+        steps: [
+          {
+            label: 'Tier 1 (Foundation / أصل أصولي كلي): Fatwa #401 climbs to «اللفظ العام يجب العمل بعمومه حتى يثبت المخصص»',
+            run: () => triggerQuiz('fatwa-401', 'foundation')
+          },
+          {
+            label: 'Tier 2 (Sub-Principle / قاعدة أصولية متفرعة): Fatwa #401 targets «العبرة بعموم اللفظ لا بخصوص السبب» vs sibling «النكرة في سياق النفي تعم»',
+            run: () => triggerQuiz('fatwa-401', 'sub_principle')
+          },
+          {
+            label: 'Tier 3 (Applied Criterion / ضابط أصولي تطبيقي): Fatwa #102 targets leaf criterion «تقييد العبادة المشروعة بزمان أو مكان أو عدد... بدعة إضافية»',
+            run: () => triggerQuiz('fatwa-102', 'criterion')
+          }
+        ]
+      }
+    ];
+
+    function triggerQuiz(fatwaId, tier) {
+      activeQuiz = UsulEngine.synthesizeQuiz(db, fatwaId, tier);
+      renderAll();
+    }
+
+    function selectScenario(idx) {
+      currentScenarioIdx = idx;
+      currentStepIdx = 0;
+      SCENARIOS[idx].steps[0].run();
+    }
+
+    function runStep(idx) {
+      currentStepIdx = idx;
+      SCENARIOS[currentScenarioIdx].steps[idx].run();
+    }
+
+    function getBadgeHtml(node) {
+      const lbl = UsulEngine.getClassicalTierLabel(node.science, node.tier, node.domain_section);
+      const cls = node.tier === 'foundation'
+        ? 'badge-foundation'
+        : (node.tier === 'sub_principle' ? 'badge-sub' : 'badge-criterion');
+      return `<span class="badge ${cls}">[${node.tier}] ${lbl.ar}</span>`;
+    }
+
+    function renderTree(parentId) {
+      const children = db.principles.filter(p => p.parent_id === parentId);
+      if (children.length === 0) return '';
+      const activeIds = new Set(activeQuiz.correctNodes.map(c => c.id));
+
+      return `<ul class="${parentId ? 'tree-children' : 'tree-list'}">
+        ${children.map(node => {
+          const secParents = db.principle_relations.filter(
+            r => r.source_id === node.id && r.relation_type === 'secondary_parent'
+          );
+          return `
+            <li>
+              <div class="tree-node ${activeIds.has(node.id) ? 'highlighted' : ''}">
+                <div>
+                  <span class="badge badge-alias mono" style="margin-right:0.35rem;">${node.domain_section}</span>
+                  <span class="ar" style="font-weight:700;">${node.canonical_text_ar}</span>
+                  ${secParents.map(sp => `<span class="badge badge-foundation mono" style="margin-left:0.35rem;">+secondary_parent: ${sp.target_id}</span>`).join('')}
+                </div>
+                <div style="flex-shrink:0;">
+                  ${getBadgeHtml(node)}
+                </div>
+              </div>
+              ${renderTree(node.id)}
+            </li>
+          `;
+        }).join('')}
+      </ul>`;
+    }
+
+    function renderAll() {
+      document.getElementById('trace-text').textContent = activeQuiz.explanation;
+      document.getElementById('metrics-badge').textContent =
+        `Mode: ${activeQuiz.questionMode}`;
+
+      // Tabs
+      document.getElementById('scenario-tabs').innerHTML = SCENARIOS.map((sc, i) => `
+        <button class="tab-btn ${i === currentScenarioIdx ? 'active' : ''}" onclick="selectScenario(${i})">${sc.title}</button>
+      `).join('');
+      document.getElementById('scenario-description').textContent = SCENARIOS[currentScenarioIdx].description;
+      document.getElementById('scenario-steps').innerHTML = SCENARIOS[currentScenarioIdx].steps.map((st, i) => `
+        <button class="step-btn ${i === currentStepIdx ? 'current-step' : ''}" onclick="runStep(${i})">
+          <span class="step-num">${i + 1}</span>
+          <span>${st.label}</span>
+        </button>
+      `).join('');
+
+      // Quiz Output
+      document.getElementById('quiz-output').innerHTML = `
+        <div class="state-card">
+          <h4>Generated Quiz Card • ${activeQuiz.questionMode}</h4>
+          <div style="background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:0.75rem 0.9rem; margin-bottom:0.75rem;">
+            <div style="font-size:0.78rem; color:var(--text-muted);">
+              Fatwa <code>${activeQuiz.fatwa.id}</code> • الشيخ ${activeQuiz.fatwa.scholar} (Ep #${activeQuiz.fatwa.episode})
+            </div>
+            <div class="ar" style="font-weight:700; margin-top:0.2rem;">السؤال: «${activeQuiz.fatwa.question_ar}»</div>
+            <div class="ar" style="color:var(--text-muted);">الجواب: «${activeQuiz.fatwa.answer_ar}»</div>
+          </div>
+
+          <div class="ar" style="font-weight:700; color:var(--accent); margin-bottom:0.6rem;">
+            ${activeQuiz.promptAr}
+          </div>
+
+          ${activeQuiz.correctNodes.map(c => `
+            <div class="quiz-option correct">
+              <div>
+                <span class="badge" style="background:#10b981; color:#fff;">☑ Correct Selection</span>
+                ${getBadgeHtml(c)}
+                <span class="badge badge-alias">${c.domain_section}</span>
+                <div class="ar" style="font-weight:700; font-size:1.15rem; margin-top:0.25rem;">«${c.canonical_text_ar}»</div>
+                <div class="ar" style="font-size:0.92rem; color:#065f46;">${c.summary_ar}</div>
+              </div>
+              <span class="mono">${c.id}</span>
+            </div>
+          `).join('')}
+
+          <div style="font-size:0.76rem; font-weight:700; color:var(--text-muted); margin:0.65rem 0 0.35rem; text-transform:uppercase;">
+            Graph-Generated Distractors:
+          </div>
+          ${activeQuiz.distractors.map(d => `
+            <div class="quiz-option">
+              <div>
+                <span class="badge badge-alias">☐ Distractor</span>
+                ${getBadgeHtml(d.node)}
+                <span class="badge badge-alias">${d.node.domain_section}</span>
+                <div class="ar" style="font-weight:700; margin-top:0.2rem;">«${d.node.canonical_text_ar}»</div>
+                <div class="ar" style="font-size:0.9rem; color:var(--rose);">${d.reason}</div>
+              </div>
+              <span class="mono">${d.node.id}</span>
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      document.getElementById('tree-output').innerHTML = renderTree(null);
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>
