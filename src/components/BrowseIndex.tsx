@@ -1,12 +1,21 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronDown, ChevronLeft, FolderTree, Library } from 'lucide-react';
-import { BrowseTab, Fatwa, FatwaPrinciple, Principle } from '../types';
+import {
+  BrowseTab,
+  Fatwa,
+  FatwaPrinciple,
+  FatwaSummary,
+  Principle,
+  PrincipleTreeNode,
+} from '../types';
 import { CATEGORY_LABELS, chapterLabelAr } from '../utils/arabic';
+import { sqliteClient } from '../services/sqliteClient';
+import { flattenPrinciplesTree } from '../data/mockArchiveAdapter';
 
 interface BrowseIndexProps {
-  fatwas: Fatwa[];
-  principles: Principle[];
-  fatwaPrinciples: FatwaPrinciple[];
+  fatwas?: (Fatwa | FatwaSummary)[];
+  principles?: Principle[];
+  fatwaPrinciples?: FatwaPrinciple[];
   activeFatwaId?: string;
   onSelectFatwa: (fatwaId: string) => void;
   onSelectPrinciple: (principleId: string) => void;
@@ -19,9 +28,9 @@ const TREE_SECTIONS: { id: string; title: string; category: Principle['category'
 ];
 
 export const BrowseIndex: React.FC<BrowseIndexProps> = ({
-  fatwas,
-  principles,
-  fatwaPrinciples,
+  fatwas = [],
+  principles = [],
+  fatwaPrinciples = [],
   activeFatwaId,
   onSelectFatwa,
   onSelectPrinciple,
@@ -35,6 +44,53 @@ export const BrowseIndex: React.FC<BrowseIndexProps> = ({
   const [expandedChapters, setExpandedChapters] = useState<Record<string, boolean>>({});
   const [selectedPrincipleId, setSelectedPrincipleId] = useState<string | null>(null);
 
+  // On-demand principles tree from sqliteClient
+  const [queriedTree, setQueriedTree] = useState<PrincipleTreeNode[]>([]);
+  // On-demand chapters fatwas from sqliteClient
+  const [chapterFatwas, setChapterFatwas] = useState<FatwaSummary[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    sqliteClient
+      .getPrinciplesTree()
+      .then(tree => {
+        if (!cancelled && tree.length > 0) {
+          setQueriedTree(tree);
+        }
+      })
+      .catch(err => {
+        console.warn("[BrowseIndex] Failed to fetch principles tree:", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (tab !== 'chapters') return;
+    let cancelled = false;
+    sqliteClient
+      .browseFatwas({ limit: 100 })
+      .then(res => {
+        if (!cancelled && res.fatwas.length > 0) {
+          setChapterFatwas(res.fatwas);
+        }
+      })
+      .catch(err => {
+        console.warn("[BrowseIndex] Failed to browse fatwas for chapters:", err);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tab]);
+
+  const activePrinciples = useMemo(() => {
+    if (queriedTree.length > 0) {
+      return flattenPrinciplesTree(queriedTree);
+    }
+    return principles;
+  }, [queriedTree, principles]);
+
   const linkedCountByPrinciple = useMemo(() => {
     const counts = new Map<string, number>();
     for (const fp of fatwaPrinciples) {
@@ -43,9 +99,11 @@ export const BrowseIndex: React.FC<BrowseIndexProps> = ({
     return counts;
   }, [fatwaPrinciples]);
 
+  const activeFatwasForChapters = chapterFatwas.length > 0 ? chapterFatwas : fatwas;
+
   const chapterTree = useMemo(() => {
-    const map = new Map<string, Map<string, Fatwa[]>>();
-    for (const f of fatwas) {
+    const map = new Map<string, Map<string, (Fatwa | FatwaSummary)[]>>();
+    for (const f of activeFatwasForChapters) {
       if (!map.has(f.topic_chapter)) map.set(f.topic_chapter, new Map());
       const subs = map.get(f.topic_chapter)!;
       const key = f.topic_subtopic || 'عام';
@@ -55,11 +113,20 @@ export const BrowseIndex: React.FC<BrowseIndexProps> = ({
     return Array.from(map.entries()).sort((a, b) =>
       chapterLabelAr(a[0]).localeCompare(chapterLabelAr(b[0]), 'ar')
     );
-  }, [fatwas]);
+  }, [activeFatwasForChapters]);
 
-  const selectPrinciple = (principleId: string) => {
+  const selectPrinciple = async (principleId: string) => {
     setSelectedPrincipleId(principleId);
     onSelectPrinciple(principleId);
+    try {
+      const res = await sqliteClient.browseFatwas({ principleId, limit: 1 });
+      if (res.fatwas.length > 0) {
+        onSelectFatwa(res.fatwas[0].id);
+        return;
+      }
+    } catch {
+      /* fallback to prop search */
+    }
     const linked = fatwaPrinciples.find(fp => fp.principle_id === principleId);
     if (linked) onSelectFatwa(linked.fatwa_id);
   };
@@ -105,7 +172,7 @@ export const BrowseIndex: React.FC<BrowseIndexProps> = ({
         {tab === 'principles' && (
           <div className="space-y-1">
             {TREE_SECTIONS.map(section => {
-              const items = principles
+              const items = activePrinciples
                 .filter(p => p.category === section.category)
                 .sort((a, b) => (a.depth ?? 0) - (b.depth ?? 0) || a.id.localeCompare(b.id));
               const open = expandedSections[section.id];
@@ -130,7 +197,10 @@ export const BrowseIndex: React.FC<BrowseIndexProps> = ({
                     <ul className="pr-1 pb-2 space-y-0.5">
                       {items.map(p => {
                         const depth = p.depth ?? 0;
-                        const count = linkedCountByPrinciple.get(p.id) || 0;
+                        const count =
+                          (p as PrincipleTreeNode).fatwas_count !== undefined
+                            ? (p as PrincipleTreeNode).fatwas_count
+                            : linkedCountByPrinciple.get(p.id) || 0;
                         const active = selectedPrincipleId === p.id;
                         return (
                           <li key={p.id} style={{ paddingInlineStart: `${Math.min(depth, 3) * 0.65}rem` }}>

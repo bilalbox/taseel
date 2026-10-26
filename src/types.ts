@@ -42,6 +42,54 @@ export interface Principle {
   domain_section?: string;
 }
 
+export interface PrincipleTreeNode extends Principle {
+  fatwas_count: number;
+  children: PrincipleTreeNode[];
+}
+
+export interface BrowseFatwasParams {
+  query?: string;
+  scholar?: Scholar | 'ALL';
+  chapter?: string | 'ALL';
+  subtopic?: string;
+  principleId?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface FatwaSummary {
+  id: string;
+  episode_id: string;
+  scholar_name: Scholar;
+  episode_number: number;
+  question_text: string;
+  topic_domain: TopicDomain;
+  topic_chapter: string;
+  topic_subtopic: string;
+  audio_url?: string;
+  audio_timestamp?: number;
+  linked_principles_count?: number;
+}
+
+export interface BrowseFatwasResult {
+  fatwas: FatwaSummary[];
+  total: number;
+  hasMore: boolean;
+  latencyMs?: number;
+}
+
+export interface FatwaDetail extends Fatwa {
+  principles: Principle[];
+  fatwaPrinciples: FatwaPrinciple[];
+  fatwa: Fatwa;
+}
+
+export interface ArchiveQueryAdapter {
+  getPrinciplesTree(): Promise<PrincipleTreeNode[]>;
+  browseFatwas(params?: BrowseFatwasParams): Promise<BrowseFatwasResult>;
+  getFatwaDetail(id: string): Promise<FatwaDetail | null>;
+}
+
 export type AppMode = 'quiz' | 'browse';
 export type BrowseTab = 'principles' | 'chapters';
 

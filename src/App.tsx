@@ -72,13 +72,13 @@ export function App() {
     sqliteClient
       .init()
       .then(payload => {
-        if (payload.principles.length > 0) {
+        if (payload.principles && payload.principles.length > 0) {
           setPrinciples(payload.principles);
         }
-        if (payload.fatwas.length > 0) {
+        if (payload.fatwas && payload.fatwas.length > 0) {
           setFatwas(payload.fatwas);
         }
-        if (payload.fatwaPrinciples.length > 0) {
+        if (payload.fatwaPrinciples && payload.fatwaPrinciples.length > 0) {
           setFatwaPrinciples(payload.fatwaPrinciples);
         }
         setTotalArchiveCount(payload.totalFatwasCount);

@@ -3,7 +3,9 @@ import { BookmarkCheck, CheckCircle2, Filter, Layers, Search, Shuffle } from 'lu
 import {
   AppMode,
   Fatwa,
+  FatwaDetail,
   FatwaPrinciple,
+  FatwaSummary,
   Principle,
   Scholar,
   UserState,
@@ -19,6 +21,7 @@ import {
 import { FatwaReader } from './FatwaReader';
 import { QuizPane } from './QuizPane';
 import { BrowseIndex } from './BrowseIndex';
+import { sqliteClient } from '../services/sqliteClient';
 
 interface AppShellProps {
   fatwas: Fatwa[];
@@ -137,6 +140,48 @@ export const AppShell: React.FC<AppShellProps> = ({
     [fatwas]
   );
 
+  const [browsedFatwas, setBrowsedFatwas] = useState<FatwaSummary[]>([]);
+  const [browseTotal, setBrowseTotal] = useState<number>(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    sqliteClient
+      .browseFatwas({
+        scholar: selectedScholar,
+        chapter: selectedChapter,
+        query: searchQuery,
+        limit: 80,
+      })
+      .then(res => {
+        if (!cancelled && res.fatwas.length > 0) {
+          setBrowsedFatwas(res.fatwas);
+          setBrowseTotal(res.total);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedScholar, selectedChapter, searchQuery, opfsReady]);
+
+  const [activeDetail, setActiveDetail] = useState<FatwaDetail | null>(null);
+
+  useEffect(() => {
+    if (!activeFatwaId) return;
+    let cancelled = false;
+    sqliteClient
+      .getFatwaDetail(activeFatwaId)
+      .then(detail => {
+        if (!cancelled && detail) {
+          setActiveDetail(detail);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [activeFatwaId]);
+
   const filteredFatwas = useMemo(() => {
     return fatwas.filter(f => {
       if (selectedScholar !== 'ALL' && f.scholar_name !== selectedScholar) return false;
@@ -149,20 +194,36 @@ export const AppShell: React.FC<AppShellProps> = ({
     });
   }, [fatwas, selectedScholar, selectedChapter, filterUnansweredOnly, answeredQuestions, searchQuery]);
 
-  const activeFatwa =
-    fatwas.find(f => f.id === activeFatwaId) || filteredFatwas[0] || fatwas[0];
+  const displayFatwas = useMemo(() => {
+    const base = browsedFatwas.length > 0 ? browsedFatwas : filteredFatwas;
+    if (filterUnansweredOnly) {
+      return base.filter(f => !isQuestionAnswered(answeredQuestions, f.id));
+    }
+    return base;
+  }, [browsedFatwas, filteredFatwas, filterUnansweredOnly, answeredQuestions]);
 
-  const currentFatwaPrinciples = useMemo(
-    () => fatwaPrinciples.filter(fp => fp.fatwa_id === activeFatwa?.id),
-    [fatwaPrinciples, activeFatwa]
-  );
+  const activeFatwa =
+    activeDetail?.fatwa ||
+    fatwas.find(f => f.id === activeFatwaId) ||
+    (displayFatwas[0] as Fatwa) ||
+    filteredFatwas[0] ||
+    fatwas[0];
+
+  const currentFatwaPrinciples = useMemo(() => {
+    if (activeDetail?.fatwaPrinciples && activeDetail.fatwaPrinciples.length > 0) {
+      return activeDetail.fatwaPrinciples;
+    }
+    return fatwaPrinciples.filter(fp => fp.fatwa_id === activeFatwa?.id);
+  }, [activeDetail, fatwaPrinciples, activeFatwa]);
 
   const selectedFatwaPrinciple =
     currentFatwaPrinciples.find(
       fp => fp.principle_id === (activePrincipleId || currentFatwaPrinciples[0]?.principle_id)
     ) || currentFatwaPrinciples[0];
 
-  const currentPrinciple = principles.find(p => p.id === selectedFatwaPrinciple?.principle_id);
+  const currentPrinciple =
+    activeDetail?.principles.find(p => p.id === selectedFatwaPrinciple?.principle_id) ||
+    principles.find(p => p.id === selectedFatwaPrinciple?.principle_id);
 
   // Grounded quiz candidates and progress stats
   const groundedCandidates = useMemo(
@@ -377,7 +438,9 @@ export const AppShell: React.FC<AppShellProps> = ({
                 <h2 className="font-semibold text-xs text-ink flex items-center gap-1.5">
                   <Layers className="w-3.5 h-3.5 text-accent" />
                   الفتاوى
-                  <span className="text-ink-faint font-normal">({filteredFatwas.length})</span>
+                  <span className="text-ink-faint font-normal">
+                    ({browseTotal > 0 ? browseTotal : displayFatwas.length})
+                  </span>
                 </h2>
 
                 {answeredCount > 0 && (
@@ -397,7 +460,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                 )}
               </div>
               <div className="space-y-1 max-h-[calc(100vh-14rem)] overflow-y-auto">
-                {filteredFatwas.map(fatwa => {
+                {displayFatwas.map(fatwa => {
                   const isActive = fatwa.id === activeFatwa?.id;
                   const isSaved = userState.bookmarks.includes(fatwa.id);
                   const isAnswered = isQuestionAnswered(answeredQuestions, fatwa.id);
@@ -430,7 +493,7 @@ export const AppShell: React.FC<AppShellProps> = ({
                     </button>
                   );
                 })}
-                {filteredFatwas.length === 0 && (
+                {displayFatwas.length === 0 && (
                   <p className="text-center text-ink-faint text-xs py-6">
                     {filterUnansweredOnly ? 'أجبت على جميع الفتاوى المطابقة!' : 'لا نتائج مطابقة'}
                   </p>
@@ -442,6 +505,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 
         <div className={`${readerColSpan} space-y-4 order-1 lg:order-2 transition-all`}>
           <FatwaReader
+            fatwaId={activeFatwaId}
             fatwa={activeFatwa}
             principles={principles}
             fatwaPrinciples={currentFatwaPrinciples}
@@ -472,7 +536,7 @@ export const AppShell: React.FC<AppShellProps> = ({
             />
           ) : (
             <BrowseIndex
-              fatwas={filteredFatwas}
+              fatwas={displayFatwas}
               principles={principles}
               fatwaPrinciples={fatwaPrinciples}
               activeFatwaId={activeFatwa?.id}
