@@ -1,6 +1,7 @@
 # Dependencies & build
 node_modules/
 dist/
+*.tsbuildinfo
 
 # Python
 __pycache__/

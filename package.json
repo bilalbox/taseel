@@ -1,37 +1,61 @@
 {
-  "name": "taseel",
-  "private": true,
-  "version": "0.1.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc && vite build",
-    "build:db": "python3 pipeline/src/compile_sqlite.py",
-    "test": "vitest run",
-    "feedback": "python3 pipeline/src/fetch_feedback.py",
-    "deploy": "pnpm build && npx wrangler pages deploy dist --project-name=taseel --commit-dirty=true",
-    "deploy:pages": "pnpm deploy",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@sqlite.org/sqlite-wasm": "3.54.1-build1",
-    "clsx": "^2.1.1",
-    "lucide-react": "^1.61.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "tailwind-merge": "^2.6.1"
-  },
-  "devDependencies": {
-    "@types/react": "^18.3.31",
-    "@types/react-dom": "^18.3.7",
-    "@vitejs/plugin-react": "^4.7.0",
-    "autoprefixer": "^10.6.1",
-    "postcss": "^8.5.31",
-    "tailwindcss": "^3.4.19",
-    "typescript": "^5.9.3",
-    "vite": "^5.4.21",
-    "vite-plugin-pwa": "^2.0.0",
-    "vitest": "^3.2.7"
-  },
-  "packageManager": "pnpm@12.15.0+sha512.b3951d6d6ff4a9f13dc7cf56cd28d2b8eb37dbcc9c68e52e1e1191873ea9f82a017287ab50baadc5ccc494f036c67c0e47eb13608c2fa36f47711b61ea128e61"
+	"name": "taseel",
+	"private": true,
+	"version": "0.1.0",
+	"type": "module",
+	"scripts": {
+		"dev": "vite",
+		"build": "tsc && vite build",
+		"build:db": "python3 pipeline/src/compile_sqlite.py",
+		"test": "vitest run",
+		"feedback": "python3 pipeline/src/fetch_feedback.py",
+		"deploy": "pnpm build && wrangler pages deploy dist --project-name=taseel --commit-dirty=true",
+		"deploy:pages": "pnpm deploy",
+		"preview": "vite preview",
+		"typecheck": "tsc -b",
+		"lint": "biome check .",
+		"lint:graph": "tsx scripts/run-rev-dep.ts",
+		"lint:complexity": "tsx scripts/ratchets/run-complexity.ts",
+		"lint:py": "uvx ruff@0.17.2 check . && uvx ruff@0.17.2 format --check . && uvx basedpyright@1.40.2 && uvx tach@0.35.3 check && uvx vulture@2.16 . vulture_whitelist.py",
+		"gate:fast": "pnpm lint && pnpm lint:graph && pnpm lint:complexity && pnpm typecheck && pnpm lint:py",
+		"gate:fast:py": "pnpm gate:fast && pnpm lint:py",
+		"gate": "pnpm gate:fast && pnpm test",
+		"test:ratchets": "bash tests/ratchets/ratchet-contract.test.sh",
+		"prepare": "husky"
+	},
+	"dependencies": {
+		"@sqlite.org/sqlite-wasm": "3.54.1-build1",
+		"clsx": "^2.1.1",
+		"lucide-react": "^1.61.0",
+		"react": "^18.3.1",
+		"react-dom": "^18.3.1",
+		"tailwind-merge": "^2.6.1"
+	},
+	"devDependencies": {
+		"@types/react": "^18.3.31",
+		"@types/react-dom": "^18.3.7",
+		"@vitejs/plugin-react": "^4.7.0",
+		"autoprefixer": "^10.6.1",
+		"postcss": "^8.5.31",
+		"tailwindcss": "^3.4.19",
+		"typescript": "^5.9.3",
+		"vite": "^5.4.21",
+		"vite-plugin-pwa": "^2.0.0",
+		"vitest": "^3.2.7",
+		"@biomejs/biome": "^2.6.3",
+		"husky": "^9.1.7",
+		"lint-staged": "^17.6.0",
+		"rev-dep": "^3.3.0",
+		"tsx": "^4.20.0",
+		"wrangler": "^4.152.0"
+	},
+	"packageManager": "pnpm@12.15.0+sha512.b3951d6d6ff4a9f13dc7cf56cd28d2b8eb37dbcc9c68e52e1e1191873ea9f82a017287ab50baadc5ccc494f036c67c0e47eb13608c2fa36f47711b61ea128e61",
+	"lint-staged": {
+		"*.{js,ts,cjs,mjs,d.cts,d.mts,jsx,tsx,json,jsonc}": [
+			"biome check --write --no-errors-on-unmatched"
+		]
+	},
+	"engines": {
+		"node": ">=24.0.0 <25"
+	}
 }
