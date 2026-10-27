@@ -1,0 +1,52 @@
+{
+  "schemaVersion": "1.0",
+  "canonicalFormVersion": "1.0",
+  "parameters": {
+    "blinding": "exact",
+    "blindIdentifiers": false,
+    "blindStrings": false,
+    "blindNumbers": false,
+    "minTokens": 50,
+    "minLines": 3,
+    "minDepth": 0,
+    "minStatements": 0,
+    "minDuplicates": 2,
+    "skipObjects": false,
+    "ignoreFiles": [
+      "scripts/**",
+      "tests/**",
+      "**/node_modules/**"
+    ],
+    "configLevelSettings": {
+      "configPath": "rev-dep.config.json",
+      "ignoreFiles": [
+        "**/node_modules/**",
+        "**/dist/**",
+        "**/.git/**",
+        "**/.wrangler/**",
+        "**/baselines/**",
+        "**/tests/ratchets/fixtures/**"
+      ]
+    }
+  },
+  "duplications": [
+    {
+      "hash": "43cd79d6e36c2817",
+      "occurrences": 2,
+      "files": {
+        "src/workers/sqlite.worker.ts": 2
+      },
+      "label": "id: String(h.id),"
+    },
+    {
+      "hash": "a70f171dead95b5e",
+      "occurrences": 3,
+      "files": {
+        "src/components/variants/VariantA_ClassicalReader.tsx": 1,
+        "src/components/variants/VariantB_CommandRecall.tsx": 1,
+        "src/components/variants/VariantC_TaxonomyTree.tsx": 1
+      },
+      "label": "fatwas: Fatwa[];"
+    }
+  ]
+}
