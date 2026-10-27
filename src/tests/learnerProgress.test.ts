@@ -257,13 +257,13 @@ describe('LearnerProgressStore (Ticket #3)', () => {
       expect(store.getStats().answeredCount).toBe(2);
 
       // nextQuestion must select the only remaining unanswered question: fatwa-3
-      store.nextQuestion();
+      await store.nextQuestion();
       expect(store.getCurrentQuestion()?.fatwa.id).toBe('fatwa-3');
     });
 
-    it('avoids repeating the current question when multiple candidates exist', () => {
+    it('avoids repeating the current question when multiple candidates exist', async () => {
       store.selectQuestion('fatwa-1');
-      store.nextQuestion();
+      await store.nextQuestion();
       expect(store.getCurrentQuestion()?.fatwa.id).not.toBe('fatwa-1');
     });
 
@@ -278,20 +278,20 @@ describe('LearnerProgressStore (Ticket #3)', () => {
       expect(store.getStats().answeredCount).toBe(3);
 
       // Rotating when all are answered should cycle without throwing or null
-      store.nextQuestion();
+      await store.nextQuestion();
       const nextQ = store.getCurrentQuestion();
       expect(nextQ).not.toBeNull();
       expect(['fatwa-1', 'fatwa-2', 'fatwa-3']).toContain(nextQ?.fatwa.id);
     });
 
-    it('respects scholar and chapter filters during rotation', () => {
+    it('respects scholar and chapter filters during rotation', async () => {
       // Rotation with Ibn Uthaymeen filter should pick fatwa-2
-      store.nextQuestion({ scholar: 'ابن عثيمين' });
+      await store.nextQuestion({ scholar: 'ابن عثيمين' });
       expect(store.getCurrentQuestion()?.fatwa.scholar_name).toBe('ابن عثيمين');
       expect(store.getCurrentQuestion()?.fatwa.id).toBe('fatwa-2');
 
       // Rotation with chapter 'معاملات' should pick fatwa-3
-      store.nextQuestion({ chapter: 'معاملات' });
+      await store.nextQuestion({ chapter: 'معاملات' });
       expect(store.getCurrentQuestion()?.fatwa.topic_chapter).toBe('معاملات');
       expect(store.getCurrentQuestion()?.fatwa.id).toBe('fatwa-3');
     });

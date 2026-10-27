@@ -113,7 +113,7 @@ export class SqliteLocalStorageAdapter implements LearnerStorageAdapter {
   private legacyStateKey = 'taseel_user_state_v1';
   private legacyTrackerKey = 'taseel_quiz_answered_v1';
 
-  async loadData(): Promise<LearnerStorageData> {
+  public loadDataFromLocal(): LearnerStorageData {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
       return { bookmarks: [], history: [], xp: 0 };
     }
@@ -152,6 +152,24 @@ export class SqliteLocalStorageAdapter implements LearnerStorageAdapter {
     return { bookmarks: [], history: [], xp: 0 };
   }
 
+  async loadData(): Promise<LearnerStorageData> {
+    try {
+      const sqliteData = await sqliteClient.loadUserState();
+      if (
+        sqliteData &&
+        (sqliteData.bookmarks.length > 0 ||
+          sqliteData.history.length > 0 ||
+          sqliteData.xp > 0)
+      ) {
+        this.persistLocal(sqliteData);
+        return sqliteData;
+      }
+    } catch {
+      // Worker not ready or running in SSR/mock test environment
+    }
+    return this.loadDataFromLocal();
+  }
+
   private persistLocal(data: LearnerStorageData): void {
     if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
     try {
@@ -166,10 +184,10 @@ export class SqliteLocalStorageAdapter implements LearnerStorageAdapter {
 
   async saveBookmark(fatwaId: string, isBookmarked: boolean): Promise<void> {
     try {
-      sqliteClient.toggleBookmark(fatwaId).catch(() => {});
+      await sqliteClient.toggleBookmark(fatwaId);
     } catch {}
 
-    const current = await this.loadData();
+    const current = this.loadDataFromLocal();
     const set = new Set(current.bookmarks);
     if (isBookmarked) {
       set.add(fatwaId);
@@ -181,10 +199,10 @@ export class SqliteLocalStorageAdapter implements LearnerStorageAdapter {
 
   async saveAttempt(attempt: UserQuizHistoryItem, newXp?: number): Promise<void> {
     try {
-      sqliteClient.recordQuizAttempt(attempt).catch(() => {});
+      await sqliteClient.recordQuizAttempt(attempt, newXp);
     } catch {}
 
-    const current = await this.loadData();
+    const current = this.loadDataFromLocal();
     const updatedHistory = [...current.history, attempt];
     const updatedXp =
       newXp !== undefined
@@ -199,10 +217,10 @@ export class SqliteLocalStorageAdapter implements LearnerStorageAdapter {
 
   async clearAttempts(): Promise<void> {
     try {
-      sqliteClient.clearQuizAttempts().catch(() => {});
+      await sqliteClient.clearQuizAttempts();
     } catch {}
 
-    const current = await this.loadData();
+    const current = this.loadDataFromLocal();
     this.persistLocal({
       ...current,
       history: [],
@@ -563,10 +581,16 @@ export class LearnerProgressStore {
     return attempt;
   }
 
-  public nextQuestion(filter?: {
+  public async nextQuestion(filter?: {
     scholar?: Scholar | 'ALL';
     chapter?: string;
-  }): void {
+  }): Promise<void> {
+    const item = await this.fetchNextRandomQuestion(filter);
+    if (item) {
+      return;
+    }
+
+    // Fallback if archiveAdapter fails to return a question
     let pool = this.getGroundedCandidates(filter || this.filter);
     if (pool.length === 0) {
       pool = this.getGroundedCandidates({ scholar: 'ALL', chapter: 'ALL' });
@@ -594,8 +618,6 @@ export class LearnerProgressStore {
       this.activeQuizItem = null;
       this.notify();
     }
-
-    this.fetchNextRandomQuestion(filter).catch(() => {});
   }
 
   public selectQuestion(fatwaId: string, principleId?: string | null): void {

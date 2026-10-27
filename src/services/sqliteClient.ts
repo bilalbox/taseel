@@ -121,21 +121,41 @@ class SqliteWorkerClient {
     return this.call<QuizQuestionItem | null>('GET_RANDOM_QUIZ_QUESTION', params);
   }
 
-  public searchFatwas(query: string, limit = 80): Promise<{ fatwas: Fatwa[]; latencyMs: number }> {
-    return this.call<{ fatwas: Fatwa[]; latencyMs: number }>('SEARCH_FATWAS', { query, limit });
+  public getArchiveChapters(): Promise<string[]> {
+    if (typeof Worker === 'undefined') {
+      return mockArchiveAdapter.getArchiveChapters();
+    }
+    return this.call<string[]>('GET_ARCHIVE_CHAPTERS');
+  }
+
+  public loadUserState(): Promise<{ bookmarks: string[]; history: UserQuizHistoryItem[]; xp: number }> {
+    if (typeof Worker === 'undefined') {
+      return Promise.resolve({ bookmarks: [], history: [], xp: 0 });
+    }
+    return this.call<{ bookmarks: string[]; history: UserQuizHistoryItem[]; xp: number }>('LOAD_USER_STATE');
   }
 
   public toggleBookmark(fatwaId: string): Promise<boolean> {
+    if (typeof Worker === 'undefined') {
+      return Promise.resolve(true);
+    }
     return this.call<boolean>('TOGGLE_BOOKMARK', { fatwaId });
   }
 
   public recordQuizAttempt(
-    item: UserQuizHistoryItem
+    item: UserQuizHistoryItem,
+    newXp?: number
   ): Promise<boolean> {
-    return this.call<boolean>('RECORD_QUIZ_ATTEMPT', { item });
+    if (typeof Worker === 'undefined') {
+      return Promise.resolve(true);
+    }
+    return this.call<boolean>('RECORD_QUIZ_ATTEMPT', { item, newXp });
   }
 
   public clearQuizAttempts(): Promise<boolean> {
+    if (typeof Worker === 'undefined') {
+      return Promise.resolve(true);
+    }
     return this.call<boolean>('CLEAR_QUIZ_ATTEMPTS');
   }
 }
