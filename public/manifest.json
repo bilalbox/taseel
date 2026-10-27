@@ -1,10 +1,10 @@
 {
-	"version": "2026.10.26",
-	"ontology_version": "2026.10.26-full",
-	"sha256": "0d1f393598531de518ac27c9bc5808e53b09cd9f61679b2b57d3df64df1d0808",
+	"version": "2026.10.27",
+	"ontology_version": "2026.10.27-grounding",
+	"sha256": "1ba9075509b7ea1ea2423532ec18a6ec32374dc530d8aa68bb82ae7f55102548",
 	"url": "/content.sqlite3.gz",
-	"uncompressed_bytes": 76419072,
-	"gzip_bytes": 22352568,
+	"uncompressed_bytes": 75804672,
+	"gzip_bytes": 22241983,
 	"counts": {
 		"episodes": 87,
 		"ibn_baz_fatwas": 12217,
@@ -12,10 +12,10 @@
 		"principles": 44,
 		"principle_aliases": 88,
 		"principle_relations": 6,
-		"issue_clusters": 14578,
+		"issue_clusters": 14556,
 		"fatwas": 19301,
-		"grounded_fatwas": 932,
-		"fatwa_principles": 967,
+		"grounded_fatwas": 531,
+		"fatwa_principles": 541,
 		"llm_extracted_fatwas": 13655,
 		"llm_links": 283
 	}

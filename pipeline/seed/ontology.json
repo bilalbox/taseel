@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.26-full",
+  "version": "2026.10.27-grounding",
   "principles": [
     {
       "id": "fiqh.yaqeen",
@@ -38,7 +38,24 @@
           "scholar_preference": "ابن عثيمين",
           "is_colloquial_variant": false
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "اليقين لا يزول بالشك",
+          "اليقين لا يرتفع بالشك",
+          "الشك لا يرفع اليقين"
+        ],
+        "quote_any": [
+          "اليقين لا يزول",
+          "اليقين لا يرتفع",
+          "الشك لا يرفع اليقين"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "قرر الشيخ أن اليقين الثابت لا يزول بالشك الطارئ، والواجب طرح الشك والبناء على المتيقن."
     },
     {
       "id": "fiqh.yaqeen.baqaa",
@@ -84,7 +101,20 @@
           "scholar_preference": "ابن باز",
           "is_colloquial_variant": false
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "الاصل بقاء ما كان على ما كان"
+        ],
+        "quote_any": [
+          "الاصل بقاء ما كان"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "قرر الشيخ استمرار الحكم السابق استصحاباً للأصل، فالأصل بقاء ما كان على ما كان حتى يثبت المغيّر بيقين."
     },
     {
       "id": "fiqh.yaqeen.baqaa.taharah",
@@ -107,7 +137,71 @@
           "alias_text_ar": "الطهارة لا تنتقض بالشك",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "any_of": [
+          {
+            "require_groups": [
+              {
+                "any": [
+                  "تيقن الطهاره",
+                  "توضا بيقين",
+                  "علي طهارته",
+                  "سلامه الطهاره",
+                  "الاصل بقاء الطهاره",
+                  "الوضوء لا يبطل",
+                  "لا ينصرف حتي يسمع",
+                  "مس المراه"
+                ]
+              },
+              {
+                "any": [
+                  "شك",
+                  "مشكوك",
+                  "ريب",
+                  "يخيل اليه"
+                ]
+              }
+            ]
+          },
+          {
+            "require_groups": [
+              {
+                "any": [
+                  "تيقن الطهاره",
+                  "توضا بيقين",
+                  "علي طهارته",
+                  "سلامه الطهاره",
+                  "الاصل بقاء الطهاره",
+                  "الوضوء لا يبطل",
+                  "لا ينصرف حتي يسمع",
+                  "مس المراه"
+                ]
+              },
+              {
+                "any": [
+                  "سلامه الطهاره",
+                  "الاصل بقاء الطهاره"
+                ]
+              }
+            ]
+          }
+        ],
+        "quote_any": [
+          "الاصل بقاء الطهاره",
+          "سلامه الطهاره",
+          "تيقن الطهاره",
+          "لا ينصرف",
+          "لا يبطل",
+          "علي طهارته"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "preferred_alias_id": "al.taharah.1",
+        "confidence": 0.94,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "بنى الشيخ الحكم على أن الطهارة المتيقنة السابقة لا ترتفع بالشك الطارئ، فالأصل بقاء الطهارة حتى يثبت الناقض بيقين."
     },
     {
       "id": "fiqh.yaqeen.baqaa.taharah.waswas",
@@ -130,7 +224,41 @@
           "alias_text_ar": "أعرض عن الوسواس ولا تلتفت إليه",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "require_groups": [
+          {
+            "any": [
+              "وسواس",
+              "الوساوس",
+              "موسوس"
+            ]
+          },
+          {
+            "any": [
+              "لا يلتفت",
+              "يطرح",
+              "لا عمل عليه",
+              "اعرض",
+              "غير موسوس",
+              "يدع الوسواس"
+            ]
+          }
+        ],
+        "quote_any": [
+          "وسواس",
+          "لا يلتفت",
+          "يطرح",
+          "لا عمل عليه",
+          "اعرض"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "preferred_alias_id": "al.waswas.1",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "أسقط الشيخ اعتبار الشكوك المتكررة والوسواس في الطهارة وأمر بالبناء على اليقين وطرح الوساوس."
     },
     {
       "id": "fiqh.yaqeen.baqaa.hadath",
@@ -148,7 +276,23 @@
           "alias_text_ar": "الأصل بقاء الحدث حتى يتيقن الوضوء",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "تيقن الحدث وشك في الطهاره",
+          "الاصل بقاء الحدث"
+        ],
+        "quote_any": [
+          "تيقن الحدث",
+          "الاصل بقاء الحدث"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "preferred_alias_id": "al.hadath.1",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "قرر الشيخ أن من تيقن الحدث وشك في الطهارة بنى على يقين الحدث السابق، فلا يرتفع إلا بوضوء متيقن."
     },
     {
       "id": "fiqh.yaqeen.baqaa.taharah_miyab",
@@ -171,7 +315,48 @@
           "alias_text_ar": "الأصل في الثياب الطهارة",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "any_of": [
+          {
+            "require_any": [
+              "الاصل في المياه الطهاره",
+              "الاصل في الثياب الطهاره",
+              "الاصل في الارض الطهاره",
+              "الاصل في الفرش الطهاره"
+            ]
+          },
+          {
+            "require_groups": [
+              {
+                "any": [
+                  "الاصل الطهاره"
+                ]
+              },
+              {
+                "any": [
+                  "نجاسه",
+                  "ثوب",
+                  "ماء",
+                  "بقع",
+                  "رطوب"
+                ]
+              }
+            ]
+          }
+        ],
+        "quote_any": [
+          "الاصل في",
+          "الاصل الطهاره",
+          "طهاره"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "preferred_alias_id": "al.miyah.1",
+        "confidence": 0.93,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "قرر الشيخ طهارة المحل استصحاباً للأصل في الأعيان والثياب، فلا يُحكم بالنجاسة بالشك والظن حتى تُعلم بيقين."
     },
     {
       "id": "fiqh.yaqeen.baqaa.talaq",
@@ -194,7 +379,41 @@
           "alias_text_ar": "الطلاق لا يقع بالشك والظن",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "require_groups": [
+          {
+            "any": [
+              "طلاق",
+              "الطلاق"
+            ]
+          },
+          {
+            "any": [
+              "شك"
+            ]
+          },
+          {
+            "any": [
+              "بقاء النكاح",
+              "لا يقع",
+              "يبني علي اليقين",
+              "الاصل عدم"
+            ]
+          }
+        ],
+        "quote_any": [
+          "بقاء النكاح",
+          "لا يقع بالشك",
+          "يبني علي اليقين",
+          "الاصل عدم الطلاق"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "confidence": 0.94,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "قرر الشيخ بقاء عقد النكاح على أصله لتيقنه، وإلغاء الشك في وقوع الطلاق لأن اليقين لا يزول بالشك."
     },
     {
       "id": "fiqh.yaqeen.baqaa.salat_shakk",
@@ -217,7 +436,34 @@
           "alias_text_ar": "فليطرح الشك وليبن على ما استيقن",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "any_of": [
+          {
+            "require_all": [
+              "يبني علي اليقين",
+              "الاقل"
+            ]
+          },
+          {
+            "require_any": [
+              "شك هل صلي ثلاثا",
+              "شك في عدد الركعات"
+            ]
+          }
+        ],
+        "quote_any": [
+          "يبني علي اليقين",
+          "الاقل",
+          "سجود السهو",
+          "يسجد للسهو"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "أوجب الشيخ البناء على اليقين وهو الأقل وسجود السهو عند الشك في عدد الركعات دون ترجيح."
     },
     {
       "id": "fiqh.yaqeen.baqaa.sawm_nahar",
@@ -235,7 +481,35 @@
           "alias_text_ar": "الأصل بقاء الليل والأصل بقاء النهار",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "any_of": [
+          {
+            "require_all": [
+              "طلوع الفجر",
+              "غروب الشمس",
+              "شك"
+            ]
+          },
+          {
+            "require_any": [
+              "شاكا في طلوع الفجر",
+              "شاكا في غروب"
+            ]
+          }
+        ],
+        "quote_any": [
+          "طلوع الفجر",
+          "غروب الشمس",
+          "بقاء الليل",
+          "بقاء النهار"
+        ],
+        "invocation_type": "implicit_application",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "فرّق الشيخ بين الشك في الفجر فالأصل بقاء الليل وصحة الصوم، وبين الشك في الغروب فالأصل بقاء النهار وفساد الصوم."
     },
     {
       "id": "fiqh.yaqeen.baraa",
@@ -269,7 +543,22 @@
           "scholar_preference": "ابن عثيمين",
           "is_colloquial_variant": false
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "براءه الذمه",
+          "براءه ذمته"
+        ],
+        "quote_any": [
+          "براءه الذمه",
+          "براءه ذمته"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "confidence": 0.93,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "استصحب الشيخ براءة الذمة الأصلية من وجوب تكليف زائد أو ضمان حتى يثبت الشغل بدليل شرعي صحيح."
     },
     {
       "id": "fiqh.yaqeen.adam_sifat",
@@ -315,7 +604,34 @@
           "alias_text_ar": "الشك بعد الفراغ من الصلاة لا يلتفت إليه",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "require_groups": [
+          {
+            "any": [
+              "بعد الفراغ"
+            ]
+          },
+          {
+            "any": [
+              "لا يؤثر",
+              "لا يلتفت",
+              "صحيحه"
+            ]
+          }
+        ],
+        "quote_any": [
+          "بعد الفراغ",
+          "لا يلتفت",
+          "لا يؤثر"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "preferred_alias_id": "al.yaqeen.5",
+        "confidence": 0.93,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "ألغى الشيخ الشك الطارئ بعد الفراغ من العبادة، لأن الأصل تمامها وصحتها والشك الحادث بعد الفراغ لا أثر له."
     },
     {
       "id": "fiqh.yaqeen.rida_shakk",
@@ -338,7 +654,36 @@
           "alias_text_ar": "لا بد من خمس رضعات معلومات في الحولين",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "require_groups": [
+          {
+            "any": [
+              "رضاع",
+              "رضعات",
+              "ترضيع"
+            ]
+          },
+          {
+            "any": [
+              "شك",
+              "لا يثبت",
+              "خمس رضعات"
+            ]
+          }
+        ],
+        "quote_any": [
+          "رضاع",
+          "رضعات",
+          "لا يثبت بالشك",
+          "يقين"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "confidence": 0.94,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "نفى الشيخ ثبوت التحريم بالرضاع المشكوك فيه، لأن الأصل عدم التحريم حتى يثبت بيقين خمس رضعات معلومات."
     },
     {
       "id": "fiqh.mashaqqah",
@@ -379,7 +724,58 @@
           "scholar_preference": "ابن عثيمين",
           "is_colloquial_variant": false
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "any_of": [
+          {
+            "require_any": [
+              "المشقه تجلب التيسير",
+              "الحرج مرفوع"
+            ]
+          },
+          {
+            "require_all": [
+              "مدتها تطول",
+              "بخلاف الجنب"
+            ]
+          },
+          {
+            "require_any": [
+              "مشقه النزع"
+            ]
+          },
+          {
+            "require_all": [
+              "سلس",
+              "معفو عنه"
+            ]
+          },
+          {
+            "require_all": [
+              "الشقوق اليسيره",
+              "حرج"
+            ]
+          }
+        ],
+        "quote_any": [
+          "المشقه تجلب التيسير",
+          "الحرج مرفوع",
+          "مدتها تطول",
+          "مشقه النزع",
+          "معفو عنه",
+          "الشقوق اليسيره"
+        ],
+        "invocation_type_if": {
+          "contains": "المشقه تجلب",
+          "then": "explicit_verbatim",
+          "else": "implicit_application"
+        },
+        "invocation_type": "implicit_application",
+        "confidence": 0.9,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "علّل الشيخ التيسير والتخفيف برفع المشقة والحرج العارض عن المكلف، لأن المشقة تجلب التيسير في الشريعة."
     },
     {
       "id": "fiqh.mashaqqah.idha_daqa",
@@ -409,7 +805,42 @@
           "alias_text_ar": "إذا كان يضره الماء يتيمم",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_groups": [
+          {
+            "any": [
+              "يضره الماء",
+              "يضر قدميك",
+              "يضر",
+              "العاجز عن استعمال الماء",
+              "البرد شديدا",
+              "خطر في صحتك",
+              "تيمم عن محل الجرح",
+              "مسح الجبيره"
+            ]
+          },
+          {
+            "any": [
+              "تيمم",
+              "التيمم",
+              "يكفيك التيمم"
+            ]
+          }
+        ],
+        "quote_any": [
+          "يضره الماء",
+          "يضر",
+          "العاجز عن استعمال الماء",
+          "تيمم",
+          "التيمم"
+        ],
+        "invocation_type": "implicit_application",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "أجاز الشيخ التيمم أو المسح على الجبيرة دفعاً لضرر استعمال الماء عند المرض أو الجرح الشديد، إعمالاً لضابط تيمم المريض."
     },
     {
       "id": "fiqh.mashaqqah.maysur",
@@ -437,7 +868,44 @@
           "alias_text_ar": "لا واجب مع العجز ولا محرم مع الضرورة",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "any_of": [
+          {
+            "require_any": [
+              "الميسور لا يسقط بالمعسور"
+            ]
+          },
+          {
+            "require_all": [
+              "يصلي قاعدا",
+              "عجز"
+            ]
+          },
+          {
+            "require_all": [
+              "يومئ",
+              "عجز"
+            ]
+          }
+        ],
+        "quote_any": [
+          "الميسور لا يسقط",
+          "يصلي قاعدا",
+          "يومئ",
+          "بما استطاع"
+        ],
+        "invocation_type_if": {
+          "contains": "الميسور لا يسقط",
+          "then": "explicit_verbatim",
+          "else": "implicit_application"
+        },
+        "invocation_type": "implicit_application",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "أوجب الشيخ الإتيان بالمقدور عليه من العبادة وسقوط ما عجز عنه المكلف، لأن الميسور لا يسقط بالمعسور."
     },
     {
       "id": "fiqh.mashaqqah.darurat",
@@ -460,7 +928,22 @@
           "alias_text_ar": "الضرورات تبيح المحظورات",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "الضرورات تبيح المحظورات",
+          "الضروره تبيح"
+        ],
+        "quote_any": [
+          "الضرورات تبيح",
+          "الضروره تبيح"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "رخّص الشيخ في ارتكاب المحظور استثناءً لحال الضرورة الملجئة، مؤصلاً على قاعدة: الضرورات تبيح المحظورات."
     },
     {
       "id": "fiqh.darar",
@@ -478,7 +961,44 @@
           "alias_text_ar": "لا ضرر ولا ضرار",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "any_of": [
+          {
+            "require_any": [
+              "الضرر يزال",
+              "لا ضرر ولا ضرار"
+            ]
+          },
+          {
+            "require_groups": [
+              {
+                "any": [
+                  "يضر ضررا كبيرا"
+                ]
+              },
+              {
+                "any": [
+                  "دخان",
+                  "قات",
+                  "خمر",
+                  "مخدر"
+                ]
+              }
+            ]
+          }
+        ],
+        "quote_any": [
+          "الضرر يزال",
+          "لا ضرر ولا ضرار",
+          "يضر ضررا"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "قضى الشيخ بالمنع والتحريم دفعاً للضرر المتحقق، استناداً إلى القاعدة الكلية بأن الضرر يزال شرعاً."
     },
     {
       "id": "fiqh.darar.daf_mafsadah",
@@ -496,7 +1016,22 @@
           "alias_text_ar": "دفع المضار مقدم على جلب المصالح",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "درء المفاسد",
+          "دفع المفسده"
+        ],
+        "quote_any": [
+          "درء المفاسد",
+          "دفع المفسده"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "قدّم الشيخ درء المفسدة المترتبة على الفعل على جلب المصلحة، إعمالاً لقاعدة درء المفاسد مقدم على جلب المصالح."
     },
     {
       "id": "fiqh.maqasid",
@@ -524,7 +1059,36 @@
           "alias_text_ar": "على حسب نيته وقصده",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "any_of": [
+          {
+            "require_any": [
+              "الامور بمقاصدها",
+              "النيه تكفي عن الجميع",
+              "اذا نوى الجميع كفى",
+              "مدار الاعمال على النيات"
+            ]
+          },
+          {
+            "require_all": [
+              "اغتسل",
+              "ناويا الحدثين"
+            ]
+          }
+        ],
+        "quote_any": [
+          "الامور بمقاصدها",
+          "النيه تكفي",
+          "نوى الجميع",
+          "ناويا الحدثين"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "ناط الشيخ الحكم بنية المكلف وقصده في العبادة وإجزاء العمل الواحد بالنية الجامعة، عملاً بقاعدة: الأمور بمقاصدها."
     },
     {
       "id": "fiqh.maqasid.talaq_kinayah",
@@ -547,7 +1111,38 @@
           "alias_text_ar": "حكمه حكم اليمين إذا لم يقصد إيقاع الطلاق",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "require_groups": [
+          {
+            "any": [
+              "طلاق",
+              "الحقي باهلك",
+              "يمين الطلاق",
+              "كنايه"
+            ]
+          },
+          {
+            "any": [
+              "يرجع الي نيته",
+              "ان نوى",
+              "ان كان اراد",
+              "حسب نيته"
+            ]
+          }
+        ],
+        "quote_any": [
+          "نيته",
+          "ان نوى",
+          "اراد",
+          "قصده"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "ردّ الشيخ حكم كنايات الطلاق وأيمان التهديد إلى نية المتكلم وقصده، فإن نوى الطلاق وقع وإلا كان يميناً مكفراً."
     },
     {
       "id": "fiqh.maqasid.uqud",
@@ -565,7 +1160,24 @@
           "alias_text_ar": "الحيل لا تبيح المحرمات",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "العبره في العقود بالمقاصد",
+          "العبره بالمعاني",
+          "حقيقه العقد"
+        ],
+        "quote_any": [
+          "العبره في العقود",
+          "المقاصد",
+          "المعاني"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "حكم الشيخ بناءً على حقيقة العقد ومقصده الاقتصادي لا على ظاهره اللفظي، فالعبرة في العقود بالمقاصد والمعاني."
     },
     {
       "id": "fiqh.maqasid.wasail",
@@ -606,7 +1218,30 @@
           "alias_text_ar": "بالمعروف على حسب العرف والعادة",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "العرف",
+          "في عرف الناس",
+          "المعروف بين الناس",
+          "عاده النساء",
+          "عادتها المعروفه",
+          "جمله العاده"
+        ],
+        "quote_any": [
+          "العرف",
+          "عاده النساء",
+          "عادتها المعروفه",
+          "جمله العاده",
+          "في عرف الناس",
+          "المعروف بين الناس"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "confidence": 0.9,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "أحال الشيخ في تقدير المسألة وضبطها إلى العرف والعادة المطردة، استناداً إلى قاعدة العادة محكمة."
     },
     {
       "id": "fiqh.dabit.qard_naf",
@@ -624,7 +1259,34 @@
           "alias_text_ar": "كل قرض جر منفعة فهو ربا",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "require_groups": [
+          {
+            "any": [
+              "قرض",
+              "سلف"
+            ]
+          },
+          {
+            "any": [
+              "جر نفعا",
+              "منفعه مشروطه",
+              "كل قرض جر"
+            ]
+          }
+        ],
+        "quote_any": [
+          "جر نفعا",
+          "قرض",
+          "ربا"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "confidence": 0.96,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "حرّم الشيخ اشتراط المنفعة أو الزيادة في القرض، لأن كل قرض جر نفعاً مشروطاً فهو ربا محرم."
     },
     {
       "id": "fiqh.dabit.jahalah_nisyan",
@@ -664,7 +1326,53 @@
           "scholar_preference": "ابن عثيمين",
           "is_colloquial_variant": false
         }
-      ]
+      ],
+      "match": {
+        "context": "combined",
+        "require_groups": [
+          {
+            "any": [
+              "ناسيا",
+              "ناسيه",
+              "نسيت",
+              "جاهلا",
+              "جاهله",
+              "مكرها"
+            ]
+          },
+          {
+            "any": [
+              "لا اثم عليه ولا كفاره",
+              "لا فديه",
+              "معفو عنه",
+              "لا شيء عليه"
+            ]
+          },
+          {
+            "any": [
+              "محظور",
+              "اكل",
+              "صيام",
+              "احرام",
+              "طيب",
+              "شجر"
+            ]
+          }
+        ],
+        "quote_any": [
+          "ناسيا",
+          "ناسيه",
+          "جاهلا",
+          "جاهله",
+          "لا شيء عليه",
+          "لا كفاره",
+          "لا فديه"
+        ],
+        "invocation_type": "explicit_paraphrase",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "أسقط الشيخ الإثم والكفارة عن ارتكاب المحظور نسياناً أو جهلاً، إعمالاً لضابط عفو الشريعة عن الخطأ والنسيان."
     },
     {
       "id": "usul.adillah.sunnah",
@@ -676,7 +1384,24 @@
       "summary_ar": "ما ثبت عن النبي ﷺ من قول أو فعل أو تقرير فهو وحي تشريعي يجب العمل به.",
       "textual_evidence_ar": "قوله تعالى: ﴿وَمَا آتَاكُمُ الرَّسُولُ فَخُذُوهُ﴾.",
       "matching_guardrail": "لا تربط بها لمجرد استشهاد الشيخ بحديث نبوي؛ بل اربط بها فقط عند الرد على من ينكر حجية السنة.",
-      "aliases": []
+      "aliases": [],
+      "match": {
+        "context": "answer",
+        "confidence": 0.9,
+        "difficulty": "advanced"
+      },
+      "explanation_template_ar": "ناقش الشيخ حجية السنة وخبر الآحاد بوصفها مستنداً أصولياً للحكم لا مجرد رواية واقعة.",
+      "epistemic_markers": [
+        "خبر الواحد",
+        "خبر الآحاد",
+        "أخبار الآحاد",
+        "حديث الآحاد",
+        "أحاديث الآحاد",
+        "حجية السنة",
+        "السنة حجة",
+        "منكر السنة",
+        "القرآنيين"
+      ]
     },
     {
       "id": "usul.adillah.sunnah.khabar_wahid",
@@ -699,6 +1424,19 @@
           "alias_text_ar": "حديث الآحاد الصحيح حجة في العقائد والأحكام",
           "scholar_preference": "ابن باز"
         }
+      ],
+      "match": {
+        "context": "answer",
+        "confidence": 0.9,
+        "difficulty": "advanced"
+      },
+      "explanation_template_ar": "أصّل الشيخ على حجية خبر الواحد وكونه طريقاً شرعياً لإثبات الحكم.",
+      "epistemic_markers": [
+        "خبر الواحد",
+        "خبر الآحاد",
+        "أخبار الآحاد",
+        "حديث الآحاد",
+        "أحاديث الآحاد"
       ]
     },
     {
@@ -740,7 +1478,32 @@
           "alias_text_ar": "العبرة بما روى الصحابي لا بما رأى",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "any_of": [
+          {
+            "require_any": [
+              "العبره بما روى الصحابي"
+            ]
+          },
+          {
+            "require_all": [
+              "روى",
+              "رايه",
+              "الحديث المرفوع"
+            ]
+          }
+        ],
+        "quote_any": [
+          "العبره بما روى",
+          "المرفوع"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.98,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "قدّم الشيخ رواية الصحابي المرفوعة على فتواه واجتهاده؛ إعمالاً لقاعدة أن العبرة بما روى الراوي لا بما رأى."
     },
     {
       "id": "usul.adillah.ijma",
@@ -763,6 +1526,24 @@
           "alias_text_ar": "لا يجوز خرق الإجماع",
           "scholar_preference": "ابن باز"
         }
+      ],
+      "match": {
+        "context": "answer",
+        "confidence": 0.9,
+        "difficulty": "advanced"
+      },
+      "explanation_template_ar": "أسس الشيخ الحكم على حجية الإجماع بوصفه دليلاً قطعياً لا تجوز مخالفته.",
+      "epistemic_markers": [
+        "حجة قطعية",
+        "تحرم مخالفته",
+        "يخرق",
+        "خرق الإجماع",
+        "حجية الإجماع",
+        "الإجماع حجة",
+        "مخالفة الإجماع",
+        "خالف الإجماع",
+        "لا تجتمع أمتي",
+        "انعقد الإجماع"
       ]
     },
     {
@@ -820,7 +1601,32 @@
           "scholar_preference": "ابن باز",
           "is_colloquial_variant": true
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "any_of": [
+          {
+            "require_any": [
+              "الاصل في العبادات التوقيف",
+              "العبادات توقيفيه"
+            ]
+          },
+          {
+            "require_all": [
+              "الاصل في العباده",
+              "توقيف"
+            ]
+          }
+        ],
+        "quote_any": [
+          "توقيف",
+          "الاصل في العبادات"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "قرر الشيخ المنع من هذا العمل لأن الأصل في العبادات التوقيف، فلا يشرع التعبد إلا بما ثبت بنص صحيح."
     },
     {
       "id": "usul.adillah.istishab.tawqeef_ibadat.takhsis",
@@ -843,7 +1649,24 @@
           "alias_text_ar": "تخصيص يوم أو ليلة بعبادة لم يرد بها دليل بدعة",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "تخصيص",
+          "تخصيص يوم",
+          "تخصيص رجب",
+          "بدعه اضافيه"
+        ],
+        "quote_any": [
+          "تخصيص",
+          "بدعه"
+        ],
+        "invocation_type": "implicit_application",
+        "confidence": 0.9,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "حكم الشيخ ببدعية تقييد العبادة بزمان أو هيئة لم يرد بها الشرع، لأن تخصيص العبادة المطلقة بغير دليل بدعة إضافية."
     },
     {
       "id": "usul.adillah.istishab.ibaha_muamalat",
@@ -876,7 +1699,27 @@
           "alias_text_ar": "المسلمون على شروطهم إلا شرطاً أحل حراماً أو حرم حلالاً",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "الاصل في المعاملات الحل",
+          "الاصل في الاشياء الاباحه",
+          "الاصل في العادات الاباحه",
+          "الاصل في الاطعمه الحل",
+          "الاصل في اللباس الحل",
+          "الاصل فيها الحل"
+        ],
+        "quote_any": [
+          "الاصل في",
+          "الاباحه",
+          "الحل"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.94,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "استصحب الشيخ أصل الإباحة والحل في المعاملات والأعيان حتى يثبت دليل التحريم والمنع."
     },
     {
       "id": "usul.alfaz.umum",
@@ -894,7 +1737,22 @@
           "alias_text_ar": "حمل العام على عمومه حتى يرد المخصص",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "اللفظ عام",
+          "يبقي العام علي عمومه"
+        ],
+        "quote_any": [
+          "اللفظ عام",
+          "يبقي العام"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "أجرى الشيخ النص الشرعي على عمومه الشامل لجميع الأفراد لعدم وجود المخصص المخرج."
     },
     {
       "id": "usul.alfaz.umum.sabab",
@@ -906,7 +1764,20 @@
       "summary_ar": "ورود النص الشرعي العام بسبب واقعة خاصة أو سؤال معين لا يقصر حكمه على تلك الواقعة بل يعم كل ما شمله اللفظ.",
       "textual_evidence_ar": "تعميم آيات الظهار واللعان وأحاديث الأحكام الواردة على أسباب خاصة.",
       "matching_guardrail": "يربط بها عندما يسأل السائل هل الحديث أو الآية خاصة بمن نزلت فيه أو وردت بسببه.",
-      "aliases": []
+      "aliases": [],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "العبره بعموم اللفظ لا بخصوص السبب"
+        ],
+        "quote_any": [
+          "العبره بعموم اللفظ"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "عمم الشيخ حكم النص على جميع الوقائع، إعمالاً لقاعدة أن العبرة بعموم اللفظ لا بخصوص السبب."
     },
     {
       "id": "usul.alfaz.umum.sabab.istifsal",
@@ -918,7 +1789,20 @@
       "summary_ar": "إذا سئل النبي ﷺ عن واقعة تحتمل عدة أحوال فأجاب بحكم مطلق دون أن يستفصل عن التفاصيل، دل على عموم الحكم لجميع الأحوال.",
       "textual_evidence_ar": "قاعدة الشافعي المشهورة في استنباط العموم من ترك الاستفصال.",
       "matching_guardrail": "يربط بها عندما يعلل الشيخ عموم الحكم بأن النبي ﷺ لم يستفصل من السائل.",
-      "aliases": []
+      "aliases": [],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "ترك الاستفصال"
+        ],
+        "quote_any": [
+          "ترك الاستفصال"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "استنبط الشيخ عموم الحكم من ترك النبي ﷺ للاستفصال في واقعة الحال مع قيام الاحتمال."
     },
     {
       "id": "usul.alfaz.nahy",
@@ -941,7 +1825,23 @@
           "alias_text_ar": "الأصل في النهي التحريم",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "الاصل في النهي التحريم",
+          "النهي يقتضي التحريم",
+          "النهي يقتضي الفساد"
+        ],
+        "quote_any": [
+          "الاصل في النهي",
+          "النهي يقتضي"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "استدل الشيخ بالنهي المطلق على تحريم الفعل واقتضائه البطلان، لأن الأصل في النهي التحريم والفساد."
     },
     {
       "id": "usul.alfaz.amr_wujub",
@@ -964,7 +1864,22 @@
           "alias_text_ar": "الأصل في الأمر الوجوب",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "الاصل في الامر الوجوب",
+          "الامر يقتضي الوجوب"
+        ],
+        "quote_any": [
+          "الاصل في الامر",
+          "يقتضي الوجوب"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "حمل الشيخ الأمر الوارد في النص على الوجوب العيني، لأن الأصل في الأمر المطلق اقتضاء الوجوب."
     },
     {
       "id": "usul.ahkam.ma_la_yatimmu_wajib",
@@ -976,7 +1891,22 @@
       "summary_ar": "كل وسيلة أو مقدمة يتوقف عليها أداء الواجب الشرعي وهي في مقدور المكلف تصير واجبة تبعاً له.",
       "textual_evidence_ar": "وجوب غسل جزء من الرأس أو العضد لتحقق استيعاب الوجه واليدين في الوضوء.",
       "matching_guardrail": "يربط بها في إيجاب مقدمات الواجب ووسائله المتوقف عليها.",
-      "aliases": []
+      "aliases": [],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "ما لا يتم الواجب الا به",
+          "لا يتم الواجب الا"
+        ],
+        "quote_any": [
+          "ما لا يتم الواجب",
+          "لا يتم الواجب الا"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "أوجب الشيخ هذا الفعل التبعي لإكمال الواجب الأصلي؛ إعمالاً لقاعدة أن ما لا يتم الواجب المطلق إلا به فهو واجب."
     },
     {
       "id": "usul.ahkam.la_taah_makhluq",
@@ -994,7 +1924,22 @@
           "alias_text_ar": "إنما الطاعة في المعروف",
           "scholar_preference": "ابن باز"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "لا طاعه لمخلوق",
+          "معصيه الخالق"
+        ],
+        "quote_any": [
+          "لا طاعه لمخلوق",
+          "معصيه الخالق"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.98,
+        "difficulty": "beginner"
+      },
+      "explanation_template_ar": "حرّم الشيخ إطاعة المخلوق في معصية الخالق، تأصيلاً لقاعدة: لا طاعة لمخلوق في معصية الخالق."
     },
     {
       "id": "usul.taarud.jam_muqaddam",
@@ -1017,7 +1962,22 @@
           "alias_text_ar": "لا تعارض بين نصين صحيحين",
           "scholar_preference": "ابن عثيمين"
         }
-      ]
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "الجمع بين الدليلين",
+          "اعمال الدليلين"
+        ],
+        "quote_any": [
+          "الجمع بين الدليلين",
+          "اعمال الدليلين"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.94,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "سلك الشيخ مسلك الجمع والتوفيق بين النصين دفعاً للتعارض، لأن إعمال الدليلين أولى من إهمال أحدهما."
     }
   ],
   "relations": [
@@ -1056,6 +2016,30 @@
       "target_id": "usul.adillah.istishab.ibaha_muamalat",
       "relation_type": "contrast_pair",
       "explanation_ar": "التفريق الأصولي الجوهري بين باب العبادات (التوقيف والمنع إلا بدليل) وباب المعاملات والعادات (الإباحة إلا بدليل)."
+    }
+  ],
+  "grounding_skips": [
+    {
+      "id": "pregnant_divorce_hikmah",
+      "skip_reason": "HIKMAH_NOT_ISTISHAB",
+      "fatwa_ids": [
+        "baz-2"
+      ],
+      "question_any": [
+        "تطلق وهي حامل"
+      ],
+      "answer_any": [
+        "بقاء النكاح"
+      ]
+    },
+    {
+      "id": "nail_trimming_permanence",
+      "skip_reason": "NAIL_TRIMMING_PERMANENCE",
+      "answer_all": [
+        "اظافر",
+        "بقائه",
+        "فطره"
+      ]
     }
   ]
 }

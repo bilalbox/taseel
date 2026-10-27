@@ -11,11 +11,14 @@ ignore = ["E402", "E741"]
 max-complexity = 15
 
 [tool.ruff.lint.per-file-ignores]
-"pipeline/src/takhrij_engine.py" = ["C901", "SIM102"]
-"pipeline/src/extractor.py" = ["C901", "SIM102"]
 "pipeline/src/llm_batch_enrich.py" = ["C901", "SIM102"]
 "pipeline/src/compile_sqlite.py" = ["C901"]
 "pipeline/src/run_chapter_takhrij.py" = ["C901"]
+"pipeline/src/grounding.py" = ["C901"]
+
+[tool.pytest.ini_options]
+testpaths = ["pipeline/tests"]
+pythonpath = ["pipeline/src"]
 
 [tool.basedpyright]
 typeCheckingMode = "standard"

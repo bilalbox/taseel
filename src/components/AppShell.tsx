@@ -22,7 +22,7 @@ import type {
 import { chapterLabelAr } from "../utils/arabic";
 import { BrowseIndex } from "./BrowseIndex";
 import { FatwaReader } from "./FatwaReader";
-import { QuizPane } from "./QuizPane";
+import { QuizPane, quizPaneRemountKey } from "./QuizPane";
 
 export interface AppShellProps {
 	fatwas: Fatwa[];
@@ -455,6 +455,7 @@ export const AppShell: React.FC<AppShellProps> = ({
 				>
 					{mode === "quiz" ? (
 						<QuizPane
+							key={quizPaneRemountKey(activeFatwa?.id, currentPrinciple?.id)}
 							fatwa={activeFatwa}
 							principle={currentPrinciple}
 							fatwaPrinciple={selectedFatwaPrinciple}

@@ -12,6 +12,7 @@
 			"!!**/dist",
 			"!!**/node_modules",
 			"!!**/.wrangler",
+			"!!**/pnpm-lock.yaml",
 			"!!.rev-dep.baseline.json",
 			"!!.rev-dep.duplicates.json",
 			"!prototype-data-model.html",
