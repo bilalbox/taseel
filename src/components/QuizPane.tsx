@@ -13,15 +13,7 @@ export interface QuizPaneProps {
   lastAttempt?: { isCorrect: boolean; selectedId: string; timestamp: number };
   totalGroundedCount?: number;
   answeredCount?: number;
-  onRecordQuizAttempt?: (
-    fatwaId: string,
-    principleId: string,
-    selectedId: string,
-    isCorrect: boolean,
-    timeSpentMs: number
-  ) => void;
   onNextQuestion?: () => void;
-  onResetProgress?: () => void;
 }
 
 export const QuizPane: React.FC<QuizPaneProps> = ({
@@ -32,9 +24,7 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
   lastAttempt: propLastAttempt,
   totalGroundedCount: propTotalGroundedCount,
   answeredCount: propAnsweredCount,
-  onRecordQuizAttempt: propOnRecordQuizAttempt,
   onNextQuestion: propOnNextQuestion,
-  onResetProgress: propOnResetProgress,
 }) => {
   const learner = useLearnerProgress();
   const currentQ = learner.currentQuestion;
@@ -53,7 +43,7 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
   const answeredCount =
     propAnsweredCount !== undefined ? propAnsweredCount : learner.stats.answeredCount;
   const handleNextQuestion = propOnNextQuestion || (() => learner.nextQuestion());
-  const handleResetProgress = propOnResetProgress || (() => learner.resetProgress());
+  const handleResetProgress = () => learner.resetProgress();
 
   const [selectedQuizChoice, setSelectedQuizChoice] = useState<string | null>(null);
   const [hasSubmittedQuiz, setHasSubmittedQuiz] = useState(false);
@@ -119,17 +109,7 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
     if (hasSubmittedQuiz || !selectedQuizChoice || !fatwa || !principle) return;
     setHasSubmittedQuiz(true);
     const duration = Date.now() - quizStartTime;
-    if (propOnRecordQuizAttempt) {
-      propOnRecordQuizAttempt(
-        fatwa.id,
-        principle.id,
-        selectedQuizChoice,
-        selectedQuizChoice === principle.id,
-        duration
-      );
-    } else {
-      learner.recordAttempt(selectedQuizChoice, duration);
-    }
+    learner.recordAttempt(selectedQuizChoice, duration);
   };
 
   const handleRetry = () => {

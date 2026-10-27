@@ -8,11 +8,9 @@ import {
   FatwaSummary,
   Principle,
   Scholar,
-  UserState,
 } from '../types';
 import { chapterLabelAr } from '../utils/arabic';
 import { toFatwaSummary } from '../data/mockArchiveAdapter';
-import { AnsweredQuestionsMap } from '../utils/quizTracker';
 import { FatwaReader } from './FatwaReader';
 import { QuizPane } from './QuizPane';
 import { BrowseIndex } from './BrowseIndex';
@@ -28,17 +26,6 @@ export interface AppShellProps {
   onSearchLatency?: (latencyMs: number) => void;
   bootLabel?: string | null;
   opfsReady: boolean;
-  userState?: UserState;
-  answeredQuestions?: AnsweredQuestionsMap;
-  onRecordQuizAttempt?: (
-    fatwaId: string,
-    principleId: string,
-    selectedId: string,
-    isCorrect: boolean,
-    timeSpentMs: number
-  ) => void;
-  onToggleBookmark?: (fatwaId: string) => void;
-  onResetQuizProgress?: () => void;
 }
 
 export const AppShell: React.FC<AppShellProps> = ({
@@ -50,9 +37,6 @@ export const AppShell: React.FC<AppShellProps> = ({
   onSearchLatency,
   bootLabel,
   opfsReady,
-  onRecordQuizAttempt,
-  onToggleBookmark,
-  onResetQuizProgress,
 }) => {
   const learner = useLearnerProgress();
   const [mode, setMode] = useState<AppMode>('quiz');
@@ -94,10 +78,24 @@ export const AppShell: React.FC<AppShellProps> = ({
     }
   }, [learner.currentQuestion]);
 
-  const chapters = useMemo(
-    () => Array.from(new Set(fatwas.map(f => f.topic_chapter))).sort(),
-    [fatwas]
+  const [chapters, setChapters] = useState<string[]>(() =>
+    Array.from(new Set(fatwas.map(f => f.topic_chapter).filter(Boolean))).sort()
   );
+
+  useEffect(() => {
+    let cancelled = false;
+    sqliteClient
+      .getArchiveChapters()
+      .then(chs => {
+        if (!cancelled && chs && chs.length > 0) {
+          setChapters(chs);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [opfsReady]);
 
   const [browsedFatwas, setBrowsedFatwas] = useState<FatwaSummary[]>(() =>
     fatwas.map(f => toFatwaSummary(f, fatwaPrinciples))
@@ -154,7 +152,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   }, [browsedFatwas, filterUnansweredOnly, learner]);
 
   const activeFatwa =
-    activeDetail?.fatwa ||
+    activeDetail ||
     fatwas.find(f => f.id === activeFatwaId) ||
     (displayFatwas[0] as Fatwa | undefined) ||
     fatwas[0];

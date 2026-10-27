@@ -127,9 +127,6 @@ describe('MockArchiveAdapter', () => {
       expect(detail!.question_text).toBeTruthy();
       expect(detail!.answer_text).toBeTruthy();
 
-      expect(detail!.fatwa).toBeDefined();
-      expect(detail!.fatwa.id).toBe('fatwa-101');
-
       expect(Array.isArray(detail!.principles)).toBe(true);
       expect(detail!.principles.length).toBe(1);
       expect(detail!.principles[0].id).toBe('principle-yaqeen');
@@ -143,6 +140,17 @@ describe('MockArchiveAdapter', () => {
     it('returns null for an invalid id', async () => {
       const detail = await mockArchiveAdapter.getFatwaDetail('non-existent-id');
       expect(detail).toBeNull();
+    });
+  });
+
+  describe('getArchiveChapters', () => {
+    it('returns sorted unique non-empty archive chapters', async () => {
+      const chapters = await mockArchiveAdapter.getArchiveChapters();
+      expect(Array.isArray(chapters)).toBe(true);
+      expect(chapters.length).toBeGreaterThan(0);
+      expect(chapters.every(c => typeof c === 'string' && c.trim().length > 0)).toBe(true);
+      const sorted = [...chapters].sort();
+      expect(chapters).toEqual(sorted);
     });
   });
 });

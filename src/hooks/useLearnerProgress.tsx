@@ -14,7 +14,7 @@ export interface UseLearnerProgressReturn {
   stats: LearnerStats;
   isBookmarked: (fatwaId: string) => boolean;
   recordAttempt: (selectedId: string, timeSpentMs: number) => Promise<UserQuizHistoryItem | null>;
-  nextQuestion: (filter?: { scholar?: Scholar | 'ALL'; chapter?: string }) => void;
+  nextQuestion: (filter?: { scholar?: Scholar | 'ALL'; chapter?: string }) => Promise<void> | void;
   toggleBookmark: (fatwaId: string) => Promise<boolean>;
   resetProgress: () => Promise<void>;
   selectQuestion: (fatwaId: string, principleId?: string | null) => void;

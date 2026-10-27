@@ -81,7 +81,6 @@ export interface BrowseFatwasResult {
 export interface FatwaDetail extends Fatwa {
   principles: Principle[];
   fatwaPrinciples: FatwaPrinciple[];
-  fatwa: Fatwa;
 }
 
 export interface RandomQuizQuestionParams {
@@ -96,6 +95,7 @@ export interface ArchiveQueryAdapter {
   browseFatwas(params?: BrowseFatwasParams): Promise<BrowseFatwasResult>;
   getFatwaDetail(id: string): Promise<FatwaDetail | null>;
   getRandomQuizQuestion(params?: RandomQuizQuestionParams): Promise<QuizQuestionItem | null>;
+  getArchiveChapters(): Promise<string[]>;
 }
 
 export type AppMode = 'quiz' | 'browse';

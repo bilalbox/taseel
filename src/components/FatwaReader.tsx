@@ -16,7 +16,6 @@ interface FatwaReaderProps {
   isBookmarked?: boolean;
   /** Hide linked-principle chips in quiz mode so they do not spoil the answer. */
   showExtractedPrinciples?: boolean;
-  onToggleBookmark?: (fatwaId: string) => void;
   onSelectPrinciple: (principleId: string) => void;
 }
 
@@ -28,7 +27,6 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
   activePrincipleId,
   isBookmarked: propIsBookmarked,
   showExtractedPrinciples = true,
-  onToggleBookmark: propOnToggleBookmark,
   onSelectPrinciple,
 }) => {
   const learner = useLearnerProgress();
@@ -56,7 +54,7 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
     };
   }, [targetId]);
 
-  const activeFatwa = detail?.fatwa || detail || fatwa;
+  const activeFatwa = detail || fatwa;
   const activePrinciples =
     detail?.principles && detail.principles.length > 0 ? detail.principles : principles;
   const activeFatwaPrinciples =
@@ -73,11 +71,7 @@ export const FatwaReader: React.FC<FatwaReaderProps> = ({
 
   const handleToggleBookmark = () => {
     if (!activeFatwa) return;
-    if (propOnToggleBookmark) {
-      propOnToggleBookmark(activeFatwa.id);
-    } else {
-      learner.toggleBookmark(activeFatwa.id);
-    }
+    learner.toggleBookmark(activeFatwa.id);
   };
 
   if (!activeFatwa) {

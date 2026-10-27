@@ -15,7 +15,12 @@ import type {
   TopicDomain,
 } from '../types';
 import { mockArchiveAdapter } from '../data/mockArchiveAdapter';
-import { executeBrowseFatwas, executeGetRandomQuizQuestion } from '../data/archiveQuery';
+import {
+  executeBrowseFatwas,
+  executeGetRandomQuizQuestion,
+  mapCategory,
+  usableAudioUrl,
+} from '../data/archiveQuery';
 
 export interface ManifestData {
   version: string;
@@ -75,19 +80,6 @@ function postProgress(stage: string, bytesProcessed = 0, totalExpected = 0, deta
       detail
     });
   }
-}
-
-/** Drop dead IA placeholder URLs (`noor-ala-al-darb-samples` never existed). */
-function usableAudioUrl(
-  ...candidates: Array<any>
-): string | undefined {
-  for (const c of candidates) {
-    if (c == null) continue;
-    const s = String(c).trim();
-    if (!s || s.includes('archive.org')) continue;
-    return s;
-  }
-  return undefined;
 }
 
 function fatwasHasAudioUrlColumn(database: Database): boolean {
@@ -238,12 +230,6 @@ async function initEngines() {
   const payload = loadInitialUiPayload(manifest, bootMs);
   postProgress('READY', manifest?.uncompressed_bytes ?? 0, manifest?.uncompressed_bytes ?? 0, 'جاهز للعمل بدون اتصال (100% Offline)');
   return payload;
-}
-
-function mapCategory(science: string, kind: string): 'fiqhiyyah' | 'usuliyyah' | 'dabit' {
-  if (kind.startsWith('dabit')) return 'dabit';
-  if (science === 'usul') return 'usuliyyah';
-  return 'fiqhiyyah';
 }
 
 function loadInitialUiPayload(manifest: ManifestData | null, bootMs: number) {
@@ -441,63 +427,44 @@ function getFatwaDetailWorker(id: string): FatwaDetail | null {
 
   return {
     ...fatwa,
-    fatwa,
     principles,
     fatwaPrinciples,
   };
 }
 
-function searchFatwasFts(rawQuery: string, limit = 80) {
+function getArchiveChaptersWorker(): string[] {
   if (!db) throw new Error('Database not initialized');
-  const t0 = performance.now();
-  const norm = normalizeArabic(rawQuery);
-  if (!norm) {
-    return { fatwas: [], latencyMs: 0 };
-  }
-
-  // Construct safe FTS5 token prefix query
-  const ftsQuery = norm
-    .split(/\s+/)
-    .filter(Boolean)
-    .map(tok => `"${tok.replace(/"/g, '')}"*`)
-    .join(' AND ');
-
   const rows = db.selectObjects(
-    `
-    SELECT f.id, f.episode_id, f.scholar_name, f.question_text, f.answer_text,
-           f.topic_domain, f.topic_chapter, f.topic_subtopic, f.audio_start_sec,
-           f.audio_url AS fatwa_audio_url,
-           e.episode_number, e.audio_url AS episode_audio_url
-    FROM fatwas_fts fts
-    JOIN fatwas f ON f.rowid = fts.rowid
-    JOIN episodes e ON e.id = f.episode_id
-    WHERE fatwas_fts MATCH ?
-    LIMIT ?
-    `,
-    [ftsQuery, limit]
+    "SELECT DISTINCT topic_chapter FROM fatwas WHERE topic_chapter IS NOT NULL AND topic_chapter != '' ORDER BY topic_chapter"
   );
+  return rows.map((r: any) => String(r.topic_chapter));
+}
 
-  const fatwas = rows.map((r: any) => {
-    const clip = usableAudioUrl(r.fatwa_audio_url, r.episode_audio_url);
-    return {
-      id: String(r.id),
-      episode_id: String(r.episode_id),
-      question_text: String(r.question_text),
-      answer_text: String(r.answer_text),
-      question_norm: normalizeArabic(String(r.question_text)),
-      answer_norm: normalizeArabic(String(r.answer_text)),
-      topic_domain: String(r.topic_domain) as any,
-      topic_chapter: String(r.topic_chapter),
-      topic_subtopic: String(r.topic_subtopic || 'فتاوى نور على الدرب'),
-      scholar_name: String(r.scholar_name) as any,
-      episode_number: Number(r.episode_number || 1),
-      audio_url: clip,
-      audio_timestamp: Number(r.audio_start_sec || 0),
-    };
-  });
+function loadUserStateWorker(): { bookmarks: string[]; history: any[]; xp: number } {
+  if (!db) throw new Error('Database not initialized');
+  const bookmarkRows = db.selectObjects('SELECT fatwa_id FROM user_db.bookmarks ORDER BY created_at DESC');
+  const historyRows = db.selectObjects('SELECT * FROM user_db.quiz_attempts ORDER BY timestamp ASC');
+  const xpVal = db.selectValue("SELECT value FROM user_db.kv_meta WHERE key = 'xp'");
 
-  const latencyMs = Number((performance.now() - t0).toFixed(2));
-  return { fatwas, latencyMs };
+  const history = historyRows.map((h: any) => ({
+    id: String(h.id),
+    fatwa_id: String(h.fatwa_id),
+    principle_id: String(h.principle_id),
+    selected_principle_id: String(h.selected_principle_id),
+    is_correct: Boolean(h.is_correct),
+    timestamp: Number(h.timestamp),
+    time_spent_ms: Number(h.time_spent_ms),
+    difficulty: String(h.difficulty) as any
+  }));
+
+  const calculatedXp = history.reduce((acc, h) => acc + (h.is_correct ? 20 : 5), 0);
+  const xp = xpVal != null ? Number(xpVal) : calculatedXp;
+
+  return {
+    bookmarks: bookmarkRows.map((b: any) => String(b.fatwa_id)),
+    history,
+    xp
+  };
 }
 
 function getRandomQuizQuestionWorker(params: any = {}) {
@@ -524,8 +491,11 @@ if (typeof self !== 'undefined') {
       } else if (action === 'GET_RANDOM_QUIZ_QUESTION') {
         const result = db ? getRandomQuizQuestionWorker(payload) : await mockArchiveAdapter.getRandomQuizQuestion(payload);
         self.postMessage({ id, ok: true, result });
-      } else if (action === 'SEARCH_FATWAS') {
-        const result = searchFatwasFts(payload.query, payload.limit || 80);
+      } else if (action === 'GET_ARCHIVE_CHAPTERS') {
+        const result = db ? getArchiveChaptersWorker() : await mockArchiveAdapter.getArchiveChapters();
+        self.postMessage({ id, ok: true, result });
+      } else if (action === 'LOAD_USER_STATE') {
+        const result = db ? loadUserStateWorker() : { bookmarks: [], history: [], xp: 0 };
         self.postMessage({ id, ok: true, result });
       } else if (action === 'TOGGLE_BOOKMARK') {
         if (db) {
@@ -543,7 +513,7 @@ if (typeof self !== 'undefined') {
         self.postMessage({ id, ok: true, result: true });
       } else if (action === 'RECORD_QUIZ_ATTEMPT') {
         if (db) {
-          const { item } = payload;
+          const { item, newXp } = payload;
           db.exec({
             sql: `INSERT OR REPLACE INTO user_db.quiz_attempts
                   (id, fatwa_id, principle_id, selected_principle_id, is_correct, timestamp, time_spent_ms, difficulty)
@@ -559,11 +529,18 @@ if (typeof self !== 'undefined') {
               item.difficulty
             ]
           });
+          if (typeof newXp === 'number') {
+            db.exec({
+              sql: "INSERT OR REPLACE INTO user_db.kv_meta (key, value) VALUES ('xp', ?)",
+              bind: [String(newXp)]
+            });
+          }
         }
         self.postMessage({ id, ok: true, result: true });
       } else if (action === 'CLEAR_QUIZ_ATTEMPTS') {
         if (db) {
           db.exec('DELETE FROM user_db.quiz_attempts;');
+          db.exec("DELETE FROM user_db.kv_meta WHERE key = 'xp';");
         }
         self.postMessage({ id, ok: true, result: true });
       }

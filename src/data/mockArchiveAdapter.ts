@@ -209,7 +209,6 @@ export class MockArchiveAdapter implements ArchiveQueryAdapter {
 
     return {
       ...fatwa,
-      fatwa,
       principles,
       fatwaPrinciples: linkedFp,
     };
@@ -272,7 +271,12 @@ export class MockArchiveAdapter implements ArchiveQueryAdapter {
     };
     const contrastId = contrastPairsMap[correct_principle.id];
 
-    const otherPrinciples = this.principles.filter(p => p.id !== correct_principle.id);
+    const linkedPrincipleIds = new Set(
+      this.fatwaPrinciples
+        .filter(fp => fp.fatwa_id === fatwa.id)
+        .map(fp => fp.principle_id)
+    );
+    const otherPrinciples = this.principles.filter(p => !linkedPrincipleIds.has(p.id));
     otherPrinciples.sort((a, b) => {
       const aPriority = a.id === contrastId ? 0 : a.category === correct_principle.category ? 1 : 2;
       const bPriority = b.id === contrastId ? 0 : b.category === correct_principle.category ? 1 : 2;
@@ -308,6 +312,23 @@ export class MockArchiveAdapter implements ArchiveQueryAdapter {
       fatwa_principle,
       choices,
     };
+  }
+
+  public async getArchiveChapters(): Promise<string[]> {
+    const db = await this.ensureDb();
+    if (db) {
+      const rows = db.selectObjects(
+        "SELECT DISTINCT topic_chapter FROM fatwas WHERE topic_chapter IS NOT NULL AND topic_chapter != '' ORDER BY topic_chapter"
+      );
+      return rows.map((r: any) => String(r.topic_chapter));
+    }
+    return Array.from(
+      new Set(
+        this.fatwas
+          .map(f => f.topic_chapter)
+          .filter(ch => Boolean(ch && ch.trim()))
+      )
+    ).sort();
   }
 }
 

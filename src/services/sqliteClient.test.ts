@@ -27,4 +27,18 @@ describe('sqliteClient', () => {
     const nonExistent = await sqliteClient.getFatwaDetail('unknown-id-xyz');
     expect(nonExistent).toBeNull();
   });
+
+  it('retrieves distinct archive chapters via getArchiveChapters', async () => {
+    const chapters = await sqliteClient.getArchiveChapters();
+    expect(Array.isArray(chapters)).toBe(true);
+    expect(chapters.length).toBeGreaterThan(0);
+    expect(chapters.every(c => typeof c === 'string')).toBe(true);
+  });
+
+  it('loads user state fallback gracefully in non-worker environments', async () => {
+    const userState = await sqliteClient.loadUserState();
+    expect(userState).toHaveProperty('bookmarks');
+    expect(userState).toHaveProperty('history');
+    expect(userState).toHaveProperty('xp');
+  });
 });
