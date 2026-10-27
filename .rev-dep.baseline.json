@@ -26,6 +26,10 @@
         {
           "file": "src/tests/quizDistractors.test.ts",
           "module": "vitest"
+        },
+        {
+          "file": "src/tests/quizPaneRemount.test.ts",
+          "module": "vitest"
         }
       ],
       "orphan-files": [

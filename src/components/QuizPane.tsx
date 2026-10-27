@@ -1,6 +1,6 @@
 import { ArrowLeft, Flag, Shuffle } from "lucide-react";
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useLearnerProgress } from "../hooks/useLearnerProgress";
 import type {
 	DistractorItem,
@@ -20,6 +20,14 @@ export interface QuizPaneProps {
 	totalGroundedCount?: number;
 	answeredCount?: number;
 	onNextQuestion?: () => void;
+}
+
+/** Remount key so local reveal state clears when the active question changes. */
+export function quizPaneRemountKey(
+	fatwaId: string | undefined,
+	principleId: string | undefined,
+): string {
+	return `${fatwaId ?? ""}:${principleId ?? ""}`;
 }
 
 export const QuizPane: React.FC<QuizPaneProps> = ({
@@ -67,11 +75,10 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
 	const [quizStartTime, setQuizStartTime] = useState(() => Date.now());
 	const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
-	useEffect(() => {
-		setSelectedQuizChoice(null);
-		setHasSubmittedQuiz(false);
-		setQuizStartTime(Date.now());
-	}, []);
+	// Local reveal state resets via remount when AppShell changes the pane `key`
+	// (fatwa id + principle id). Avoid a deps-only useEffect for that reset:
+	// Biome useExhaustiveDependencies + --write strips unused ids and leaves
+	// hasSubmittedQuiz stuck after "next question".
 
 	const distractors: DistractorItem[] = useMemo(() => {
 		if (!fatwaPrinciple) return [];
