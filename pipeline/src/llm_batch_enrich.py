@@ -2,7 +2,7 @@
 Stage 3D: Resumable, Cluster-Deduplicated Structured-Output Extraction Pass (Agent-Driven).
 
 Extracts *implicit* Qawa'id Fiqhiyyah / Qawa'id Usuliyyah / chapter Dawabit from the
-fatwas that Stage 3 (`extractor.py`) could not ground deterministically.
+fatwas that Stage 3 (`ground_fatwa`) could not ground deterministically.
 
 Instead of calling an LLM API, the "model" is a coding agent working through
 file-based batches (see `pipeline/LLM_EXTRACTION_RUNBOOK.md`):
@@ -37,7 +37,6 @@ import json
 import os
 import re
 import sys
-import unicodedata
 from collections import Counter
 from collections.abc import Iterable
 from datetime import UTC, datetime
@@ -45,9 +44,10 @@ from pathlib import Path
 
 from arabic_norm import normalize_arabic
 from cluster_issues import cluster_fatwa_issues
-from extractor import extract_and_ground_fatwa
+from grounding import epistemic_markers_for, ground_fatwa
 from ingest_archives import load_full_archives
 from ontology_index import STOP_TOKENS, OntologyGraph
+from verbatim import locate_verbatim
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 PIPELINE_DIR = ROOT_DIR / "pipeline"
@@ -159,42 +159,6 @@ FATWA_RESULT_SCHEMA: dict = {
 
 # §5.1 Routine Proof Citation Guardrail: these Usul nodes may only be linked when the
 # answer discusses the *authority / epistemic weight* of the proof itself.
-_EPISTEMIC_MARKERS_RAW: dict[str, list[str]] = {
-    "usul.adillah.ijma": [
-        "حجة قطعية",
-        "تحرم مخالفته",
-        "يخرق",
-        "خرق الإجماع",
-        "حجية الإجماع",
-        "الإجماع حجة",
-        "مخالفة الإجماع",
-        "خالف الإجماع",
-        "لا تجتمع أمتي",
-        "انعقد الإجماع",
-    ],
-    "usul.adillah.sunnah": [
-        "خبر الواحد",
-        "خبر الآحاد",
-        "أخبار الآحاد",
-        "حديث الآحاد",
-        "أحاديث الآحاد",
-        "حجية السنة",
-        "السنة حجة",
-        "منكر السنة",
-        "القرآنيين",
-    ],
-    "usul.adillah.sunnah.khabar_wahid": [
-        "خبر الواحد",
-        "خبر الآحاد",
-        "أخبار الآحاد",
-        "حديث الآحاد",
-        "أحاديث الآحاد",
-    ],
-}
-EPISTEMIC_MARKERS: dict[str, list[str]] = {
-    pid: [normalize_arabic(m) for m in markers] for pid, markers in _EPISTEMIC_MARKERS_RAW.items()
-}
-
 _CLAUSE_RE = re.compile(r"[^.؛!؟\n]+")
 _CAUSAL_CLAUSE_HINTS = [
     normalize_arabic(h)
@@ -233,61 +197,6 @@ _CAUSAL_CLAUSE_HINTS = [
 
 
 # =============================================================================
-# Verbatim quote location (diacritic / punctuation / whitespace tolerant)
-# =============================================================================
-_FOLD_MAP = {"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ة": "ه", "ى": "ي", "ؤ": "ء", "ئ": "ء"}
-
-
-def _fold_with_index(text: str) -> tuple[str, list[int]]:
-    """
-    Folds text for matching (drops harakat/tatweel, unifies alef/taa/yaa/hamza, collapses
-    punctuation+whitespace into single spaces) and returns a map folded_idx -> raw_idx.
-    """
-    out: list[str] = []
-    idx: list[int] = []
-    pending_space = False
-    for i, ch in enumerate(text):
-        if ch == "\u0640" or unicodedata.category(ch) == "Mn":
-            continue
-        ch = _FOLD_MAP.get(ch, ch)
-        if ch.isalnum():
-            if pending_space and out:
-                out.append(" ")
-                idx.append(i)
-            pending_space = False
-            out.append(ch.lower())
-            idx.append(i)
-        else:
-            pending_space = True
-    return "".join(out), idx
-
-
-def locate_verbatim(quote: str, answer_text: str) -> str | None:
-    """
-    Returns the exact raw substring of `answer_text` matching `quote` (tolerating
-    differences in diacritics, punctuation and whitespace), or None if absent.
-    """
-    if not quote or not quote.strip():
-        return None
-    q = quote.strip()
-    if q in answer_text:
-        return q
-    folded_q, _ = _fold_with_index(q)
-    if len(folded_q) < 8:
-        return None
-    folded_a, a_idx = _fold_with_index(answer_text)
-    pos = folded_a.find(folded_q)
-    if pos < 0:
-        return None
-    start_raw = a_idx[pos]
-    end_raw = a_idx[pos + len(folded_q) - 1] + 1
-    # Extend over trailing combining marks belonging to the last matched letter.
-    while end_raw < len(answer_text) and unicodedata.category(answer_text[end_raw]) == "Mn":
-        end_raw += 1
-    return answer_text[start_raw:end_raw]
-
-
-# =============================================================================
 # Corpus loading & eligibility
 # =============================================================================
 class Corpus:
@@ -306,20 +215,18 @@ class Corpus:
         self.eligibility: Counter = Counter()
         self.eligible_ids: set[str] = set()
         for f in fatwas:
-            res = extract_and_ground_fatwa(
-                f, self.ontology, norm_question=f["question_norm"], norm_answer=f["answer_norm"]
-            )
-            if not res["skipped"]:
+            res = ground_fatwa(f, self.ontology)
+            if not res.skipped:
                 self.eligibility["DETERMINISTICALLY_GROUNDED"] += 1
                 if include_grounded:
                     self.eligible_ids.add(f["id"])
-            elif res["skip_reason"] in (
+            elif res.skip_reason in (
                 "ROUTINE_PROOF_CITATION_ONLY",
                 "NO_CAUSAL_PRINCIPLE_DETECTED",
             ):
-                self.eligibility[f"TRIAGE_{res['skip_reason']}"] += 1
+                self.eligibility[f"TRIAGE_{res.skip_reason}"] += 1
             else:
-                self.eligibility[f"ELIGIBLE_{res['skip_reason']}"] += 1
+                self.eligibility[f"ELIGIBLE_{res.skip_reason}"] += 1
                 self.eligible_ids.add(f["id"])
 
 
@@ -785,7 +692,7 @@ def validate_fatwa_response(
         if conf < min_confidence:
             _reject(inv, "BELOW_MIN_CONFIDENCE")
             continue
-        markers = EPISTEMIC_MARKERS.get(pid)
+        markers = epistemic_markers_for(ontology, pid)
         if markers and not any(m in answer_norm for m in markers):
             _reject(inv, "ROUTINE_PROOF_CITATION")
             continue
@@ -1265,7 +1172,7 @@ def main(argv: Iterable[str] | None = None) -> None:
         p.add_argument(
             "--include-grounded",
             action="store_true",
-            help="Also send fatwas already grounded by the deterministic extractor",
+            help="Also send fatwas already grounded by the deterministic grounder",
         )
         p.add_argument("--jobs-per-batch", type=int, default=DEFAULT_JOBS_PER_BATCH)
         p.add_argument(

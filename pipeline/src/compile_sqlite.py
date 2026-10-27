@@ -20,7 +20,7 @@ from pathlib import Path
 
 from arabic_norm import normalize_arabic
 from cluster_issues import cluster_fatwa_issues
-from extractor import extract_and_ground_fatwa
+from grounding import ground_fatwa
 from ingest_archives import load_full_archives
 from llm_batch_enrich import EXTRACTIONS_PATH, load_llm_links, merge_fatwa_links
 from ontology_index import OntologyGraph
@@ -89,16 +89,11 @@ def build_content_database() -> None:
     skip_reasons = Counter()
 
     for fatwa in raw_fatwas:
-        res = extract_and_ground_fatwa(
-            fatwa,
-            ontology,
-            norm_question=fatwa["question_norm"],
-            norm_answer=fatwa["answer_norm"],
-        )
-        if res["skipped"]:
-            skip_reasons[res["skip_reason"]] += 1
+        res = ground_fatwa(fatwa, ontology)
+        if res.skipped:
+            skip_reasons[res.skip_reason or "UNKNOWN"] += 1
         else:
-            deterministic_links_by_fatwa[fatwa["id"]] = res["grounded_links"]
+            deterministic_links_by_fatwa[fatwa["id"]] = res.to_dict()["grounded_links"]
 
     print(
         f"  ✓ Deterministic pass over {len(raw_fatwas):,} fatwas in {time.perf_counter() - t_extract:.2f}s: "

@@ -8,6 +8,44 @@ from pathlib import Path
 
 from arabic_norm import normalize_arabic
 
+
+def _norm_marker_list(markers: list[str] | None) -> list[str]:
+    return [normalize_arabic(m) for m in (markers or []) if m]
+
+
+def _normalize_match_pattern(pattern: dict) -> dict:
+    out = dict(pattern)
+    if "require_any" in pattern:
+        out["require_any_norm"] = _norm_marker_list(pattern["require_any"])
+    if "require_all" in pattern:
+        out["require_all_norm"] = _norm_marker_list(pattern["require_all"])
+    if "require_groups" in pattern:
+        out["require_groups_norm"] = [
+            {"any": _norm_marker_list(g.get("any"))} for g in pattern["require_groups"]
+        ]
+    if "forbid_any" in pattern:
+        out["forbid_any_norm"] = _norm_marker_list(pattern["forbid_any"])
+    if "quote_any" in pattern:
+        out["quote_any_norm"] = _norm_marker_list(pattern["quote_any"])
+    return out
+
+
+def _normalize_match_spec(match: dict) -> dict:
+    out = _normalize_match_pattern(match)
+    if "any_of" in match:
+        out["any_of_norm"] = [_normalize_match_pattern(alt) for alt in match["any_of"]]
+    return out
+
+
+def _normalize_grounding_skip(rule: dict) -> dict:
+    out = dict(rule)
+    out["question_any_norm"] = _norm_marker_list(rule.get("question_any"))
+    out["answer_any_norm"] = _norm_marker_list(rule.get("answer_any"))
+    out["answer_all_norm"] = _norm_marker_list(rule.get("answer_all"))
+    out["fatwa_ids"] = list(rule.get("fatwa_ids") or [])
+    return out
+
+
 STOP_TOKENS: set[str] = {
     "الاصل",
     "في",
@@ -65,6 +103,9 @@ class OntologyGraph:
         self.nodes: dict[str, dict] = {}
         self.aliases: list[dict] = []
         self.relations: list[dict] = raw.get("relations", [])
+        self.grounding_skips: list[dict] = [
+            _normalize_grounding_skip(rule) for rule in raw.get("grounding_skips", [])
+        ]
 
         # 1. Index raw nodes & aliases
         for p in raw["principles"]:
@@ -90,6 +131,11 @@ class OntologyGraph:
                 t for t in norm_canonical.split() if len(t) > 2 and t not in STOP_TOKENS
             ]
 
+            match = p.get("match")
+            normalized_match = _normalize_match_spec(match) if match else None
+            epistemic_raw = p.get("epistemic_markers") or []
+            epistemic_norm = [normalize_arabic(m) for m in epistemic_raw]
+
             self.nodes[node_id] = {
                 **p,
                 "canonical_text_norm": norm_canonical,
@@ -97,6 +143,8 @@ class OntologyGraph:
                 "aliases_resolved": node_aliases,
                 "distinctive_tokens": distinctive_tokens,
                 "depth": 0,
+                "match": normalized_match,
+                "epistemic_markers_norm": epistemic_norm,
             }
 
         # 2. Validate parent_id references & compute tree depth (DAG validation)

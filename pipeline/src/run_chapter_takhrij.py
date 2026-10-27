@@ -8,7 +8,7 @@ Executes the batch lifecycle chapter-by-chapter in priority order:
 
 For each batch:
 - Exports jobs and prompt (batch_NNNN.jobs.json, batch_NNNN.prompt.md)
-- Evaluates every fatwa using takhrij_engine (batch_NNNN.response.jsonl)
+- Evaluates every fatwa via ground_fatwa (batch_NNNN.response.jsonl)
 - Validates batch (check)
 - Ingests batch into llm_extractions.jsonl and moves to done/
 """
@@ -26,6 +26,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 PIPELINE_DIR = ROOT_DIR / "pipeline"
 sys.path.insert(0, str(PIPELINE_DIR / "src"))
 
+from grounding import ground_fatwa
 from llm_batch_enrich import (
     DONE_DIR,
     EXTRACTIONS_PATH,
@@ -41,7 +42,6 @@ from llm_batch_enrich import (
     read_extraction_records,
     render_prompt,
 )
-from takhrij_engine import evaluate_fatwa
 
 CHAPTER_PRIORITY = [
     "Taharah",
@@ -116,13 +116,13 @@ def run_chapter(
 
         print(f"\n--- [{chapter}] Exported {batch_id}: {len(chunk)} jobs ({n_fatwas} fatwas) ---")
 
-        # Evaluate fatwas using takhrij_engine
+        # Evaluate fatwas with the unified deterministic grounder
         responses = []
         for job in chunk:
             cands = job["candidate_ids"]
             for f in job["fatwas"]:
-                res = evaluate_fatwa(f, cands, corpus.ontology)
-                responses.append(res)
+                res = ground_fatwa(f, corpus.ontology, candidate_ids=cands)
+                responses.append(res.to_fatwa_result())
 
         # Write response.jsonl
         with open(files["response"], "w", encoding="utf-8") as out:
