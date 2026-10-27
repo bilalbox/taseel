@@ -15,7 +15,7 @@ import type {
   TopicDomain,
 } from '../types';
 import { mockArchiveAdapter } from '../data/mockArchiveAdapter';
-import { executeBrowseFatwas } from '../data/archiveQuery';
+import { executeBrowseFatwas, executeGetRandomQuizQuestion } from '../data/archiveQuery';
 
 export interface ManifestData {
   version: string;
@@ -500,6 +500,11 @@ function searchFatwasFts(rawQuery: string, limit = 80) {
   return { fatwas, latencyMs };
 }
 
+function getRandomQuizQuestionWorker(params: any = {}) {
+  if (!db) throw new Error('Database not initialized');
+  return executeGetRandomQuizQuestion(db, params);
+}
+
 if (typeof self !== 'undefined') {
   self.onmessage = async (event: MessageEvent) => {
     const { id, action, payload } = event.data;
@@ -515,6 +520,9 @@ if (typeof self !== 'undefined') {
         self.postMessage({ id, ok: true, result });
       } else if (action === 'GET_FATWA_DETAIL') {
         const result = db ? getFatwaDetailWorker(payload?.id) : await mockArchiveAdapter.getFatwaDetail(payload?.id);
+        self.postMessage({ id, ok: true, result });
+      } else if (action === 'GET_RANDOM_QUIZ_QUESTION') {
+        const result = db ? getRandomQuizQuestionWorker(payload) : await mockArchiveAdapter.getRandomQuizQuestion(payload);
         self.postMessage({ id, ok: true, result });
       } else if (action === 'SEARCH_FATWAS') {
         const result = searchFatwasFts(payload.query, payload.limit || 80);

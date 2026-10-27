@@ -84,10 +84,18 @@ export interface FatwaDetail extends Fatwa {
   fatwa: Fatwa;
 }
 
+export interface RandomQuizQuestionParams {
+  scholar?: Scholar | 'ALL';
+  chapter?: string | 'ALL';
+  excludeFatwaIds?: string[];
+  seed?: number;
+}
+
 export interface ArchiveQueryAdapter {
   getPrinciplesTree(): Promise<PrincipleTreeNode[]>;
   browseFatwas(params?: BrowseFatwasParams): Promise<BrowseFatwasResult>;
   getFatwaDetail(id: string): Promise<FatwaDetail | null>;
+  getRandomQuizQuestion(params?: RandomQuizQuestionParams): Promise<QuizQuestionItem | null>;
 }
 
 export type AppMode = 'quiz' | 'browse';
@@ -110,17 +118,20 @@ export interface FatwaPrinciple {
   difficulty: Difficulty;
 }
 
+export interface QuizQuestionChoice {
+  id: string;
+  text: string;
+  category: PrincipleCategory;
+  is_correct: boolean;
+  explanation?: string;
+  science?: string;
+}
+
 export interface QuizQuestionItem {
   fatwa: Fatwa;
   correct_principle: Principle;
   fatwa_principle: FatwaPrinciple;
-  choices: {
-    id: string;
-    text: string;
-    category: PrincipleCategory;
-    is_correct: boolean;
-    explanation?: string;
-  }[];
+  choices: QuizQuestionChoice[];
 }
 
 export interface UserQuizHistoryItem {

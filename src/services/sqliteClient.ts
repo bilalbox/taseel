@@ -6,6 +6,8 @@ import {
   FatwaPrinciple,
   Principle,
   PrincipleTreeNode,
+  QuizQuestionItem,
+  RandomQuizQuestionParams,
   UserQuizHistoryItem,
 } from '../types';
 import type { ManifestData } from '../workers/sqlite.worker';
@@ -108,6 +110,15 @@ class SqliteWorkerClient {
       return mockArchiveAdapter.getFatwaDetail(id);
     }
     return this.call<FatwaDetail | null>('GET_FATWA_DETAIL', { id });
+  }
+
+  public getRandomQuizQuestion(
+    params: RandomQuizQuestionParams = {}
+  ): Promise<QuizQuestionItem | null> {
+    if (typeof Worker === 'undefined') {
+      return mockArchiveAdapter.getRandomQuizQuestion(params);
+    }
+    return this.call<QuizQuestionItem | null>('GET_RANDOM_QUIZ_QUESTION', params);
   }
 
   public searchFatwas(query: string, limit = 80): Promise<{ fatwas: Fatwa[]; latencyMs: number }> {

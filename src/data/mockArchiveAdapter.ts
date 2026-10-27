@@ -9,10 +9,19 @@ import {
   FatwaSummary,
   Principle,
   PrincipleTreeNode,
+  QuizQuestionChoice,
+  QuizQuestionItem,
+  RandomQuizQuestionParams,
 } from '../types';
 import { normalizeArabic } from '../utils/arabic';
 import { EPISODES_DATA, FATWA_PRINCIPLES_DATA, FATWAS_DATA, PRINCIPLES_DATA } from './mockData';
-import { createInMemoryArchiveDb, executeBrowseFatwas } from './archiveQuery';
+import {
+  createInMemoryArchiveDb,
+  executeBrowseFatwas,
+  executeGetRandomQuizQuestion,
+  mulberry32,
+  shuffleChoices,
+} from './archiveQuery';
 
 export function flattenPrinciplesTree(nodes: PrincipleTreeNode[]): PrincipleTreeNode[] {
   const result: PrincipleTreeNode[] = [];
@@ -203,6 +212,101 @@ export class MockArchiveAdapter implements ArchiveQueryAdapter {
       fatwa,
       principles,
       fatwaPrinciples: linkedFp,
+    };
+  }
+
+  public async getRandomQuizQuestion(
+    params: RandomQuizQuestionParams = {}
+  ): Promise<QuizQuestionItem | null> {
+    const db = await this.ensureDb();
+    if (db) {
+      return executeGetRandomQuizQuestion(db, params);
+    }
+
+    const {
+      scholar = 'ALL',
+      chapter = 'ALL',
+      excludeFatwaIds = [],
+      seed,
+    } = params;
+
+    const fpByFatwa = new Map<string, FatwaPrinciple>();
+    for (const fp of this.fatwaPrinciples) {
+      if (!fpByFatwa.has(fp.fatwa_id)) {
+        fpByFatwa.set(fp.fatwa_id, fp);
+      }
+    }
+
+    const principleMap = new Map<string, Principle>(this.principles.map(p => [p.id, p]));
+    const grounded: { fatwa: Fatwa; fp: FatwaPrinciple; principle: Principle }[] = [];
+
+    for (const fatwa of this.fatwas) {
+      if (scholar !== 'ALL' && fatwa.scholar_name !== scholar) continue;
+      if (chapter !== 'ALL' && fatwa.topic_chapter !== chapter) continue;
+      const fp = fpByFatwa.get(fatwa.id);
+      if (fp) {
+        const p = principleMap.get(fp.principle_id);
+        if (p) {
+          grounded.push({ fatwa, fp, principle: p });
+        }
+      }
+    }
+
+    if (grounded.length === 0) return null;
+
+    const cleanExclude = new Set((excludeFatwaIds || []).filter(Boolean));
+    const unanswered = grounded.filter(g => !cleanExclude.has(g.fatwa.id));
+    const candidatePool = unanswered.length > 0 ? unanswered : grounded;
+
+    const rng = seed !== undefined ? mulberry32(seed) : Math.random;
+    const selected = candidatePool[Math.floor(rng() * candidatePool.length)];
+    if (!selected) return null;
+
+    const correct_principle = selected.principle;
+    const fatwa_principle = selected.fp;
+    const fatwa = selected.fatwa;
+
+    const contrastPairsMap: Record<string, string> = {
+      'principle-ibaha': 'principle-tawqeef',
+      'principle-tawqeef': 'principle-ibaha',
+    };
+    const contrastId = contrastPairsMap[correct_principle.id];
+
+    const otherPrinciples = this.principles.filter(p => p.id !== correct_principle.id);
+    otherPrinciples.sort((a, b) => {
+      const aPriority = a.id === contrastId ? 0 : a.category === correct_principle.category ? 1 : 2;
+      const bPriority = b.id === contrastId ? 0 : b.category === correct_principle.category ? 1 : 2;
+      return aPriority - bPriority;
+    });
+
+    const distractorRows = otherPrinciples.slice(0, 3);
+    const distractorChoices: QuizQuestionChoice[] = distractorRows.map(d => ({
+      id: d.id,
+      text: d.canonical_text_ar,
+      category: d.category,
+      science: d.science || (d.category === 'usuliyyah' ? 'usul' : 'fiqh'),
+      is_correct: false,
+      explanation: d.id === contrastId
+        ? 'قاعدة مقابلة: التفريق بين باب العبادات التوقيف وباب المعاملات الإباحة'
+        : `هذه القاعدة (${d.canonical_text_ar}) تتعلق بـ: ${String(d.general_explanation_ar).slice(0, 95)}... وليست مناط الحكم في هذه الفتوى.`,
+    }));
+
+    const correctChoice: QuizQuestionChoice = {
+      id: correct_principle.id,
+      text: correct_principle.canonical_text_ar,
+      category: correct_principle.category,
+      science: correct_principle.science || (correct_principle.category === 'usuliyyah' ? 'usul' : 'fiqh'),
+      is_correct: true,
+      explanation: fatwa_principle.application_explanation_ar,
+    };
+
+    const choices = shuffleChoices([correctChoice, ...distractorChoices], seed);
+
+    return {
+      fatwa,
+      correct_principle,
+      fatwa_principle,
+      choices,
     };
   }
 }

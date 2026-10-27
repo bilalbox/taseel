@@ -76,6 +76,20 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
   }, [fatwaPrinciple]);
 
   const quizChoices = useMemo(() => {
+    if (
+      currentQ?.quizItem?.choices &&
+      currentQ.quizItem.choices.length > 0 &&
+      currentQ.quizItem.fatwa.id === fatwa?.id
+    ) {
+      return currentQ.quizItem.choices.map(c => ({
+        id: c.id,
+        text: c.text,
+        category: c.category,
+        is_correct: c.is_correct,
+        reason: c.explanation || '',
+      }));
+    }
+
     if (!principle || !fatwaPrinciple) return [];
     const all = [
       {
@@ -94,7 +108,7 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
       })),
     ];
     return all.sort((a, b) => a.text.localeCompare(b.text, 'ar'));
-  }, [principle, distractors, fatwaPrinciple]);
+  }, [currentQ?.quizItem, fatwa?.id, principle, distractors, fatwaPrinciple]);
 
   const handleChoiceSelect = (choiceId: string) => {
     if (hasSubmittedQuiz) return;

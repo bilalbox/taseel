@@ -1,12 +1,15 @@
 import {
+  ArchiveQueryAdapter,
   Fatwa,
   Principle,
   FatwaPrinciple,
+  QuizQuestionItem,
   Scholar,
   UserQuizHistoryItem,
   UserState,
 } from '../types';
 import { sqliteClient } from '../services/sqliteClient';
+import { MockArchiveAdapter } from '../data/mockArchiveAdapter';
 import { FATWAS_DATA, PRINCIPLES_DATA, FATWA_PRINCIPLES_DATA } from '../data/mockData';
 
 export interface LearnerStorageData {
@@ -33,6 +36,7 @@ export interface CurrentQuizQuestion {
     selectedId: string;
     timestamp: number;
   };
+  quizItem?: QuizQuestionItem;
 }
 
 export interface LearnerStats {
@@ -44,6 +48,7 @@ export interface LearnerStats {
 
 export interface LearnerStoreOptions {
   storageAdapter?: LearnerStorageAdapter;
+  archiveAdapter?: ArchiveQueryAdapter;
   fatwas?: Fatwa[];
   principles?: Principle[];
   fatwaPrinciples?: FatwaPrinciple[];
@@ -208,6 +213,7 @@ export class SqliteLocalStorageAdapter implements LearnerStorageAdapter {
 
 export class LearnerProgressStore {
   private storageAdapter: LearnerStorageAdapter;
+  private archiveAdapter: ArchiveQueryAdapter;
   private fatwas: Fatwa[];
   private principles: Principle[];
   private fatwaPrinciples: FatwaPrinciple[];
@@ -216,6 +222,7 @@ export class LearnerProgressStore {
   private xp = 0;
   private activeFatwaId: string | null = null;
   private activePrincipleId: string | null = null;
+  private activeQuizItem: QuizQuestionItem | null = null;
   private filter: { scholar?: Scholar | 'ALL'; chapter?: string } = {
     scholar: 'ALL',
     chapter: 'ALL',
@@ -228,6 +235,11 @@ export class LearnerProgressStore {
     this.fatwas = options.fatwas || FATWAS_DATA;
     this.principles = options.principles || PRINCIPLES_DATA;
     this.fatwaPrinciples = options.fatwaPrinciples || FATWA_PRINCIPLES_DATA;
+    this.archiveAdapter =
+      options.archiveAdapter ||
+      (options.fatwas
+        ? new MockArchiveAdapter(this.fatwas, this.principles, this.fatwaPrinciples)
+        : sqliteClient);
     if (options.filter) {
       this.filter = options.filter;
     }
@@ -424,7 +436,59 @@ export class LearnerProgressStore {
       fatwaPrinciple: targetFp,
       isAnswered,
       lastAttempt,
+      quizItem:
+        this.activeQuizItem && this.activeQuizItem.fatwa.id === fatwa.id
+          ? this.activeQuizItem
+          : undefined,
     };
+  }
+
+  public getAnsweredFatwaIds(): string[] {
+    return Array.from(new Set(this.history.map(h => h.fatwa_id)));
+  }
+
+  public setCurrentQuizItem(item: QuizQuestionItem): void {
+    this.activeFatwaId = item.fatwa.id;
+    this.activePrincipleId = item.correct_principle.id;
+    this.activeQuizItem = item;
+
+    if (!this.fatwas.some(f => f.id === item.fatwa.id)) {
+      this.fatwas = [...this.fatwas, item.fatwa];
+    }
+    if (!this.principles.some(p => p.id === item.correct_principle.id)) {
+      this.principles = [...this.principles, item.correct_principle];
+    }
+    if (!this.fatwaPrinciples.some(fp => fp.id === item.fatwa_principle.id)) {
+      this.fatwaPrinciples = [...this.fatwaPrinciples, item.fatwa_principle];
+    }
+    this.notify();
+  }
+
+  public async fetchNextRandomQuestion(filter?: {
+    scholar?: Scholar | 'ALL';
+    chapter?: string;
+  }): Promise<QuizQuestionItem | null> {
+    const activeFilter = filter || this.filter;
+    const answeredIds = this.getAnsweredFatwaIds();
+    const excludeFatwaIds = this.activeFatwaId
+      ? Array.from(new Set([...answeredIds, this.activeFatwaId]))
+      : answeredIds;
+
+    try {
+      const item = await this.archiveAdapter.getRandomQuizQuestion({
+        scholar: activeFilter.scholar,
+        chapter: activeFilter.chapter,
+        excludeFatwaIds,
+      });
+
+      if (item) {
+        this.setCurrentQuizItem(item);
+        return item;
+      }
+    } catch (err) {
+      console.warn('[LearnerProgressStore] fetchNextRandomQuestion failed:', err);
+    }
+    return null;
   }
 
   public getStats(): LearnerStats {
@@ -527,19 +591,26 @@ export class LearnerProgressStore {
     if (pick) {
       this.activeFatwaId = pick.fatwa.id;
       this.activePrincipleId = pick.fatwaPrinciple.principle_id;
+      this.activeQuizItem = null;
       this.notify();
     }
+
+    this.fetchNextRandomQuestion(filter).catch(() => {});
   }
 
   public selectQuestion(fatwaId: string, principleId?: string | null): void {
     this.activeFatwaId = fatwaId;
     this.activePrincipleId = principleId || null;
+    if (this.activeQuizItem && this.activeQuizItem.fatwa.id !== fatwaId) {
+      this.activeQuizItem = null;
+    }
     this.notify();
   }
 
   public async resetProgress(): Promise<void> {
     this.history = [];
     this.xp = 0;
+    this.activeQuizItem = null;
     this.notify();
     await this.storageAdapter.clearAttempts();
   }

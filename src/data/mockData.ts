@@ -100,6 +100,28 @@ export const PRINCIPLES_DATA: Principle[] = [
     category: 'fiqhiyyah',
     general_explanation_ar: 'قاعدة فقهية كبرى تقضي بأن العرف العام المستقر والمطرد أو الغالب يصار إليه في تحديد معاني الألفاظ والالتزامات والمقادير التي لم يحددها الشارع بضابط مخصوص.',
     english_transliteration: 'Al-‘Ādatu Muḥakkamah'
+  },
+  {
+    id: 'principle-ijma',
+    canonical_text_ar: 'الإجماع الثابت حجة قطعية تحرم مخالفته',
+    canonical_text_norm: normalizeArabic('الإجماع الثابت حجة قطعية تحرم مخالفته'),
+    category: 'usuliyyah',
+    general_explanation_ar: 'اتفاق مجتهدي الأمة بعد وفاة النبي ﷺ على حكم شرعي حجة قاطعة لا يجوز لأحد نقضها أو الخروج عنها.',
+    english_transliteration: 'Al-Ijmā‘u Ḥujjatun Qaṭ‘iyyah',
+    depth: 0,
+    science: 'usul',
+    kind: 'asl_kulli'
+  },
+  {
+    id: 'principle-wajib',
+    canonical_text_ar: 'ما لا يتم الواجب إلا به فهو واجب',
+    canonical_text_norm: normalizeArabic('ما لا يتم الواجب إلا به فهو واجب'),
+    category: 'usuliyyah',
+    general_explanation_ar: 'كل وسيلة أو مقدمة يتوقف عليها أداء الواجب الشرعي وهي في مقدور المكلف تصير واجبة تبعاً له.',
+    english_transliteration: 'Mā Lā Yatimmul-Wājibu Illā Bihi Fa-Huwa Wājib',
+    depth: 0,
+    science: 'usul',
+    kind: 'qa_idah_usuliyyah'
   }
 ];
 
