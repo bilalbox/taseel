@@ -2,40 +2,49 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { ArrowLeft, BookOpen, CheckCircle, CheckCircle2, Flag, HelpCircle, RotateCcw, Shuffle } from 'lucide-react';
 import { Fatwa, Principle, FatwaPrinciple, DistractorItem } from '../types';
 import { CATEGORY_LABELS } from '../utils/arabic';
-import { AnsweredQuestionRecord } from '../utils/quizTracker';
 import { FeedbackModal } from './FeedbackModal';
+import { useLearnerProgress } from '../hooks/useLearnerProgress';
 
-interface QuizPaneProps {
-  fatwa: Fatwa | undefined;
-  principle: Principle | undefined;
-  fatwaPrinciple: FatwaPrinciple | undefined;
+export interface QuizPaneProps {
+  fatwa?: Fatwa;
+  principle?: Principle;
+  fatwaPrinciple?: FatwaPrinciple;
   isAnswered?: boolean;
-  lastAttempt?: AnsweredQuestionRecord;
+  lastAttempt?: { isCorrect: boolean; selectedId: string; timestamp: number };
   totalGroundedCount?: number;
   answeredCount?: number;
-  onRecordQuizAttempt: (
-    fatwaId: string,
-    principleId: string,
-    selectedId: string,
-    isCorrect: boolean,
-    timeSpentMs: number
-  ) => void;
   onNextQuestion?: () => void;
-  onResetProgress?: () => void;
 }
 
 export const QuizPane: React.FC<QuizPaneProps> = ({
-  fatwa,
-  principle,
-  fatwaPrinciple,
-  isAnswered = false,
-  lastAttempt,
-  totalGroundedCount = 0,
-  answeredCount = 0,
-  onRecordQuizAttempt,
-  onNextQuestion,
-  onResetProgress,
+  fatwa: propFatwa,
+  principle: propPrinciple,
+  fatwaPrinciple: propFatwaPrinciple,
+  isAnswered: propIsAnswered,
+  lastAttempt: propLastAttempt,
+  totalGroundedCount: propTotalGroundedCount,
+  answeredCount: propAnsweredCount,
+  onNextQuestion: propOnNextQuestion,
 }) => {
+  const learner = useLearnerProgress();
+  const currentQ = learner.currentQuestion;
+
+  const fatwa = propFatwa !== undefined ? propFatwa : currentQ?.fatwa;
+  const principle = propPrinciple !== undefined ? propPrinciple : currentQ?.principle;
+  const fatwaPrinciple =
+    propFatwaPrinciple !== undefined ? propFatwaPrinciple : currentQ?.fatwaPrinciple;
+  const isAnswered =
+    propIsAnswered !== undefined ? propIsAnswered : (currentQ?.isAnswered ?? false);
+  const lastAttempt = propLastAttempt !== undefined ? propLastAttempt : currentQ?.lastAttempt;
+  const totalGroundedCount =
+    propTotalGroundedCount !== undefined
+      ? propTotalGroundedCount
+      : learner.stats.totalGroundedCount;
+  const answeredCount =
+    propAnsweredCount !== undefined ? propAnsweredCount : learner.stats.answeredCount;
+  const handleNextQuestion = propOnNextQuestion || (() => learner.nextQuestion());
+  const handleResetProgress = () => learner.resetProgress();
+
   const [selectedQuizChoice, setSelectedQuizChoice] = useState<string | null>(null);
   const [hasSubmittedQuiz, setHasSubmittedQuiz] = useState(false);
   const [quizStartTime, setQuizStartTime] = useState(() => Date.now());
@@ -57,6 +66,20 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
   }, [fatwaPrinciple]);
 
   const quizChoices = useMemo(() => {
+    if (
+      currentQ?.quizItem?.choices &&
+      currentQ.quizItem.choices.length > 0 &&
+      currentQ.quizItem.fatwa.id === fatwa?.id
+    ) {
+      return currentQ.quizItem.choices.map(c => ({
+        id: c.id,
+        text: c.text,
+        category: c.category,
+        is_correct: c.is_correct,
+        reason: c.explanation || '',
+      }));
+    }
+
     if (!principle || !fatwaPrinciple) return [];
     const all = [
       {
@@ -75,7 +98,7 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
       })),
     ];
     return all.sort((a, b) => a.text.localeCompare(b.text, 'ar'));
-  }, [principle, distractors, fatwaPrinciple]);
+  }, [currentQ?.quizItem, fatwa?.id, principle, distractors, fatwaPrinciple]);
 
   const handleChoiceSelect = (choiceId: string) => {
     if (hasSubmittedQuiz) return;
@@ -85,13 +108,8 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
   const handleSubmit = () => {
     if (hasSubmittedQuiz || !selectedQuizChoice || !fatwa || !principle) return;
     setHasSubmittedQuiz(true);
-    onRecordQuizAttempt(
-      fatwa.id,
-      principle.id,
-      selectedQuizChoice,
-      selectedQuizChoice === principle.id,
-      Date.now() - quizStartTime
-    );
+    const duration = Date.now() - quizStartTime;
+    learner.recordAttempt(selectedQuizChoice, duration);
   };
 
   const handleRetry = () => {
@@ -104,10 +122,10 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
     return (
       <div className="bg-page-raised border border-page-line rounded-lg p-6 text-center text-ink-muted text-sm animate-fade-pane space-y-3">
         <p>لا توجد قاعدة مربوطة بهذه الفتوى للاختبار بعد</p>
-        {onNextQuestion && (
+        {handleNextQuestion && (
           <button
             type="button"
-            onClick={onNextQuestion}
+            onClick={handleNextQuestion}
             className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-accent text-white rounded-md text-xs font-semibold hover:bg-accent-mid transition"
           >
             <Shuffle className="w-3.5 h-3.5" />
@@ -157,10 +175,10 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
             <Flag className="w-3.5 h-3.5 text-amber-600" />
             <span className="hidden sm:inline">إبلاغ</span>
           </button>
-          {onNextQuestion && (
+          {handleNextQuestion && (
             <button
               type="button"
-              onClick={onNextQuestion}
+              onClick={handleNextQuestion}
               title="الانتقال إلى سؤال عشوائي آخر"
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium border border-page-line bg-page hover:bg-page-sunken text-ink-muted hover:text-ink transition"
             >
@@ -281,10 +299,10 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
             >
               إعادة المحاولة
             </button>
-            {onNextQuestion && (
+            {handleNextQuestion && (
               <button
                 type="button"
-                onClick={onNextQuestion}
+                onClick={handleNextQuestion}
                 className="inline-flex items-center gap-2 px-5 py-2 bg-accent text-white font-semibold rounded-lg text-sm hover:bg-accent-mid shadow-sm transition"
               >
                 <span>السؤال التالي</span>

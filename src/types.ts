@@ -42,6 +42,62 @@ export interface Principle {
   domain_section?: string;
 }
 
+export interface PrincipleTreeNode extends Principle {
+  fatwas_count: number;
+  children: PrincipleTreeNode[];
+}
+
+export interface BrowseFatwasParams {
+  query?: string;
+  scholar?: Scholar | 'ALL';
+  chapter?: string | 'ALL';
+  subtopic?: string;
+  principleId?: string;
+  limit?: number;
+  offset?: number;
+}
+
+export interface FatwaSummary {
+  id: string;
+  episode_id: string;
+  scholar_name: Scholar;
+  episode_number: number;
+  question_text: string;
+  topic_domain: TopicDomain;
+  topic_chapter: string;
+  topic_subtopic: string;
+  audio_url?: string;
+  audio_timestamp?: number;
+  linked_principles_count?: number;
+}
+
+export interface BrowseFatwasResult {
+  fatwas: FatwaSummary[];
+  total: number;
+  hasMore: boolean;
+  latencyMs?: number;
+}
+
+export interface FatwaDetail extends Fatwa {
+  principles: Principle[];
+  fatwaPrinciples: FatwaPrinciple[];
+}
+
+export interface RandomQuizQuestionParams {
+  scholar?: Scholar | 'ALL';
+  chapter?: string | 'ALL';
+  excludeFatwaIds?: string[];
+  seed?: number;
+}
+
+export interface ArchiveQueryAdapter {
+  getPrinciplesTree(): Promise<PrincipleTreeNode[]>;
+  browseFatwas(params?: BrowseFatwasParams): Promise<BrowseFatwasResult>;
+  getFatwaDetail(id: string): Promise<FatwaDetail | null>;
+  getRandomQuizQuestion(params?: RandomQuizQuestionParams): Promise<QuizQuestionItem | null>;
+  getArchiveChapters(): Promise<string[]>;
+}
+
 export type AppMode = 'quiz' | 'browse';
 export type BrowseTab = 'principles' | 'chapters';
 
@@ -62,17 +118,20 @@ export interface FatwaPrinciple {
   difficulty: Difficulty;
 }
 
+export interface QuizQuestionChoice {
+  id: string;
+  text: string;
+  category: PrincipleCategory;
+  is_correct: boolean;
+  explanation?: string;
+  science?: string;
+}
+
 export interface QuizQuestionItem {
   fatwa: Fatwa;
   correct_principle: Principle;
   fatwa_principle: FatwaPrinciple;
-  choices: {
-    id: string;
-    text: string;
-    category: PrincipleCategory;
-    is_correct: boolean;
-    explanation?: string;
-  }[];
+  choices: QuizQuestionChoice[];
 }
 
 export interface UserQuizHistoryItem {
@@ -86,20 +145,9 @@ export interface UserQuizHistoryItem {
   difficulty: Difficulty;
 }
 
-export interface SpacedRepetitionRecord {
-  principle_id: string;
-  level: number;
-  streak: number;
-  last_reviewed: number;
-  next_review: number;
-  correct_count: number;
-  total_attempts: number;
-}
-
 export interface UserState {
   bookmarks: string[]; // fatwa_ids
   history: UserQuizHistoryItem[];
-  spaced_repetition: Record<string, SpacedRepetitionRecord>;
   xp: number;
   streak_days: number;
 }

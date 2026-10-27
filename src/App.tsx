@@ -1,21 +1,15 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AppShell } from './components/AppShell';
 import { StateSurfaceDrawer } from './components/StateSurfaceDrawer';
 import {
   FATWAS_DATA,
   PRINCIPLES_DATA,
   FATWA_PRINCIPLES_DATA,
-  INITIAL_USER_STATE,
 } from './data/mockData';
-import { Fatwa, Principle, FatwaPrinciple, UserState } from './types';
+import { Fatwa, Principle, FatwaPrinciple } from './types';
 import { sqliteClient, BootProgressEvent } from './services/sqliteClient';
-import {
-  AnsweredQuestionsMap,
-  loadAnsweredQuestions,
-  recordAnsweredQuestion,
-  resetAnsweredQuestions,
-  syncHistoryWithAnswered,
-} from './utils/quizTracker';
+import { learnerStore } from './stores/learnerStore';
+import { useLearnerProgress } from './hooks/useLearnerProgress';
 
 function useDebugMode(): boolean {
   return useMemo(() => {
@@ -26,6 +20,7 @@ function useDebugMode(): boolean {
 
 export function App() {
   const debugMode = useDebugMode();
+  const { userState } = useLearnerProgress();
   const [searchQuery, setSearchQuery] = useState('');
 
   const [fatwas, setFatwas] = useState<Fatwa[]>(FATWAS_DATA);
@@ -37,33 +32,6 @@ export function App() {
   const [totalArchiveCount, setTotalArchiveCount] = useState(19301);
   const [lastFtsLatencyMs, setLastFtsLatencyMs] = useState(1.2);
 
-  const [userState, setUserState] = useState<UserState>(() => {
-    const local = localStorage.getItem('taseel_user_state_v1');
-    if (local) {
-      try {
-        return JSON.parse(local);
-      } catch {
-        return INITIAL_USER_STATE;
-      }
-    }
-    return INITIAL_USER_STATE;
-  });
-
-  const [answeredQuestions, setAnsweredQuestions] = useState<AnsweredQuestionsMap>(() =>
-    loadAnsweredQuestions()
-  );
-
-  useEffect(() => {
-    localStorage.setItem('taseel_user_state_v1', JSON.stringify(userState));
-  }, [userState]);
-
-  // Synchronize historical quiz attempts with the answered questions map
-  useEffect(() => {
-    if (userState.history.length > 0) {
-      setAnsweredQuestions(prev => syncHistoryWithAnswered(prev, userState.history));
-    }
-  }, [userState.history]);
-
   useEffect(() => {
     const unsub = sqliteClient.onBootProgress(ev => {
       setBootProgress(ev);
@@ -72,37 +40,31 @@ export function App() {
     sqliteClient
       .init()
       .then(payload => {
-        if (payload.principles.length > 0) {
+        if (payload.principles && payload.principles.length > 0) {
           setPrinciples(payload.principles);
         }
-        if (payload.fatwas.length > 0) {
+        if (payload.fatwas && payload.fatwas.length > 0) {
           setFatwas(payload.fatwas);
         }
-        if (payload.fatwaPrinciples.length > 0) {
+        if (payload.fatwaPrinciples && payload.fatwaPrinciples.length > 0) {
           setFatwaPrinciples(payload.fatwaPrinciples);
         }
         setTotalArchiveCount(payload.totalFatwasCount);
         setOpfsReady(true);
         setBootProgress(null);
 
+        // Update corpus and hydrate store from canonical SQLite user_db
+        learnerStore.setCorpus(
+          payload.fatwas && payload.fatwas.length > 0 ? payload.fatwas : FATWAS_DATA,
+          payload.principles && payload.principles.length > 0 ? payload.principles : PRINCIPLES_DATA,
+          payload.fatwaPrinciples && payload.fatwaPrinciples.length > 0 ? payload.fatwaPrinciples : FATWA_PRINCIPLES_DATA
+        );
+
         if (
           payload.userState.bookmarks.length > 0 ||
           payload.userState.history.length > 0
         ) {
-          setUserState(prev => ({
-            ...prev,
-            bookmarks: Array.from(
-              new Set([...prev.bookmarks, ...payload.userState.bookmarks])
-            ),
-            history:
-              payload.userState.history.length > 0
-                ? payload.userState.history
-                : prev.history,
-            spaced_repetition: {
-              ...prev.spaced_repetition,
-              ...payload.userState.spaced_repetition,
-            },
-          }));
+          learnerStore.hydrate(payload.userState);
         }
       })
       .catch(err => {
@@ -111,109 +73,6 @@ export function App() {
       });
 
     return unsub;
-  }, []);
-
-  useEffect(() => {
-    if (!opfsReady || searchQuery.trim().length < 2) return;
-    let cancelled = false;
-    sqliteClient
-      .searchFatwas(searchQuery, 60)
-      .then(({ fatwas: ftsResults, latencyMs }) => {
-        if (cancelled) return;
-        setLastFtsLatencyMs(latencyMs);
-        if (ftsResults.length > 0) {
-          setFatwas(prev => {
-            const seen = new Set(prev.map(f => f.id));
-            const additions = ftsResults.filter(f => !seen.has(f.id));
-            return additions.length > 0 ? [...prev, ...additions] : prev;
-          });
-        }
-      })
-      .catch(() => {});
-    return () => {
-      cancelled = true;
-    };
-  }, [searchQuery, opfsReady]);
-
-  const handleToggleBookmark = useCallback((fatwaId: string) => {
-    sqliteClient.toggleBookmark(fatwaId).catch(() => {});
-    setUserState(prev => {
-      const exists = prev.bookmarks.includes(fatwaId);
-      return {
-        ...prev,
-        bookmarks: exists
-          ? prev.bookmarks.filter(id => id !== fatwaId)
-          : [...prev.bookmarks, fatwaId],
-      };
-    });
-  }, []);
-
-  const handleRecordQuizAttempt = useCallback(
-    (
-      fatwaId: string,
-      principleId: string,
-      selectedId: string,
-      isCorrect: boolean,
-      timeSpentMs: number
-    ) => {
-      // 1. Record in local storage quiz tracker
-      const updated = recordAnsweredQuestion(fatwaId, principleId, selectedId, isCorrect);
-      setAnsweredQuestions({ ...updated });
-
-      // 2. Record in UserState and SQLite worker
-      setUserState(prev => {
-        const newHistoryItem = {
-          id: `quiz-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
-          fatwa_id: fatwaId,
-          principle_id: principleId,
-          selected_principle_id: selectedId,
-          is_correct: isCorrect,
-          timestamp: Date.now(),
-          time_spent_ms: timeSpentMs,
-          difficulty: 'intermediate' as const,
-        };
-
-        const currentSR = prev.spaced_repetition[principleId] || {
-          principle_id: principleId,
-          level: 1,
-          streak: 0,
-          last_reviewed: Date.now(),
-          next_review: Date.now() + 86400000,
-          correct_count: 0,
-          total_attempts: 0,
-        };
-
-        const updatedSR = {
-          ...currentSR,
-          level: isCorrect ? currentSR.level + 1 : Math.max(1, currentSR.level - 1),
-          streak: isCorrect ? currentSR.streak + 1 : 0,
-          last_reviewed: Date.now(),
-          next_review: isCorrect
-            ? Date.now() + (currentSR.level + 1) * 86400000
-            : Date.now() + 3600000 * 2,
-          correct_count: isCorrect ? currentSR.correct_count + 1 : currentSR.correct_count,
-          total_attempts: currentSR.total_attempts + 1,
-        };
-
-        sqliteClient.recordQuizAttempt(newHistoryItem, updatedSR).catch(() => {});
-
-        return {
-          ...prev,
-          history: [...prev.history, newHistoryItem],
-          spaced_repetition: {
-            ...prev.spaced_repetition,
-            [principleId]: updatedSR,
-          },
-          xp: prev.xp + (isCorrect ? 20 : 5),
-        };
-      });
-    },
-    []
-  );
-
-  const handleResetQuizProgress = useCallback(() => {
-    const cleared = resetAnsweredQuestions();
-    setAnsweredQuestions(cleared);
   }, []);
 
   const bootLabel =
@@ -248,15 +107,11 @@ export function App() {
         fatwas={fatwas}
         principles={principles}
         fatwaPrinciples={fatwaPrinciples}
-        userState={userState}
-        answeredQuestions={answeredQuestions}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
+        onSearchLatency={setLastFtsLatencyMs}
         bootLabel={bootLabel}
         opfsReady={opfsReady}
-        onRecordQuizAttempt={handleRecordQuizAttempt}
-        onToggleBookmark={handleToggleBookmark}
-        onResetQuizProgress={handleResetQuizProgress}
       />
 
       {debugMode && (
