@@ -9,13 +9,13 @@ and compiles:
   - public/manifest.json
 """
 
-from collections import Counter
 import gzip
 import hashlib
 import json
 import sqlite3
 import time
-from datetime import datetime, timezone
+from collections import Counter
+from datetime import UTC, datetime
 from pathlib import Path
 
 from arabic_norm import normalize_arabic
@@ -24,7 +24,6 @@ from extractor import extract_and_ground_fatwa
 from ingest_archives import load_full_archives
 from llm_batch_enrich import EXTRACTIONS_PATH, load_llm_links, merge_fatwa_links
 from ontology_index import OntologyGraph
-
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 PIPELINE_DIR = ROOT_DIR / "pipeline"
@@ -108,7 +107,9 @@ def build_content_database() -> None:
         f"Filtered / Skipped: {dict(skip_reasons)}"
     )
 
-    print("\n=== [Stage 3D] Merging Cached Structured-Output Extractions (llm_extractions.jsonl) ===")
+    print(
+        "\n=== [Stage 3D] Merging Cached Structured-Output Extractions (llm_extractions.jsonl) ==="
+    )
     llm_links_by_fatwa = {}
     llm_stats = None
     if EXTRACTIONS_PATH.exists():
@@ -124,16 +125,45 @@ def build_content_database() -> None:
             proposals_path = data_dir / "llm_proposed_dawabit.json"
             grouped = {}
             for p in proposals:
-                g = grouped.setdefault(p["suggested_id"], {**{k: p[k] for k in (
-                    "suggested_id", "parent_id", "parent_exists", "science", "kind",
-                    "canonical_text_ar", "summary_ar")}, "fatwa_ids": [], "examples": []})
+                g = grouped.setdefault(
+                    p["suggested_id"],
+                    {
+                        **{
+                            k: p[k]
+                            for k in (
+                                "suggested_id",
+                                "parent_id",
+                                "parent_exists",
+                                "science",
+                                "kind",
+                                "canonical_text_ar",
+                                "summary_ar",
+                            )
+                        },
+                        "fatwa_ids": [],
+                        "examples": [],
+                    },
+                )
                 g["fatwa_ids"].append(p["fatwa_id"])
                 if len(g["examples"]) < 3:
-                    g["examples"].append({k: p[k] for k in (
-                        "fatwa_id", "evidence_quote_ar", "application_explanation_ar", "confidence_score")})
+                    g["examples"].append(
+                        {
+                            k: p[k]
+                            for k in (
+                                "fatwa_id",
+                                "evidence_quote_ar",
+                                "application_explanation_ar",
+                                "confidence_score",
+                            )
+                        }
+                    )
             ordered = sorted(grouped.values(), key=lambda g: -len(g["fatwa_ids"]))
-            proposals_path.write_text(json.dumps(ordered, ensure_ascii=False, indent=2), encoding="utf-8")
-            print(f"    • {len(proposals):,} NEW_CANDIDATE dawabit ({len(ordered):,} distinct) → {proposals_path} for curation")
+            proposals_path.write_text(
+                json.dumps(ordered, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            print(
+                f"    • {len(proposals):,} NEW_CANDIDATE dawabit ({len(ordered):,} distinct) → {proposals_path} for curation"
+            )
     else:
         print(f"  • {EXTRACTIONS_PATH} not found — compiling deterministic links only.")
 
@@ -169,7 +199,9 @@ def build_content_database() -> None:
     print("    • Top 10 Grounded Principles across the Archive:")
     for pid, cnt in principle_hit_counts.most_common(10):
         node = ontology.nodes[pid]
-        print(f"      - [{pid}] ({node['kind']}, depth={node['depth']}): {cnt:,} fatwas — «{node['canonical_text_ar']}»")
+        print(
+            f"      - [{pid}] ({node['kind']}, depth={node['depth']}): {cnt:,} fatwas — «{node['canonical_text_ar']}»"
+        )
 
     print("\n=== [Stage 4] Compiling SQLite Database & FTS5 Virtual Tables ===")
     t_sql = time.perf_counter()
@@ -349,7 +381,7 @@ def build_content_database() -> None:
         gz_file.write(raw_bytes)
 
     manifest = {
-        "version": datetime.now(timezone.utc).strftime("%Y.%m.%d"),
+        "version": datetime.now(UTC).strftime("%Y.%m.%d"),
         "ontology_version": ontology.version,
         "sha256": sha256_hash,
         "url": "/content.sqlite3.gz",
@@ -373,8 +405,8 @@ def build_content_database() -> None:
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
     print(
         f"\n=== [Build Complete in {time.perf_counter() - t0:.2f}s] ===\n"
-        f"  • SQLite DB:   {db_path} ({len(raw_bytes):,} bytes / {len(raw_bytes) / (1024*1024):.2f} MB)\n"
-        f"  • Gzipped DB:  {gz_path} ({gz_path.stat().st_size:,} bytes / {gz_path.stat().st_size / (1024*1024):.2f} MB)\n"
+        f"  • SQLite DB:   {db_path} ({len(raw_bytes):,} bytes / {len(raw_bytes) / (1024 * 1024):.2f} MB)\n"
+        f"  • Gzipped DB:  {gz_path} ({gz_path.stat().st_size:,} bytes / {gz_path.stat().st_size / (1024 * 1024):.2f} MB)\n"
         f"  • Manifest:    {manifest_path} (SHA-256: {sha256_hash[:16]}...)"
     )
 
@@ -393,7 +425,9 @@ def _run_sql_verification_suite(conn: sqlite3.Connection) -> None:
         """,
         (f'"{q_alias}"',),
     ).fetchone()
-    print(f"  1. FTS5 Alias Match for «البراءة الأصلية»: {row[0]} -> «{row[1]}» (kind={row[2]}, depth={row[3]})")
+    print(
+        f"  1. FTS5 Alias Match for «البراءة الأصلية»: {row[0]} -> «{row[1]}» (kind={row[2]}, depth={row[3]})"
+    )
 
     # Test 2: Recursive CTE Subtree Roll-Up under 'fiqh.yaqeen'
     rollup_count = conn.execute(
@@ -409,7 +443,9 @@ def _run_sql_verification_suite(conn: sqlite3.Connection) -> None:
         JOIN fatwa_principles fp ON fp.principle_id = s.id;
         """
     ).fetchone()[0]
-    print(f"  2. Recursive CTE Subtree Roll-up for 'fiqh.yaqeen': {rollup_count:,} distinct fatwas rolled up across all sub-branches.")
+    print(
+        f"  2. Recursive CTE Subtree Roll-up for 'fiqh.yaqeen': {rollup_count:,} distinct fatwas rolled up across all sub-branches."
+    )
 
     # Test 3: Breakdown by Science (Fiqh vs Usul)
     science_rows = conn.execute(
@@ -437,7 +473,9 @@ def _run_sql_verification_suite(conn: sqlite3.Connection) -> None:
         """,
         (fts_q,),
     ).fetchall()
-    print(f"  4. FTS5 Contentless Rowid Join for «الشك في الطهارة» (top 3 hits): {[r[0] for r in fts_hits]}")
+    print(
+        f"  4. FTS5 Contentless Rowid Join for «الشك في الطهارة» (top 3 hits): {[r[0] for r in fts_hits]}"
+    )
 
 
 if __name__ == "__main__":

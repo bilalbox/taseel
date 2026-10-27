@@ -1,22 +1,22 @@
 {
-  "version": "2026.10.26",
-  "ontology_version": "2026.10.26-full",
-  "sha256": "0d1f393598531de518ac27c9bc5808e53b09cd9f61679b2b57d3df64df1d0808",
-  "url": "/content.sqlite3.gz",
-  "uncompressed_bytes": 76419072,
-  "gzip_bytes": 22352568,
-  "counts": {
-    "episodes": 87,
-    "ibn_baz_fatwas": 12217,
-    "ibn_uthaymeen_fatwas": 7084,
-    "principles": 44,
-    "principle_aliases": 88,
-    "principle_relations": 6,
-    "issue_clusters": 14578,
-    "fatwas": 19301,
-    "grounded_fatwas": 932,
-    "fatwa_principles": 967,
-    "llm_extracted_fatwas": 13655,
-    "llm_links": 283
-  }
+	"version": "2026.10.26",
+	"ontology_version": "2026.10.26-full",
+	"sha256": "0d1f393598531de518ac27c9bc5808e53b09cd9f61679b2b57d3df64df1d0808",
+	"url": "/content.sqlite3.gz",
+	"uncompressed_bytes": 76419072,
+	"gzip_bytes": 22352568,
+	"counts": {
+		"episodes": 87,
+		"ibn_baz_fatwas": 12217,
+		"ibn_uthaymeen_fatwas": 7084,
+		"principles": 44,
+		"principle_aliases": 88,
+		"principle_relations": 6,
+		"issue_clusters": 14578,
+		"fatwas": 19301,
+		"grounded_fatwas": 932,
+		"fatwa_principles": 967,
+		"llm_extracted_fatwas": 13655,
+		"llm_links": 283
+	}
 }
