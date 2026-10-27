@@ -1,11 +1,13 @@
 # Agent Handoff Spec: Option 2 — Resumable LLM Structured-Output Extraction Pass for Ta'seel (تأصيل)
 
 ## 1. Objective
-Enhance Stage 3 of the **Ta'seel (تأصيل)** offline data pipeline ([`pipeline/src/extractor.py`](file:///home/bilal/mycode/usul/pipeline/src/extractor.py)) with an **asynchronous, checkpointed LLM Structured-Outputs batch pass** to extract **implicit** *Qawa'id Fiqhiyyah*, *Qawa'id Usuliyyah*, and chapter-specific *Dawabit* across the full **19,301-fatwa** *Noor 'ala al-Darb* archive (Shaykh Ibn Baz & Shaykh Ibn Uthaymeen).
+
+Enhance Stage 3 of the **Ta'seel (تأصيل)** offline data pipeline ([`pipeline/src/extractor.py`](file:///home/bilal/mycode/usul/pipeline/src/extractor.py)) with an **asynchronous, checkpointed LLM Structured-Outputs batch pass** to extract **implicit** _Qawa'id Fiqhiyyah_, _Qawa'id Usuliyyah_, and chapter-specific _Dawabit_ across the full **19,301-fatwa** _Noor 'ala al-Darb_ archive (Shaykh Ibn Baz & Shaykh Ibn Uthaymeen).
 
 ---
 
 ## 2. Current Architecture & Baseline State
+
 All raw archives, ontology seeds, clustering, and SQLite/FTS5 compilation are already implemented and verified:
 - **Raw Archives (Cached in `pipeline/data/`):**
   - `pipeline/data/ibn_baz_raw.json`: **12,217** proofread fatwas of Shaykh Ibn Baz.
@@ -39,64 +41,83 @@ Create `pipeline/src/llm_batch_enrich.py` using the Gemini / OpenAI Structured O
 
 ```json
 {
-  "type": "object",
-  "properties": {
-    "fatwa_id": { "type": "string" },
-    "has_applicable_principle": { "type": "boolean" },
-    "invocations": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "properties": {
-          "principle_id": {
-            "type": "string",
-            "description": "Must match an existing ID from the candidate ontology subgraph, or 'NEW_CANDIDATE' if proposing a new chapter dabit."
-          },
-          "matched_alias_id": { "type": ["string", "null"] },
-          "invocation_type": {
-            "type": "string",
-            "enum": ["explicit_verbatim", "explicit_paraphrase", "implicit_application"]
-          },
-          "evidence_quote_ar": {
-            "type": "string",
-            "description": "Exact verbatim substring from answer_text ('محل الشاهد') demonstrating the causal reasoning."
-          },
-          "application_explanation_ar": {
-            "type": "string",
-            "description": "Concise Arabic explanation (1-2 sentences) of how the scholar applied this principle to derive the ruling ('تحقيق المناط')."
-          },
-          "difficulty": {
-            "type": "string",
-            "enum": ["beginner", "intermediate", "advanced"]
-          },
-          "confidence_score": { "type": "number" },
-          "proposed_new_dabit": {
-            "type": ["object", "null"],
-            "properties": {
-              "suggested_id": { "type": "string" },
-              "parent_id": { "type": "string" },
-              "science": { "type": "string", "enum": ["fiqh", "usul"] },
-              "kind": { "type": "string", "enum": ["qa_idah_kulliyyah", "dabit_fiqhi", "qa_idah_usuliyyah", "dabit_usuli"] },
-              "canonical_text_ar": { "type": "string" },
-              "summary_ar": { "type": "string" }
-            },
-            "required": ["suggested_id", "parent_id", "science", "kind", "canonical_text_ar", "summary_ar"]
-          }
-        },
-        "required": [
-          "principle_id",
-          "matched_alias_id",
-          "invocation_type",
-          "evidence_quote_ar",
-          "application_explanation_ar",
-          "difficulty",
-          "confidence_score",
-          "proposed_new_dabit"
-        ]
-      }
-    }
-  },
-  "required": ["fatwa_id", "has_applicable_principle", "invocations"]
+	"type": "object",
+	"properties": {
+		"fatwa_id": { "type": "string" },
+		"has_applicable_principle": { "type": "boolean" },
+		"invocations": {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"principle_id": {
+						"type": "string",
+						"description": "Must match an existing ID from the candidate ontology subgraph, or 'NEW_CANDIDATE' if proposing a new chapter dabit."
+					},
+					"matched_alias_id": { "type": ["string", "null"] },
+					"invocation_type": {
+						"type": "string",
+						"enum": [
+							"explicit_verbatim",
+							"explicit_paraphrase",
+							"implicit_application"
+						]
+					},
+					"evidence_quote_ar": {
+						"type": "string",
+						"description": "Exact verbatim substring from answer_text ('محل الشاهد') demonstrating the causal reasoning."
+					},
+					"application_explanation_ar": {
+						"type": "string",
+						"description": "Concise Arabic explanation (1-2 sentences) of how the scholar applied this principle to derive the ruling ('تحقيق المناط')."
+					},
+					"difficulty": {
+						"type": "string",
+						"enum": ["beginner", "intermediate", "advanced"]
+					},
+					"confidence_score": { "type": "number" },
+					"proposed_new_dabit": {
+						"type": ["object", "null"],
+						"properties": {
+							"suggested_id": { "type": "string" },
+							"parent_id": { "type": "string" },
+							"science": { "type": "string", "enum": ["fiqh", "usul"] },
+							"kind": {
+								"type": "string",
+								"enum": [
+									"qa_idah_kulliyyah",
+									"dabit_fiqhi",
+									"qa_idah_usuliyyah",
+									"dabit_usuli"
+								]
+							},
+							"canonical_text_ar": { "type": "string" },
+							"summary_ar": { "type": "string" }
+						},
+						"required": [
+							"suggested_id",
+							"parent_id",
+							"science",
+							"kind",
+							"canonical_text_ar",
+							"summary_ar"
+						]
+					}
+				},
+				"required": [
+					"principle_id",
+					"matched_alias_id",
+					"invocation_type",
+					"evidence_quote_ar",
+					"application_explanation_ar",
+					"difficulty",
+					"confidence_score",
+					"proposed_new_dabit"
+				]
+			}
+		}
+	},
+	"required": ["fatwa_id", "has_applicable_principle", "invocations"]
 }
 ```
 

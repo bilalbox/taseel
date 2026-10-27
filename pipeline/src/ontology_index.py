@@ -5,28 +5,66 @@ Pre-computes inverted token indexes and tree-neighborhood expansions for fast ba
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+
 from arabic_norm import normalize_arabic
 
-
-STOP_TOKENS: Set[str] = {
-    "الاصل", "في", "من", "علي", "ان", "لا", "او", "ما", "كان", "حتي", "يقوم",
-    "الدليل", "فهو", "اذا", "تحت", "لم", "به", "بها", "عن", "الي", "عند", "كل",
-    "يرد", "بين", "بعض", "حكم", "شيء", "احد", "ولا", "الا", "فلا", "عليه",
-    "الواجب", "واجب", "فعل", "يكون", "له", "لها", "فيها", "منه", "منها", "هذا",
-    "هذه", "ذلك",
+STOP_TOKENS: set[str] = {
+    "الاصل",
+    "في",
+    "من",
+    "علي",
+    "ان",
+    "لا",
+    "او",
+    "ما",
+    "كان",
+    "حتي",
+    "يقوم",
+    "الدليل",
+    "فهو",
+    "اذا",
+    "تحت",
+    "لم",
+    "به",
+    "بها",
+    "عن",
+    "الي",
+    "عند",
+    "كل",
+    "يرد",
+    "بين",
+    "بعض",
+    "حكم",
+    "شيء",
+    "احد",
+    "ولا",
+    "الا",
+    "فلا",
+    "عليه",
+    "الواجب",
+    "واجب",
+    "فعل",
+    "يكون",
+    "له",
+    "لها",
+    "فيها",
+    "منه",
+    "منها",
+    "هذا",
+    "هذه",
+    "ذلك",
 }
 
 
 class OntologyGraph:
     def __init__(self, ontology_path: Path):
-        with open(ontology_path, "r", encoding="utf-8") as f:
+        with open(ontology_path, encoding="utf-8") as f:
             raw = json.load(f)
 
         self.version: str = raw.get("version", "1.0.0")
-        self.nodes: Dict[str, dict] = {}
-        self.aliases: List[dict] = []
-        self.relations: List[dict] = raw.get("relations", [])
+        self.nodes: dict[str, dict] = {}
+        self.aliases: list[dict] = []
+        self.relations: list[dict] = raw.get("relations", [])
 
         # 1. Index raw nodes & aliases
         for p in raw["principles"]:
@@ -65,13 +103,13 @@ class OntologyGraph:
         self._compute_and_validate_depths()
 
         # 3. Build Inverted Token Index & Pre-computed Neighborhood Subgraphs
-        self.token_to_nodes: Dict[str, Set[str]] = {}
-        self.neighborhood_by_node: Dict[str, List[str]] = {}
+        self.token_to_nodes: dict[str, set[str]] = {}
+        self.neighborhood_by_node: dict[str, list[str]] = {}
         self._build_fast_indexes()
 
     def _compute_and_validate_depths(self) -> None:
         for node_id, node in self.nodes.items():
-            visited: Set[str] = {node_id}
+            visited: set[str] = {node_id}
             depth = 0
             curr = node
             while curr.get("parent_id") is not None:
@@ -85,10 +123,10 @@ class OntologyGraph:
                 curr = self.nodes[parent_id]
             node["depth"] = depth
 
-    def get_children(self, node_id: str) -> List[dict]:
+    def get_children(self, node_id: str) -> list[dict]:
         return [n for n in self.nodes.values() if n.get("parent_id") == node_id]
 
-    def get_descendants(self, node_id: str) -> List[dict]:
+    def get_descendants(self, node_id: str) -> list[dict]:
         result = []
         queue = [node_id]
         visited = {node_id}
@@ -113,33 +151,33 @@ class OntologyGraph:
                 self.token_to_nodes.setdefault(tok, set()).add(node_id)
 
             # Pre-compute expanded neighborhood (self + parent + descendants + graph relations)
-            expanded: List[str] = []
-            seen: Set[str] = set()
+            expanded: list[str] = []
+            seen: set[str] = set()
 
-            def _add(nid: Optional[str]) -> None:
-                if nid and nid in self.nodes and nid not in seen:
-                    seen.add(nid)
-                    expanded.append(nid)
+            def _add(nid: str | None, seen_set: set[str], exp_list: list[str]) -> None:
+                if nid and nid in self.nodes and nid not in seen_set:
+                    seen_set.add(nid)
+                    exp_list.append(nid)
 
-            _add(node_id)
-            _add(node.get("parent_id"))
+            _add(node_id, seen, expanded)
+            _add(node.get("parent_id"), seen, expanded)
             for desc in self.get_descendants(node_id):
-                _add(desc["id"])
+                _add(desc["id"], seen, expanded)
             for rel in self.relations:
                 if rel["source_id"] == node_id:
-                    _add(rel["target_id"])
+                    _add(rel["target_id"], seen, expanded)
                 elif rel["target_id"] == node_id:
-                    _add(rel["source_id"])
+                    _add(rel["source_id"], seen, expanded)
 
             self.neighborhood_by_node[node_id] = expanded
 
     def retrieve_candidate_subgraph_fast(
-        self, norm_query_text: str, query_tokens: Set[str], top_k_seeds: int = 6
-    ) -> Tuple[List[dict], Dict[str, Optional[dict]]]:
+        self, norm_query_text: str, query_tokens: set[str], top_k_seeds: int = 6
+    ) -> tuple[list[dict], dict[str, dict | None]]:
         """
         High-speed O(1) inverted-index candidate subgraph retriever for 20,000+ fatwa batches.
         """
-        candidate_node_ids: Set[str] = set()
+        candidate_node_ids: set[str] = set()
         for tok in query_tokens:
             if tok in self.token_to_nodes:
                 candidate_node_ids.update(self.token_to_nodes[tok])
@@ -147,8 +185,8 @@ class OntologyGraph:
         if not candidate_node_ids:
             return [], {}
 
-        scored: List[Tuple[float, str]] = []
-        matched_alias_map: Dict[str, Optional[dict]] = {}
+        scored: list[tuple[float, str]] = []
+        matched_alias_map: dict[str, dict | None] = {}
 
         for node_id in candidate_node_ids:
             node = self.nodes[node_id]
@@ -176,8 +214,8 @@ class OntologyGraph:
         scored.sort(key=lambda x: (x[0], self.nodes[x[1]]["depth"]), reverse=True)
         seed_ids = [nid for _, nid in scored[:top_k_seeds]]
 
-        expanded_ids: List[str] = []
-        seen: Set[str] = set()
+        expanded_ids: list[str] = []
+        seen: set[str] = set()
         for sid in seed_ids:
             for neighbor_id in self.neighborhood_by_node[sid]:
                 if neighbor_id not in seen:

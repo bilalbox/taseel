@@ -1,6 +1,6 @@
 # تأصيل (Taseel)
 
-Prototype offline search and quiz engine for fiqh and usul principles drawn from the *Noor 'ala al-Darb* archives of Shaykh Ibn Baz and Shaykh Ibn Uthaymeen.
+Prototype offline search and quiz engine for fiqh and usul principles drawn from the _Noor 'ala al-Darb_ archives of Shaykh Ibn Baz and Shaykh Ibn Uthaymeen.
 
 نموذج واجهات لمحرك بحث واختبار للقواعد الفقهية والأصولية من أرشيف نور على الدرب.
 

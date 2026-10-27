@@ -11,16 +11,17 @@ import re
 import sys
 import urllib.request
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 csv.field_size_limit(sys.maxsize)
 
-IBN_BAZ_URL = "https://raw.githubusercontent.com/rn0x/binbaz_database/main/database/nur_ealaa_aldarb.json"
+IBN_BAZ_URL = (
+    "https://raw.githubusercontent.com/rn0x/binbaz_database/main/database/nur_ealaa_aldarb.json"
+)
 UTHAYMEEN_CSV_URL = "https://huggingface.co/datasets/MoMonir/shamela_books_text/resolve/main/shamela_books_text_category_22.csv"
 UTHAYMEEN_BYTE_RANGE = "bytes=386000000-404000000"
 
 # Volume -> (topic_domain, topic_chapter) for Shaykh Ibn Uthaymeen's 24-volume Noor 'ala al-Darb
-UTHAYMEEN_VOLUME_MAP: Dict[int, Tuple[str, str]] = {
+UTHAYMEEN_VOLUME_MAP: dict[int, tuple[str, str]] = {
     1: ("Aqidah", "Aqidah"),
     2: ("Aqidah", "Aqidah"),
     3: ("Aqidah", "Aqidah"),
@@ -51,11 +52,28 @@ _EPISODE_RE = re.compile(r"nour_(\d+)")
 _QA_SPLIT_RE = re.compile(r"(?:فأجاب رحمه الله تعالى\s*:?|فأجاب فضيلة الشيخ\s*:?|الجواب\s*:)")
 
 
-def _map_ibn_baz_categories(categories: List[str]) -> Tuple[str, str]:
+def _map_ibn_baz_categories(categories: list[str]) -> tuple[str, str]:
     joined = " ".join(categories)
-    if any(k in joined for k in ("الطهارة", "الوضوء", "الغسل", "التيمم", "الحيض", "النفاس", "المسح", "النجاسات")):
+    if any(
+        k in joined
+        for k in ("الطهارة", "الوضوء", "الغسل", "التيمم", "الحيض", "النفاس", "المسح", "النجاسات")
+    ):
         return ("Fiqh", "Taharah")
-    if any(k in joined for k in ("الصلاة", "الأذان", "الإقامة", "السهو", "الجماعة", "الجمعة", "التطوع", "الوتر", "القبلة", "المساجد")):
+    if any(
+        k in joined
+        for k in (
+            "الصلاة",
+            "الأذان",
+            "الإقامة",
+            "السهو",
+            "الجماعة",
+            "الجمعة",
+            "التطوع",
+            "الوتر",
+            "القبلة",
+            "المساجد",
+        )
+    ):
         return ("Fiqh", "Salat")
     if any(k in joined for k in ("الجنائز", "الميت", "القبور", "التعزية")):
         return ("Fiqh", "Janaiz")
@@ -63,17 +81,52 @@ def _map_ibn_baz_categories(categories: List[str]) -> Tuple[str, str]:
         return ("Fiqh", "Zakat")
     if any(k in joined for k in ("الصوم", "الصيام", "رمضان", "الاعتكاف", "الفطر")):
         return ("Fiqh", "Sawm")
-    if any(k in joined for k in ("الحج", "العمرة", "الإحرام", "الطواف", "السعي", "عرفة", "منى", "الهدي", "الأضاحي")):
+    if any(
+        k in joined
+        for k in ("الحج", "العمرة", "الإحرام", "الطواف", "السعي", "عرفة", "منى", "الهدي", "الأضاحي")
+    ):
         return ("Fiqh", "Hajj")
-    if any(k in joined for k in ("البيوع", "الربا", "القرض", "الإجارة", "الشركات", "المعاملات", "الوقف", "الهبة", "الوصايا", "الفرائض", "المواريث")):
+    if any(
+        k in joined
+        for k in (
+            "البيوع",
+            "الربا",
+            "القرض",
+            "الإجارة",
+            "الشركات",
+            "المعاملات",
+            "الوقف",
+            "الهبة",
+            "الوصايا",
+            "الفرائض",
+            "المواريث",
+        )
+    ):
         return ("Fiqh", "Muamalat")
-    if any(k in joined for k in ("النكاح", "الطلاق", "الخلع", "الرجعة", "العدة", "الرضاع", "النفقات", "الحضانة", "الأسرة", "المرأة")):
+    if any(
+        k in joined
+        for k in (
+            "النكاح",
+            "الطلاق",
+            "الخلع",
+            "الرجعة",
+            "العدة",
+            "الرضاع",
+            "النفقات",
+            "الحضانة",
+            "الأسرة",
+            "المرأة",
+        )
+    ):
         return ("Fiqh", "Nikah")
     if any(k in joined for k in ("الأيمان", "النذور", "الكفارات", "الأطعمة", "الذبائح")):
         return ("Fiqh", "Ayman")
     if any(k in joined for k in ("الجنايات", "الحدود", "الديات", "القضاء", "الشهادات")):
         return ("Fiqh", "Jinayat")
-    if any(k in joined for k in ("العقيدة", "التوحيد", "الشرك", "البدع", "الولاء", "الإيمان", "القدر", "نواقض")):
+    if any(
+        k in joined
+        for k in ("العقيدة", "التوحيد", "الشرك", "البدع", "الولاء", "الإيمان", "القدر", "نواقض")
+    ):
         return ("Aqidah", "Aqidah")
     if any(k in joined for k in ("التفسير", "القرآن", "التجويد")):
         return ("Tafsir", "Tafsir")
@@ -82,7 +135,7 @@ def _map_ibn_baz_categories(categories: List[str]) -> Tuple[str, str]:
     return ("Adab", "Adab")
 
 
-def ensure_raw_files_downloaded(data_dir: Path) -> Tuple[Path, Path]:
+def ensure_raw_files_downloaded(data_dir: Path) -> tuple[Path, Path]:
     data_dir.mkdir(parents=True, exist_ok=True)
     baz_path = data_dir / "ibn_baz_raw.json"
     uth_path = data_dir / "uthaymeen_2300_slice.csv"
@@ -105,7 +158,7 @@ def ensure_raw_files_downloaded(data_dir: Path) -> Tuple[Path, Path]:
     return baz_path, uth_path
 
 
-def load_full_archives(pipeline_dir: Path) -> Tuple[List[dict], List[dict]]:
+def load_full_archives(pipeline_dir: Path) -> tuple[list[dict], list[dict]]:
     """
     Returns (episodes_list, fatwas_list) combining:
       1. The golden verification fatwas from sample_corpus/noor_sample_raw.json
@@ -114,13 +167,13 @@ def load_full_archives(pipeline_dir: Path) -> Tuple[List[dict], List[dict]]:
     """
     baz_path, uth_path = ensure_raw_files_downloaded(pipeline_dir / "data")
 
-    episodes_by_id: Dict[str, dict] = {}
-    fatwas: List[dict] = []
+    episodes_by_id: dict[str, dict] = {}
+    fatwas: list[dict] = []
 
     # 1. Include golden sample corpus first for deterministic verification queries
     sample_path = pipeline_dir / "sample_corpus" / "noor_sample_raw.json"
     if sample_path.exists():
-        with open(sample_path, "r", encoding="utf-8") as f:
+        with open(sample_path, encoding="utf-8") as f:
             sample_data = json.load(f)
         for ep in sample_data.get("episodes", []):
             episodes_by_id[ep["id"]] = ep
@@ -128,7 +181,7 @@ def load_full_archives(pipeline_dir: Path) -> Tuple[List[dict], List[dict]]:
             fatwas.append(fw)
 
     # 2. Parse Shaykh Ibn Baz (12,269 fatwas)
-    with open(baz_path, "r", encoding="utf-8") as f:
+    with open(baz_path, encoding="utf-8") as f:
         baz_raw = json.load(f)
 
     for item in baz_raw:
@@ -174,7 +227,7 @@ def load_full_archives(pipeline_dir: Path) -> Tuple[List[dict], List[dict]]:
         )
 
     # 3. Parse Shaykh Ibn Uthaymeen (Shamela Book 2300, 24 volumes)
-    with open(uth_path, "r", encoding="utf-8", errors="ignore") as f:
+    with open(uth_path, encoding="utf-8", errors="ignore") as f:
         lines = f.read().splitlines()
 
     reader = csv.reader(lines[1:-1])

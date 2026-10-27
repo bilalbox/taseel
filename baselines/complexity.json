@@ -1,0 +1,40 @@
+{
+	"version": 1,
+	"findings": [
+		{
+			"id": "src/App.tsx|(anonymous)|45",
+			"score": 28,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "src/components/variants/VariantB_CommandRecall.tsx|(anonymous)|159",
+			"score": 34,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "src/data/archiveQuery.ts|createInMemoryArchiveDb",
+			"score": 28,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "src/data/archiveQuery.ts|executeGetRandomQuizQuestion",
+			"score": 47,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "src/stores/learnerStore.ts|loadDataFromLocal",
+			"score": 32,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "src/workers/sqlite.worker.ts|(anonymous)|524",
+			"score": 40,
+			"note": "Added via --update; replace with owning issue note."
+		},
+		{
+			"id": "src/workers/sqlite.worker.ts|initEngines",
+			"score": 43,
+			"note": "Added via --update; replace with owning issue note."
+		}
+	]
+}

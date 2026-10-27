@@ -1,0 +1,10 @@
+# Python pipeline scripts under pipeline/src.
+# forbid_circular_dependencies is the Python analogue of rev-dep cycles.
+
+exact = true
+forbid_circular_dependencies = true
+source_roots = ["pipeline/src"]
+
+[[modules]]
+path = "."
+depends_on = []

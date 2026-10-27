@@ -3,19 +3,62 @@ Stage 2: High-Throughput Chapter-Blocked Question Deduplication & Issue Clusteri
 Uses an Inverted Stem Index within each Fiqh chapter to cluster ~20,000 fatwas in < 2 seconds.
 """
 
-from collections import Counter
 import math
 import re
-from typing import Dict, List, Set, Tuple
+from collections import Counter
+
 from arabic_norm import normalize_arabic
 
-
-STOPWORDS: Set[str] = {
-    "رجل", "ساىل", "يقول", "يسال", "ما", "حكم", "هل", "في", "من", "علي", "عن",
-    "الي", "اذا", "ثم", "بعد", "ان", "او", "ام", "لا", "هذا", "فما", "فهل", "ذلك",
-    "وقت", "حين", "دخل", "لما", "قام", "سماحه", "الشيخ", "فضيله", "احسن", "الله",
-    "اليكم", "جزاكم", "خيرا", "السؤال", "الأول", "الثاني", "يوجد", "لدي", "عندي",
-    "شخص", "انسان", "المسلم", "الناس", "البعض", "كثير", "بعض",
+STOPWORDS: set[str] = {
+    "رجل",
+    "ساىل",
+    "يقول",
+    "يسال",
+    "ما",
+    "حكم",
+    "هل",
+    "في",
+    "من",
+    "علي",
+    "عن",
+    "الي",
+    "اذا",
+    "ثم",
+    "بعد",
+    "ان",
+    "او",
+    "ام",
+    "لا",
+    "هذا",
+    "فما",
+    "فهل",
+    "ذلك",
+    "وقت",
+    "حين",
+    "دخل",
+    "لما",
+    "قام",
+    "سماحه",
+    "الشيخ",
+    "فضيله",
+    "احسن",
+    "الله",
+    "اليكم",
+    "جزاكم",
+    "خيرا",
+    "السؤال",
+    "الأول",
+    "الثاني",
+    "يوجد",
+    "لدي",
+    "عندي",
+    "شخص",
+    "انسان",
+    "المسلم",
+    "الناس",
+    "البعض",
+    "كثير",
+    "بعض",
 }
 
 _PREFIX_RE = re.compile(r"^(وال|فال|بال|كال|لل|ال)")
@@ -28,13 +71,13 @@ def _light_arabic_stem(token: str) -> str:
     return t if len(t) >= 3 else token
 
 
-def _extract_stems_and_vec(question_text: str, subtopic: str) -> Tuple[List[str], Dict[str, float]]:
+def _extract_stems_and_vec(question_text: str, subtopic: str) -> tuple[list[str], dict[str, float]]:
     # Limit question length to first 350 chars to ignore caller salutations/preambles
     norm = normalize_arabic(f"{subtopic} {subtopic} {question_text[:350]}")
     tokens = [t for t in norm.split() if len(t) > 2 and t not in STOPWORDS]
     stems = [_light_arabic_stem(t) for t in tokens if len(_light_arabic_stem(t)) >= 3]
 
-    vec: Dict[str, float] = {}
+    vec: dict[str, float] = {}
     for st in stems:
         vec[st] = vec.get(st, 0.0) + 1.0
 
@@ -42,26 +85,26 @@ def _extract_stems_and_vec(question_text: str, subtopic: str) -> Tuple[List[str]
     return list(set(stems)), {k: v / norm_len for k, v in vec.items()}
 
 
-def _cosine(a: Dict[str, float], b: Dict[str, float]) -> float:
+def _cosine(a: dict[str, float], b: dict[str, float]) -> float:
     if len(a) > len(b):
         a, b = b, a
     return sum(v * b.get(k, 0.0) for k, v in a.items())
 
 
 def cluster_fatwa_issues(
-    fatwas: List[dict], similarity_threshold: float = 0.56
-) -> Tuple[List[dict], Dict[str, str]]:
+    fatwas: list[dict], similarity_threshold: float = 0.56
+) -> tuple[list[dict], dict[str, str]]:
     """
     Partitions fatwas by `topic_chapter` and clusters questions with cosine >= threshold
     using an inverted stem index for O(N) average-case performance across 20,000+ fatwas.
     """
-    by_chapter: Dict[str, List[dict]] = {}
+    by_chapter: dict[str, list[dict]] = {}
     for f in fatwas:
         ch = f["topic_chapter"]
         by_chapter.setdefault(ch, []).append(f)
 
-    issue_clusters: List[dict] = []
-    fatwa_to_cluster: Dict[str, str] = {}
+    issue_clusters: list[dict] = []
+    fatwa_to_cluster: dict[str, str] = {}
 
     for chapter, chapter_fatwas in by_chapter.items():
         # Pre-extract stem sets and normalized TF vectors
@@ -70,10 +113,10 @@ def cluster_fatwa_issues(
             for f in chapter_fatwas
         ]
 
-        #Inverted index: stem -> list of (cluster_record, seed_vec)
-        stem_to_clusters: Dict[str, List[int]] = {}
-        chapter_clusters: List[dict] = []
-        cluster_seed_vecs: List[Dict[str, float]] = []
+        # Inverted index: stem -> list of (cluster_record, seed_vec)
+        stem_to_clusters: dict[str, list[int]] = {}
+        chapter_clusters: list[dict] = []
+        cluster_seed_vecs: list[dict[str, float]] = []
 
         for idx, f in enumerate(chapter_fatwas):
             fid = f["id"]

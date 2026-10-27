@@ -19,16 +19,15 @@ Usage:
 """
 
 import argparse
+import contextlib
 import json
 import os
 import subprocess
-import sys
-from datetime import datetime
-from pathlib import Path
-from typing import Any, Dict, List, Optional
 import urllib.error
 import urllib.parse
 import urllib.request
+from pathlib import Path
+from typing import Any
 
 DEFAULT_API_URL = os.environ.get("FEEDBACK_API_URL", "http://localhost:3000/api/feedback")
 ADMIN_KEY = os.environ.get("FEEDBACK_ADMIN_KEY", "")
@@ -45,10 +44,10 @@ REASON_TITLES = {
 def fetch_from_api(
     base_url: str = DEFAULT_API_URL,
     status: str = "open",
-    fatwa_id: Optional[str] = None,
-    reason: Optional[str] = None,
-    admin_key: Optional[str] = None,
-) -> List[Dict[str, Any]]:
+    fatwa_id: str | None = None,
+    reason: str | None = None,
+    admin_key: str | None = None,
+) -> list[dict[str, Any]]:
     """Fetches feedback reports from the HTTP API."""
     params = {"status": status}
     if fatwa_id:
@@ -73,7 +72,7 @@ def fetch_from_api(
         return []
 
 
-def query_d1_via_wrangler(remote: bool = False, status: str = "open") -> List[Dict[str, Any]]:
+def query_d1_via_wrangler(remote: bool = False, status: str = "open") -> list[dict[str, Any]]:
     """Queries Cloudflare D1 directly via wrangler CLI."""
     cmd = [
         "npx",
@@ -91,7 +90,9 @@ def query_d1_via_wrangler(remote: bool = False, status: str = "open") -> List[Di
     where_clause = ""
     if status != "all":
         where_clause = f"WHERE status = '{status}'"
-    cmd.append(f"--command=SELECT * FROM feedback_reports {where_clause} ORDER BY created_at DESC LIMIT 100")
+    cmd.append(
+        f"--command=SELECT * FROM feedback_reports {where_clause} ORDER BY created_at DESC LIMIT 100"
+    )
 
     print(f"Executing: {' '.join(cmd)}")
     try:
@@ -108,7 +109,7 @@ def query_d1_via_wrangler(remote: bool = False, status: str = "open") -> List[Di
         return []
 
 
-def format_report_summary(rep: Dict[str, Any]) -> str:
+def format_report_summary(rep: dict[str, Any]) -> str:
     """Formats a concise one-line summary for listing."""
     rid = rep.get("id", "unknown")[:14]
     fid = rep.get("fatwa_id", "")
@@ -127,7 +128,7 @@ def format_report_summary(rep: Dict[str, Any]) -> str:
     return f"{status_icon} [{rid}] {fid:<9} | {scholar:<9} | {chapter:<8} | {reason_ar:<35} | «{comment}» ({created})"
 
 
-def display_report_details(rep: Dict[str, Any]) -> None:
+def display_report_details(rep: dict[str, Any]) -> None:
     """Displays full details of a single report."""
     print("\n" + "=" * 70)
     print(f"📋 Feedback Report: {rep.get('id')}")
@@ -135,7 +136,8 @@ def display_report_details(rep: Dict[str, Any]) -> None:
     print(f"• Status:           {rep.get('status')} (Created: {rep.get('created_at')})")
     print(f"• Fatwa ID:         {rep.get('fatwa_id')}")
     print(f"• Scholar:          {rep.get('scholar_name')} | Chapter: {rep.get('topic_chapter')}")
-    print(f"• Reason Flagged:   {REASON_TITLES.get(rep.get('reason'), rep.get('reason'))}")
+    reason = str(rep.get("reason") or "")
+    print(f"• Reason Flagged:   {REASON_TITLES.get(reason, reason)}")
     if rep.get("principle_text"):
         print(f"• Current Principle: «{rep.get('principle_text')}» ({rep.get('principle_id')})")
     if rep.get("question_excerpt"):
@@ -145,10 +147,8 @@ def display_report_details(rep: Dict[str, Any]) -> None:
 
     options = rep.get("options_shown")
     if isinstance(options, str):
-        try:
+        with contextlib.suppress(BaseException):
             options = json.loads(options)
-        except:
-            pass
     if isinstance(options, list):
         print("• Quiz Choices Shown:")
         for opt in options:
@@ -164,7 +164,7 @@ def display_report_details(rep: Dict[str, Any]) -> None:
 
 
 def cmd_list(args: argparse.Namespace) -> None:
-    reports: List[Dict[str, Any]] = []
+    reports: list[dict[str, Any]] = []
     if args.wrangler or args.remote:
         reports = query_d1_via_wrangler(remote=args.remote, status=args.status)
     else:
@@ -185,10 +185,15 @@ def cmd_list(args: argparse.Namespace) -> None:
 
 def cmd_show(args: argparse.Namespace) -> None:
     reports = fetch_from_api(base_url=args.url, status="all", admin_key=args.admin_key)
-    match = next((r for r in reports if r.get("id") == args.id or r.get("id", "").startswith(args.id)), None)
+    match = next(
+        (r for r in reports if r.get("id") == args.id or r.get("id", "").startswith(args.id)), None
+    )
     if not match and (args.wrangler or args.remote):
         d1_reps = query_d1_via_wrangler(remote=args.remote, status="all")
-        match = next((r for r in d1_reps if r.get("id") == args.id or r.get("id", "").startswith(args.id)), None)
+        match = next(
+            (r for r in d1_reps if r.get("id") == args.id or r.get("id", "").startswith(args.id)),
+            None,
+        )
 
     if not match:
         print(f"❌ Report '{args.id}' not found.")
@@ -210,16 +215,22 @@ def cmd_export(args: argparse.Namespace) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Taseel Feedback Retrieval Tool")
-    parser.add_argument("--url", default=DEFAULT_API_URL, help=f"Feedback API URL (default: {DEFAULT_API_URL})")
+    parser.add_argument(
+        "--url", default=DEFAULT_API_URL, help=f"Feedback API URL (default: {DEFAULT_API_URL})"
+    )
     parser.add_argument("--admin-key", default=ADMIN_KEY, help="Admin authorization key")
     parser.add_argument("--wrangler", action="store_true", help="Query local wrangler D1 directly")
-    parser.add_argument("--remote", action="store_true", help="Query remote Cloudflare D1 via wrangler")
+    parser.add_argument(
+        "--remote", action="store_true", help="Query remote Cloudflare D1 via wrangler"
+    )
 
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     # list
     p_list = sub.add_parser("list", help="List feedback reports")
-    p_list.add_argument("--status", default="open", choices=["open", "reviewed", "resolved", "dismissed", "all"])
+    p_list.add_argument(
+        "--status", default="open", choices=["open", "reviewed", "resolved", "dismissed", "all"]
+    )
     p_list.add_argument("--fatwa", help="Filter by fatwa ID (e.g. baz-18)")
     p_list.add_argument("--reason", choices=list(REASON_TITLES.keys()), help="Filter by reason")
 
@@ -229,7 +240,9 @@ def main() -> None:
 
     # export
     p_exp = sub.add_parser("export", help="Export reports to JSON")
-    p_exp.add_argument("--output", default="pipeline/data/feedback_export.json", help="Output JSON path")
+    p_exp.add_argument(
+        "--output", default="pipeline/data/feedback_export.json", help="Output JSON path"
+    )
     p_exp.add_argument("--status", default="open", choices=["open", "all", "resolved"])
 
     args = parser.parse_args()

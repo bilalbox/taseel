@@ -39,16 +39,15 @@ import re
 import sys
 import unicodedata
 from collections import Counter
-from datetime import datetime, timezone
+from collections.abc import Iterable
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from arabic_norm import normalize_arabic
 from cluster_issues import cluster_fatwa_issues
 from extractor import extract_and_ground_fatwa
 from ingest_archives import load_full_archives
 from ontology_index import STOP_TOKENS, OntologyGraph
-
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 PIPELINE_DIR = ROOT_DIR / "pipeline"
@@ -74,9 +73,25 @@ DEFAULT_JOBS_PER_BATCH = 30
 # Fiqh chapters first: they are the densest in qawa'id/dawabit, so early batches
 # (and pilots) yield the most useful links.
 CHAPTER_PRIORITY = [
-    "Taharah", "Salat", "Sawm", "Zakat", "Hajj", "Janaiz", "Nikah", "Muamalat",
-    "Faraid", "Ayman", "Jinayat", "Udhiyah", "Jihad", "Mutafarriqat",
-    "Hadith", "Tafsir", "Ilm", "Adab", "Aqidah",
+    "Taharah",
+    "Salat",
+    "Sawm",
+    "Zakat",
+    "Hajj",
+    "Janaiz",
+    "Nikah",
+    "Muamalat",
+    "Faraid",
+    "Ayman",
+    "Jinayat",
+    "Udhiyah",
+    "Jihad",
+    "Mutafarriqat",
+    "Hadith",
+    "Tafsir",
+    "Ilm",
+    "Adab",
+    "Aqidah",
 ]
 
 # §4 Structured Output schema — one object per fatwa (kept verbatim from the spec).
@@ -116,12 +131,25 @@ FATWA_RESULT_SCHEMA: dict = {
                             "canonical_text_ar": {"type": "string"},
                             "summary_ar": {"type": "string"},
                         },
-                        "required": ["suggested_id", "parent_id", "science", "kind", "canonical_text_ar", "summary_ar"],
+                        "required": [
+                            "suggested_id",
+                            "parent_id",
+                            "science",
+                            "kind",
+                            "canonical_text_ar",
+                            "summary_ar",
+                        ],
                     },
                 },
                 "required": [
-                    "principle_id", "matched_alias_id", "invocation_type", "evidence_quote_ar",
-                    "application_explanation_ar", "difficulty", "confidence_score", "proposed_new_dabit",
+                    "principle_id",
+                    "matched_alias_id",
+                    "invocation_type",
+                    "evidence_quote_ar",
+                    "application_explanation_ar",
+                    "difficulty",
+                    "confidence_score",
+                    "proposed_new_dabit",
                 ],
             },
         },
@@ -131,29 +159,77 @@ FATWA_RESULT_SCHEMA: dict = {
 
 # §5.1 Routine Proof Citation Guardrail: these Usul nodes may only be linked when the
 # answer discusses the *authority / epistemic weight* of the proof itself.
-_EPISTEMIC_MARKERS_RAW: Dict[str, List[str]] = {
+_EPISTEMIC_MARKERS_RAW: dict[str, list[str]] = {
     "usul.adillah.ijma": [
-        "حجة قطعية", "تحرم مخالفته", "يخرق", "خرق الإجماع", "حجية الإجماع", "الإجماع حجة",
-        "مخالفة الإجماع", "خالف الإجماع", "لا تجتمع أمتي", "انعقد الإجماع",
+        "حجة قطعية",
+        "تحرم مخالفته",
+        "يخرق",
+        "خرق الإجماع",
+        "حجية الإجماع",
+        "الإجماع حجة",
+        "مخالفة الإجماع",
+        "خالف الإجماع",
+        "لا تجتمع أمتي",
+        "انعقد الإجماع",
     ],
     "usul.adillah.sunnah": [
-        "خبر الواحد", "خبر الآحاد", "أخبار الآحاد", "حديث الآحاد", "أحاديث الآحاد",
-        "حجية السنة", "السنة حجة", "منكر السنة", "القرآنيين",
+        "خبر الواحد",
+        "خبر الآحاد",
+        "أخبار الآحاد",
+        "حديث الآحاد",
+        "أحاديث الآحاد",
+        "حجية السنة",
+        "السنة حجة",
+        "منكر السنة",
+        "القرآنيين",
     ],
     "usul.adillah.sunnah.khabar_wahid": [
-        "خبر الواحد", "خبر الآحاد", "أخبار الآحاد", "حديث الآحاد", "أحاديث الآحاد",
+        "خبر الواحد",
+        "خبر الآحاد",
+        "أخبار الآحاد",
+        "حديث الآحاد",
+        "أحاديث الآحاد",
     ],
 }
-EPISTEMIC_MARKERS: Dict[str, List[str]] = {
+EPISTEMIC_MARKERS: dict[str, list[str]] = {
     pid: [normalize_arabic(m) for m in markers] for pid, markers in _EPISTEMIC_MARKERS_RAW.items()
 }
 
 _CLAUSE_RE = re.compile(r"[^.؛!؟\n]+")
-_CAUSAL_CLAUSE_HINTS = [normalize_arabic(h) for h in (
-    "لأن", "لأجل", "الأصل", "القاعدة", "بناء على", "يقين", "الشك", "مشقة", "التيسير", "الضرر",
-    "الضرورة", "المقاصد", "بالنيات", "العبرة", "العادة", "العرف", "المفاسد", "المصالح", "الذرائع",
-    "الإكراه", "النسيان", "الجاهل", "توقيف", "بدعة", "استصحاب", "فإن", "ولهذا", "فلهذا", "لهذا",
-)]
+_CAUSAL_CLAUSE_HINTS = [
+    normalize_arabic(h)
+    for h in (
+        "لأن",
+        "لأجل",
+        "الأصل",
+        "القاعدة",
+        "بناء على",
+        "يقين",
+        "الشك",
+        "مشقة",
+        "التيسير",
+        "الضرر",
+        "الضرورة",
+        "المقاصد",
+        "بالنيات",
+        "العبرة",
+        "العادة",
+        "العرف",
+        "المفاسد",
+        "المصالح",
+        "الذرائع",
+        "الإكراه",
+        "النسيان",
+        "الجاهل",
+        "توقيف",
+        "بدعة",
+        "استصحاب",
+        "فإن",
+        "ولهذا",
+        "فلهذا",
+        "لهذا",
+    )
+]
 
 
 # =============================================================================
@@ -162,13 +238,13 @@ _CAUSAL_CLAUSE_HINTS = [normalize_arabic(h) for h in (
 _FOLD_MAP = {"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ة": "ه", "ى": "ي", "ؤ": "ء", "ئ": "ء"}
 
 
-def _fold_with_index(text: str) -> Tuple[str, List[int]]:
+def _fold_with_index(text: str) -> tuple[str, list[int]]:
     """
     Folds text for matching (drops harakat/tatweel, unifies alef/taa/yaa/hamza, collapses
     punctuation+whitespace into single spaces) and returns a map folded_idx -> raw_idx.
     """
-    out: List[str] = []
-    idx: List[int] = []
+    out: list[str] = []
+    idx: list[int] = []
     pending_space = False
     for i, ch in enumerate(text):
         if ch == "\u0640" or unicodedata.category(ch) == "Mn":
@@ -186,7 +262,7 @@ def _fold_with_index(text: str) -> Tuple[str, List[int]]:
     return "".join(out), idx
 
 
-def locate_verbatim(quote: str, answer_text: str) -> Optional[str]:
+def locate_verbatim(quote: str, answer_text: str) -> str | None:
     """
     Returns the exact raw substring of `answer_text` matching `quote` (tolerating
     differences in diacritics, punctuation and whitespace), or None if absent.
@@ -222,13 +298,13 @@ class Corpus:
             f["question_norm"] = normalize_arabic(f["question_text"])
             f["answer_norm"] = normalize_arabic(f["answer_text"])
             f["subtopic_norm"] = normalize_arabic(f.get("topic_subtopic") or "")
-        self.fatwas: List[dict] = fatwas
-        self.fatwas_by_id: Dict[str, dict] = {f["id"]: f for f in fatwas}
+        self.fatwas: list[dict] = fatwas
+        self.fatwas_by_id: dict[str, dict] = {f["id"]: f for f in fatwas}
         self.clusters, self.fatwa_to_cluster = cluster_fatwa_issues(fatwas)
-        self.clusters_by_id: Dict[str, dict] = {c["id"]: c for c in self.clusters}
+        self.clusters_by_id: dict[str, dict] = {c["id"]: c for c in self.clusters}
 
         self.eligibility: Counter = Counter()
-        self.eligible_ids: Set[str] = set()
+        self.eligible_ids: set[str] = set()
         for f in fatwas:
             res = extract_and_ground_fatwa(
                 f, self.ontology, norm_question=f["question_norm"], norm_answer=f["answer_norm"]
@@ -237,14 +313,17 @@ class Corpus:
                 self.eligibility["DETERMINISTICALLY_GROUNDED"] += 1
                 if include_grounded:
                     self.eligible_ids.add(f["id"])
-            elif res["skip_reason"] in ("ROUTINE_PROOF_CITATION_ONLY", "NO_CAUSAL_PRINCIPLE_DETECTED"):
+            elif res["skip_reason"] in (
+                "ROUTINE_PROOF_CITATION_ONLY",
+                "NO_CAUSAL_PRINCIPLE_DETECTED",
+            ):
                 self.eligibility[f"TRIAGE_{res['skip_reason']}"] += 1
             else:
                 self.eligibility[f"ELIGIBLE_{res['skip_reason']}"] += 1
                 self.eligible_ids.add(f["id"])
 
 
-def ancestor_ids(ontology: OntologyGraph, node_id: str) -> List[str]:
+def ancestor_ids(ontology: OntologyGraph, node_id: str) -> list[str]:
     out = []
     curr = ontology.nodes[node_id]
     while curr.get("parent_id"):
@@ -255,14 +334,14 @@ def ancestor_ids(ontology: OntologyGraph, node_id: str) -> List[str]:
 
 def candidate_subgraph_ids(
     fatwa: dict, ontology: OntologyGraph, max_candidates: int = DEFAULT_MAX_CANDIDATES
-) -> List[str]:
+) -> list[str]:
     """Top-N inverted-index neighbourhood + topic_chapter dawabit, plus the 5 universal maxims."""
     norm_query = f"{fatwa['subtopic_norm']} {fatwa['question_norm']} {fatwa['answer_norm']}"
     tokens = {t for t in norm_query.split() if len(t) > 2 and t not in STOP_TOKENS}
     retrieved, _ = ontology.retrieve_candidate_subgraph_fast(norm_query, tokens, top_k_seeds=6)
 
-    ordered: List[str] = []
-    seen: Set[str] = set()
+    ordered: list[str] = []
+    seen: set[str] = set()
 
     def _add(nid: str) -> None:
         if nid not in seen:
@@ -282,14 +361,18 @@ def candidate_subgraph_ids(
     return ordered
 
 
-def make_excerpt(answer_text: str, max_chars: int) -> Tuple[str, bool]:
+def make_excerpt(answer_text: str, max_chars: int) -> tuple[str, bool]:
     """Keeps the opening clause + causal clauses (verbatim segments joined by ' … ')."""
     if len(answer_text) <= max_chars:
         return answer_text, False
-    spans = [(m.start(), m.end()) for m in _CLAUSE_RE.finditer(answer_text) if len(m.group().strip()) > 12]
+    spans = [
+        (m.start(), m.end())
+        for m in _CLAUSE_RE.finditer(answer_text)
+        if len(m.group().strip()) > 12
+    ]
     if not spans:
         return answer_text[:max_chars], True
-    chosen: List[Tuple[int, int]] = [spans[0]]
+    chosen: list[tuple[int, int]] = [spans[0]]
     budget = max_chars - (spans[0][1] - spans[0][0])
     for s, e in spans[1:]:
         norm_clause = normalize_arabic(answer_text[s:e])
@@ -319,16 +402,18 @@ def _repair_trailing_partial_line(path: Path) -> None:
         data = fh.read()
         cut = data.rfind(b"\n") + 1
         fh.truncate(cut)
-        print(f"  ! Repaired truncated trailing line in {path.name} ({len(data) - cut} bytes dropped).")
+        print(
+            f"  ! Repaired truncated trailing line in {path.name} ({len(data) - cut} bytes dropped)."
+        )
 
 
-def read_extraction_records(path: Optional[Path] = None) -> Dict[str, dict]:
+def read_extraction_records(path: Path | None = None) -> dict[str, dict]:
     """fatwa_id -> latest record (later lines win, so re-ingests override)."""
     path = path or EXTRACTIONS_PATH
-    records: Dict[str, dict] = {}
+    records: dict[str, dict] = {}
     if not path.exists():
         return records
-    with open(path, "r", encoding="utf-8") as fh:
+    with open(path, encoding="utf-8") as fh:
         for line in fh:
             line = line.strip()
             if not line:
@@ -342,7 +427,7 @@ def read_extraction_records(path: Optional[Path] = None) -> Dict[str, dict]:
     return records
 
 
-def _batch_files(batch_id: str, directory: Optional[Path] = None) -> Dict[str, Path]:
+def _batch_files(batch_id: str, directory: Path | None = None) -> dict[str, Path]:
     directory = directory or JOBS_DIR
     return {
         "jobs": directory / f"{batch_id}.jobs.json",
@@ -351,7 +436,7 @@ def _batch_files(batch_id: str, directory: Optional[Path] = None) -> Dict[str, P
     }
 
 
-def outstanding_batches() -> List[str]:
+def outstanding_batches() -> list[str]:
     if not JOBS_DIR.exists():
         return []
     return sorted(p.name[: -len(".jobs.json")] for p in JOBS_DIR.glob("batch_*.jobs.json"))
@@ -368,9 +453,9 @@ def _next_batch_number() -> int:
     return max(nums) + 1
 
 
-def pending_fatwa_ids() -> Set[str]:
+def pending_fatwa_ids() -> set[str]:
     """Fatwas already exported into a batch that has not been ingested yet."""
-    ids: Set[str] = set()
+    ids: set[str] = set()
     for b in outstanding_batches():
         jobs = json.loads(_batch_files(b)["jobs"].read_text(encoding="utf-8"))["jobs"]
         for job in jobs:
@@ -384,14 +469,14 @@ def pending_fatwa_ids() -> Set[str]:
 # =============================================================================
 def build_jobs(
     corpus: Corpus,
-    exclude_ids: Set[str],
+    exclude_ids: set[str],
     max_fatwas_per_job: int = DEFAULT_MAX_FATWAS_PER_JOB,
     max_answer_chars: int = DEFAULT_MAX_ANSWER_CHARS,
     max_candidates: int = DEFAULT_MAX_CANDIDATES,
-    chapters: Optional[Set[str]] = None,
-) -> List[dict]:
+    chapters: set[str] | None = None,
+) -> list[dict]:
     ontology = corpus.ontology
-    by_cluster: Dict[str, List[dict]] = {}
+    by_cluster: dict[str, list[dict]] = {}
     for f in corpus.fatwas:  # preserves archive order -> deterministic jobs
         fid = f["id"]
         if fid not in corpus.eligible_ids or fid in exclude_ids:
@@ -400,13 +485,13 @@ def build_jobs(
             continue
         by_cluster.setdefault(corpus.fatwa_to_cluster[fid], []).append(f)
 
-    jobs: List[dict] = []
+    jobs: list[dict] = []
     for cluster_id, members in by_cluster.items():
         if len(members) <= max_fatwas_per_job:
             sent, propagate = members, []
         else:
             # Longest (most detailed) answer per scholar; propagate to the rest.
-            reps: Dict[str, dict] = {}
+            reps: dict[str, dict] = {}
             for f in members:
                 cur = reps.get(f["scholar_name"])
                 if cur is None or len(f["answer_text"]) > len(cur["answer_text"]):
@@ -419,7 +504,7 @@ def build_jobs(
                 if f["id"] not in sent_ids
             ]
 
-        cand: List[str] = []
+        cand: list[str] = []
         for f in sent:
             for nid in candidate_subgraph_ids(f, ontology, max_candidates):
                 if nid not in cand:
@@ -435,7 +520,9 @@ def build_jobs(
                     "fatwa_id": f["id"],
                     "scholar_name": f["scholar_name"],
                     "topic_subtopic": f.get("topic_subtopic") or "",
-                    "question_text": q if len(q) <= DEFAULT_MAX_QUESTION_CHARS else q[:DEFAULT_MAX_QUESTION_CHARS] + " …",
+                    "question_text": q
+                    if len(q) <= DEFAULT_MAX_QUESTION_CHARS
+                    else q[:DEFAULT_MAX_QUESTION_CHARS] + " …",
                     "answer_shown": excerpt,
                     "answer_is_excerpt": is_excerpt,
                 }
@@ -524,8 +611,10 @@ python3 pipeline/src/llm_batch_enrich.py check {batch_id}
 """
 
 
-def render_prompt(batch_id: str, jobs: List[dict], ontology: OntologyGraph, response_path: str) -> str:
-    used: List[str] = []
+def render_prompt(
+    batch_id: str, jobs: list[dict], ontology: OntologyGraph, response_path: str
+) -> str:
+    used: list[str] = []
     for job in jobs:
         for nid in job["candidate_ids"]:
             if nid not in used:
@@ -570,8 +659,8 @@ def render_prompt(batch_id: str, jobs: List[dict], ontology: OntologyGraph, resp
 # =============================================================================
 # Validation (shared by `check`, `ingest` and compile_sqlite.py)
 # =============================================================================
-def schema_errors(obj: object) -> List[str]:
-    errs: List[str] = []
+def schema_errors(obj: object) -> list[str]:
+    errs: list[str] = []
     if not isinstance(obj, dict):
         return ["result is not a JSON object"]
     if not isinstance(obj.get("fatwa_id"), str):
@@ -592,7 +681,11 @@ def schema_errors(obj: object) -> List[str]:
         for key in ("principle_id", "evidence_quote_ar", "application_explanation_ar"):
             if key in inv and (not isinstance(inv[key], str) or not inv[key].strip()):
                 errs.append(f"{p}.{key} must be a non-empty string")
-        if "matched_alias_id" in inv and inv["matched_alias_id"] is not None and not isinstance(inv["matched_alias_id"], str):
+        if (
+            "matched_alias_id" in inv
+            and inv["matched_alias_id"] is not None
+            and not isinstance(inv["matched_alias_id"], str)
+        ):
             errs.append(f"{p}.matched_alias_id must be string or null")
         if "invocation_type" in inv and inv["invocation_type"] not in INVOCATION_TYPES:
             errs.append(f"{p}.invocation_type must be one of {INVOCATION_TYPES}")
@@ -606,11 +699,20 @@ def schema_errors(obj: object) -> List[str]:
             if not isinstance(nd, dict):
                 errs.append(f"{p}.proposed_new_dabit must be object or null")
             else:
-                for key in ("suggested_id", "parent_id", "science", "kind", "canonical_text_ar", "summary_ar"):
+                for key in (
+                    "suggested_id",
+                    "parent_id",
+                    "science",
+                    "kind",
+                    "canonical_text_ar",
+                    "summary_ar",
+                ):
                     if not isinstance(nd.get(key), str) or not nd[key].strip():
                         errs.append(f"{p}.proposed_new_dabit.{key} must be a non-empty string")
                 if nd.get("science") not in NEW_DABIT_SCIENCES:
-                    errs.append(f"{p}.proposed_new_dabit.science must be one of {NEW_DABIT_SCIENCES}")
+                    errs.append(
+                        f"{p}.proposed_new_dabit.science must be one of {NEW_DABIT_SCIENCES}"
+                    )
                 if nd.get("kind") not in NEW_DABIT_KINDS:
                     errs.append(f"{p}.proposed_new_dabit.kind must be one of {NEW_DABIT_KINDS}")
         if inv.get("principle_id") == NEW_CANDIDATE and not isinstance(nd, dict):
@@ -618,10 +720,12 @@ def schema_errors(obj: object) -> List[str]:
     return errs
 
 
-def prune_to_most_specific(links: List[dict], ontology: OntologyGraph) -> Tuple[List[dict], List[dict]]:
+def prune_to_most_specific(
+    links: list[dict], ontology: OntologyGraph
+) -> tuple[list[dict], list[dict]]:
     """§5.2: drop any link whose principle is an ancestor of another linked principle."""
     linked = {l["principle_id"] for l in links}
-    covered: Set[str] = set()
+    covered: set[str] = set()
     for pid in linked:
         covered.update(ancestor_ids(ontology, pid))
     kept = [l for l in links if l["principle_id"] not in covered]
@@ -634,20 +738,25 @@ def validate_fatwa_response(
     fatwa: dict,
     ontology: OntologyGraph,
     min_confidence: float = DEFAULT_MIN_CONFIDENCE,
-) -> Tuple[List[dict], List[dict], List[dict]]:
+) -> tuple[list[dict], list[dict], list[dict]]:
     """
     Applies the §5 guardrails to one schema-valid response.
     Returns (links, rejections, proposals). `links` are ready for `fatwa_principles`.
     """
     answer = fatwa["answer_text"]
     answer_norm = fatwa.get("answer_norm") or normalize_arabic(answer)
-    links: List[dict] = []
-    rejections: List[dict] = []
-    proposals: List[dict] = []
+    links: list[dict] = []
+    rejections: list[dict] = []
+    proposals: list[dict] = []
 
     def _reject(inv: dict, reason: str) -> None:
-        rejections.append({"principle_id": inv.get("principle_id"), "reason": reason,
-                           "evidence_quote_ar": inv.get("evidence_quote_ar", "")[:120]})
+        rejections.append(
+            {
+                "principle_id": inv.get("principle_id"),
+                "reason": reason,
+                "evidence_quote_ar": inv.get("evidence_quote_ar", "")[:120],
+            }
+        )
 
     for inv in response.get("invocations") or []:
         pid = inv["principle_id"]
@@ -659,10 +768,16 @@ def validate_fatwa_response(
 
         if pid == NEW_CANDIDATE:
             nd = dict(inv["proposed_new_dabit"])
-            proposals.append({**nd, "fatwa_id": fatwa["id"], "evidence_quote_ar": quote,
-                              "application_explanation_ar": inv["application_explanation_ar"],
-                              "confidence_score": conf,
-                              "parent_exists": nd["parent_id"] in ontology.nodes})
+            proposals.append(
+                {
+                    **nd,
+                    "fatwa_id": fatwa["id"],
+                    "evidence_quote_ar": quote,
+                    "application_explanation_ar": inv["application_explanation_ar"],
+                    "confidence_score": conf,
+                    "parent_exists": nd["parent_id"] in ontology.nodes,
+                }
+            )
             continue
         if pid not in ontology.nodes:
             _reject(inv, "UNKNOWN_PRINCIPLE_ID")
@@ -681,7 +796,10 @@ def validate_fatwa_response(
         if alias_id not in alias_ids or alias_ids[alias_id]["alias_text_norm"] not in answer_norm:
             alias_id = None
         if alias_id is None:  # recover an alias that does appear verbatim
-            alias_id = next((a["id"] for a in node["aliases_resolved"] if a["alias_text_norm"] in answer_norm), None)
+            alias_id = next(
+                (a["id"] for a in node["aliases_resolved"] if a["alias_text_norm"] in answer_norm),
+                None,
+            )
 
         # Normalise invocation_type against what is actually present in the text.
         inv_type = inv["invocation_type"]
@@ -691,30 +809,40 @@ def validate_fatwa_response(
             inv_type = "explicit_paraphrase" if alias_id else "implicit_application"
         # An explicit_paraphrase without a catalogued alias is allowed (clear rewording).
 
-        links.append({
-            "fatwa_id": fatwa["id"],
-            "principle_id": pid,
-            "matched_alias_id": alias_id,
-            "invocation_type": inv_type,
-            "evidence_quote_ar": quote,
-            "application_explanation_ar": inv["application_explanation_ar"].strip(),
-            "difficulty": inv["difficulty"],
-            "confidence_score": round(conf, 2),
-        })
+        links.append(
+            {
+                "fatwa_id": fatwa["id"],
+                "principle_id": pid,
+                "matched_alias_id": alias_id,
+                "invocation_type": inv_type,
+                "evidence_quote_ar": quote,
+                "application_explanation_ar": inv["application_explanation_ar"].strip(),
+                "difficulty": inv["difficulty"],
+                "confidence_score": round(conf, 2),
+            }
+        )
 
     # Duplicate principle within one fatwa -> keep highest confidence.
-    best: Dict[str, dict] = {}
+    best: dict[str, dict] = {}
     for l in links:
-        if l["principle_id"] not in best or l["confidence_score"] > best[l["principle_id"]]["confidence_score"]:
+        if (
+            l["principle_id"] not in best
+            or l["confidence_score"] > best[l["principle_id"]]["confidence_score"]
+        ):
             best[l["principle_id"]] = l
     links, dropped = prune_to_most_specific(list(best.values()), ontology)
     for l in dropped:
-        rejections.append({"principle_id": l["principle_id"], "reason": "SUPERSEDED_BY_MORE_SPECIFIC_NODE",
-                           "evidence_quote_ar": l["evidence_quote_ar"][:120]})
+        rejections.append(
+            {
+                "principle_id": l["principle_id"],
+                "reason": "SUPERSEDED_BY_MORE_SPECIFIC_NODE",
+                "evidence_quote_ar": l["evidence_quote_ar"][:120],
+            }
+        )
     return links, rejections, proposals
 
 
-def parse_response_file(path: Path) -> Tuple[List[dict], List[str]]:
+def parse_response_file(path: Path) -> tuple[list[dict], list[str]]:
     """Accepts JSON Lines (preferred), a JSON array, or {"results": [...]}."""
     text = path.read_text(encoding="utf-8").strip()
     if not text:
@@ -741,17 +869,30 @@ def parse_response_file(path: Path) -> Tuple[List[dict], List[str]]:
     return results, errors
 
 
-def evaluate_batch(batch_id: str, corpus_fatwas: Dict[str, dict], ontology: OntologyGraph,
-                   directory: Optional[Path] = None, min_confidence: float = DEFAULT_MIN_CONFIDENCE) -> dict:
+def evaluate_batch(
+    batch_id: str,
+    corpus_fatwas: dict[str, dict],
+    ontology: OntologyGraph,
+    directory: Path | None = None,
+    min_confidence: float = DEFAULT_MIN_CONFIDENCE,
+) -> dict:
     files = _batch_files(batch_id, directory)
     jobs = json.loads(files["jobs"].read_text(encoding="utf-8"))["jobs"]
-    expected: Dict[str, dict] = {}
+    expected: dict[str, dict] = {}
     for job in jobs:
         for f in job["fatwas"]:
             expected[f["fatwa_id"]] = job
 
-    report = {"batch_id": batch_id, "jobs": jobs, "expected": expected, "accepted": {},
-              "errors": [], "warnings": [], "rejections": Counter(), "links": 0}
+    report = {
+        "batch_id": batch_id,
+        "jobs": jobs,
+        "expected": expected,
+        "accepted": {},
+        "errors": [],
+        "warnings": [],
+        "rejections": Counter(),
+        "links": 0,
+    }
     if not files["response"].exists():
         report["errors"].append(f"missing response file {files['response']}")
         return report
@@ -769,15 +910,26 @@ def evaluate_batch(batch_id: str, corpus_fatwas: Dict[str, dict], ontology: Onto
             continue
         job = expected[fid]
         for inv in res["invocations"]:
-            if inv["principle_id"] not in job["candidate_ids"] and inv["principle_id"] != NEW_CANDIDATE:
-                report["warnings"].append(f"{fid}: {inv['principle_id']} is outside the job's candidate list")
-        links, rejections, _ = validate_fatwa_response(res, corpus_fatwas[fid], ontology, min_confidence)
+            if (
+                inv["principle_id"] not in job["candidate_ids"]
+                and inv["principle_id"] != NEW_CANDIDATE
+            ):
+                report["warnings"].append(
+                    f"{fid}: {inv['principle_id']} is outside the job's candidate list"
+                )
+        links, rejections, _ = validate_fatwa_response(
+            res, corpus_fatwas[fid], ontology, min_confidence
+        )
         for r in rejections:
             report["rejections"][r["reason"]] += 1
             if r["reason"] in ("QUOTE_NOT_VERBATIM", "UNKNOWN_PRINCIPLE_ID"):
-                report["errors"].append(f"{fid}: {r['reason']} for {r['principle_id']} «{r['evidence_quote_ar']}»")
+                report["errors"].append(
+                    f"{fid}: {r['reason']} for {r['principle_id']} «{r['evidence_quote_ar']}»"
+                )
         if res["has_applicable_principle"] and not res["invocations"]:
-            report["warnings"].append(f"{fid}: has_applicable_principle=true but invocations is empty")
+            report["warnings"].append(
+                f"{fid}: has_applicable_principle=true but invocations is empty"
+            )
         report["links"] += len(links)
         report["accepted"][fid] = res
     missing = [fid for fid in expected if fid not in report["accepted"]]
@@ -792,24 +944,32 @@ def evaluate_batch(batch_id: str, corpus_fatwas: Dict[str, dict], ontology: Onto
 # Loading cached extractions for compile_sqlite.py
 # =============================================================================
 def load_llm_links(
-    fatwas_by_id: Dict[str, dict],
+    fatwas_by_id: dict[str, dict],
     ontology: OntologyGraph,
-    path: Optional[Path] = None,
+    path: Path | None = None,
     min_confidence: float = DEFAULT_MIN_CONFIDENCE,
-) -> Tuple[Dict[str, List[dict]], dict, List[dict]]:
+) -> tuple[dict[str, list[dict]], dict, list[dict]]:
     """Re-validates every cached response. Returns (links_by_fatwa, stats, proposals)."""
     records = read_extraction_records(path)
-    links_by_fatwa: Dict[str, List[dict]] = {}
-    proposals: List[dict] = []
-    stats = {"records": len(records), "unknown_fatwa": 0, "fatwas_with_links": 0, "links": 0,
-             "rejections": Counter(), "sources": Counter()}
+    links_by_fatwa: dict[str, list[dict]] = {}
+    proposals: list[dict] = []
+    stats = {
+        "records": len(records),
+        "unknown_fatwa": 0,
+        "fatwas_with_links": 0,
+        "links": 0,
+        "rejections": Counter(),
+        "sources": Counter(),
+    }
     for fid, rec in records.items():
         fatwa = fatwas_by_id.get(fid)
         if fatwa is None or schema_errors(rec.get("response")):
             stats["unknown_fatwa"] += 1
             continue
         stats["sources"][rec.get("source", "agent")] += 1
-        links, rejections, props = validate_fatwa_response(rec["response"], fatwa, ontology, min_confidence)
+        links, rejections, props = validate_fatwa_response(
+            rec["response"], fatwa, ontology, min_confidence
+        )
         for r in rejections:
             stats["rejections"][r["reason"]] += 1
         if rec.get("source") != "cluster_propagation":
@@ -822,15 +982,15 @@ def load_llm_links(
 
 
 def merge_fatwa_links(
-    fatwa_id: str, deterministic: List[dict], llm: List[dict], ontology: OntologyGraph
-) -> List[dict]:
+    fatwa_id: str, deterministic: list[dict], llm: list[dict], ontology: OntologyGraph
+) -> list[dict]:
     """
     Unions deterministic + LLM links for one fatwa (UNIQUE(fatwa_id, principle_id)).
     On overlap the string-verified deterministic invocation_type / alias win, while the
     agent's verbatim quote, تحقيق المناط explanation and difficulty replace the templates.
     Most-specific resolution is re-applied across the combined set.
     """
-    merged: Dict[str, dict] = {}
+    merged: dict[str, dict] = {}
     for l in deterministic:
         merged[l["principle_id"]] = {**l, "difficulty": None, "extraction_method": "deterministic"}
     for l in llm:
@@ -865,8 +1025,14 @@ def cmd_plan(args) -> None:
     corpus = _load_corpus(args)
     processed = set(read_extraction_records())
     pending = pending_fatwa_ids()
-    jobs = build_jobs(corpus, processed | pending, args.max_fatwas_per_job, args.max_answer_chars,
-                      args.max_candidates, set(args.chapter) if args.chapter else None)
+    jobs = build_jobs(
+        corpus,
+        processed | pending,
+        args.max_fatwas_per_job,
+        args.max_answer_chars,
+        args.max_candidates,
+        set(args.chapter) if args.chapter else None,
+    )
     eligible_clusters = {corpus.fatwa_to_cluster[f] for f in corpus.eligible_ids}
     sent = sum(len(j["fatwas"]) for j in jobs)
     prop = sum(len(j["propagate_to"]) for j in jobs)
@@ -876,11 +1042,20 @@ def cmd_plan(args) -> None:
     for k, v in sorted(corpus.eligibility.items()):
         print(f"  • {k}: {v:,}")
     print(f"Eligible: {len(corpus.eligible_ids):,} fatwas in {len(eligible_clusters):,} clusters")
-    print(f"Processed (in {EXTRACTIONS_PATH.name}): {len(processed):,} | pending in outstanding batches: {len(pending):,}")
-    print(f"Remaining: {len(jobs):,} jobs → {sent:,} fatwas sent + {prop:,} covered by cluster propagation")
-    print(f"  ≈ {_estimate_tokens('x' * chars):,} fatwa-text tokens "
-          f"(~{(len(jobs) + args.jobs_per_batch - 1) // max(1, args.jobs_per_batch):,} batches of {args.jobs_per_batch})")
-    print("  Jobs by chapter: " + ", ".join(f"{c}={n:,}" for c, n in sorted(by_chapter.items(), key=lambda x: -x[1])))
+    print(
+        f"Processed (in {EXTRACTIONS_PATH.name}): {len(processed):,} | pending in outstanding batches: {len(pending):,}"
+    )
+    print(
+        f"Remaining: {len(jobs):,} jobs → {sent:,} fatwas sent + {prop:,} covered by cluster propagation"
+    )
+    print(
+        f"  ≈ {_estimate_tokens('x' * chars):,} fatwa-text tokens "
+        f"(~{(len(jobs) + args.jobs_per_batch - 1) // max(1, args.jobs_per_batch):,} batches of {args.jobs_per_batch})"
+    )
+    print(
+        "  Jobs by chapter: "
+        + ", ".join(f"{c}={n:,}" for c, n in sorted(by_chapter.items(), key=lambda x: -x[1]))
+    )
 
 
 def cmd_export(args) -> None:
@@ -888,8 +1063,14 @@ def cmd_export(args) -> None:
     JOBS_DIR.mkdir(parents=True, exist_ok=True)
     processed = set(read_extraction_records())
     pending = pending_fatwa_ids()
-    jobs = build_jobs(corpus, processed | pending, args.max_fatwas_per_job, args.max_answer_chars,
-                      args.max_candidates, set(args.chapter) if args.chapter else None)
+    jobs = build_jobs(
+        corpus,
+        processed | pending,
+        args.max_fatwas_per_job,
+        args.max_answer_chars,
+        args.max_candidates,
+        set(args.chapter) if args.chapter else None,
+    )
     if args.max_jobs:
         jobs = jobs[: args.max_jobs]
     if not jobs:
@@ -903,7 +1084,7 @@ def cmd_export(args) -> None:
         files = _batch_files(batch_id)
         meta = {
             "batch_id": batch_id,
-            "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "created_at": datetime.now(UTC).isoformat(timespec="seconds"),
             "ontology_version": corpus.ontology.version,
             "jobs": chunk,
         }
@@ -912,15 +1093,19 @@ def cmd_export(args) -> None:
         files["prompt"].write_text(prompt, encoding="utf-8")
         n_f = sum(len(j["fatwas"]) for j in chunk)
         written.append(batch_id)
-        print(f"  ✓ {batch_id}: {len(chunk)} jobs, {n_f} fatwas, ~{_estimate_tokens(prompt):,} prompt tokens "
-              f"→ {_rel_path(files['prompt'])}")
+        print(
+            f"  ✓ {batch_id}: {len(chunk)} jobs, {n_f} fatwas, ~{_estimate_tokens(prompt):,} prompt tokens "
+            f"→ {_rel_path(files['prompt'])}"
+        )
         batch_no += 1
     print(f"Exported {len(written)} batch(es) covering {len(jobs):,} jobs.")
 
 
 def _print_report(rep: dict, verbose_limit: int = 40) -> None:
     n_exp = len(rep["expected"])
-    print(f"{rep['batch_id']}: {len(rep['accepted'])}/{n_exp} fatwas schema-valid, {rep['links']} links pass guardrails")
+    print(
+        f"{rep['batch_id']}: {len(rep['accepted'])}/{n_exp} fatwas schema-valid, {rep['links']} links pass guardrails"
+    )
     if rep["rejections"]:
         print(f"  rejections: {dict(rep['rejections'])}")
     for w in rep["warnings"][:verbose_limit]:
@@ -931,7 +1116,7 @@ def _print_report(rep: dict, verbose_limit: int = 40) -> None:
         print(f"  ... {len(rep['errors']) - verbose_limit} more errors")
 
 
-def _resolve_batches(ids: List[str], all_flag: bool) -> List[str]:
+def _resolve_batches(ids: list[str], all_flag: bool) -> list[str]:
     if all_flag:
         return [b for b in outstanding_batches() if _batch_files(b)["response"].exists()]
     out = []
@@ -943,7 +1128,7 @@ def _resolve_batches(ids: List[str], all_flag: bool) -> List[str]:
     return out
 
 
-def _load_lightweight_fatwas() -> Tuple[Dict[str, dict], OntologyGraph]:
+def _load_lightweight_fatwas() -> tuple[dict[str, dict], OntologyGraph]:
     """Answer texts only (no clustering / baseline) — enough for check & ingest."""
     ontology = OntologyGraph(ONTOLOGY_PATH)
     _, fatwas = load_full_archives(PIPELINE_DIR)
@@ -971,18 +1156,21 @@ def cmd_ingest(args) -> None:
     DONE_DIR.mkdir(parents=True, exist_ok=True)
     _repair_trailing_partial_line(EXTRACTIONS_PATH)
     processed = set(read_extraction_records())
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    now = datetime.now(UTC).isoformat(timespec="seconds")
     total_new = 0
 
     for b in batches:
         rep = evaluate_batch(b, fatwas_by_id, ontology)
         _print_report(rep, verbose_limit=10)
         if rep["errors"] and not args.allow_partial:
-            print(f"  ✗ {b} skipped: fix the errors (or pass --allow-partial to ingest valid lines "
-                  f"and re-export the rest later).")
+            print(
+                f"  ✗ {b} skipped: fix the errors (or pass --allow-partial to ingest valid lines "
+                f"and re-export the rest later)."
+            )
             continue
         new = 0
         with open(EXTRACTIONS_PATH, "a", encoding="utf-8") as out:
+
             def _append(rec: dict) -> None:
                 out.write(json.dumps(rec, ensure_ascii=False) + "\n")
                 out.flush()
@@ -993,10 +1181,20 @@ def cmd_ingest(args) -> None:
                     res = rep["accepted"].get(fid)
                     if res is None or (fid in processed and not args.reingest):
                         continue
-                    _append({"fatwa_id": fid, "source": "agent", "representative_fatwa_id": None,
-                             "cluster_id": job["cluster_id"], "job_id": job["job_id"], "batch_id": b,
-                             "model": args.model, "candidate_ids": job["candidate_ids"],
-                             "response": res, "ingested_at": now})
+                    _append(
+                        {
+                            "fatwa_id": fid,
+                            "source": "agent",
+                            "representative_fatwa_id": None,
+                            "cluster_id": job["cluster_id"],
+                            "job_id": job["job_id"],
+                            "batch_id": b,
+                            "model": args.model,
+                            "candidate_ids": job["candidate_ids"],
+                            "response": res,
+                            "ingested_at": now,
+                        }
+                    )
                     processed.add(fid)
                     new += 1
                 for prop in job["propagate_to"]:
@@ -1005,10 +1203,20 @@ def cmd_ingest(args) -> None:
                     if res is None or (fid in processed and not args.reingest):
                         continue
                     derived = {**res, "fatwa_id": fid}
-                    _append({"fatwa_id": fid, "source": "cluster_propagation", "representative_fatwa_id": rep_id,
-                             "cluster_id": job["cluster_id"], "job_id": job["job_id"], "batch_id": b,
-                             "model": args.model, "candidate_ids": job["candidate_ids"],
-                             "response": derived, "ingested_at": now})
+                    _append(
+                        {
+                            "fatwa_id": fid,
+                            "source": "cluster_propagation",
+                            "representative_fatwa_id": rep_id,
+                            "cluster_id": job["cluster_id"],
+                            "job_id": job["job_id"],
+                            "batch_id": b,
+                            "model": args.model,
+                            "candidate_ids": job["candidate_ids"],
+                            "response": derived,
+                            "ingested_at": now,
+                        }
+                    )
                     processed.add(fid)
                     new += 1
         src = _batch_files(b)
@@ -1018,7 +1226,9 @@ def cmd_ingest(args) -> None:
                 src[key].replace(dst[key])
         total_new += new
         print(f"  ✓ {b}: appended {new} records → {_rel_path(EXTRACTIONS_PATH)}; moved to done/")
-    print(f"Ingest complete: {total_new} new records ({len(processed):,} fatwas processed in total).")
+    print(
+        f"Ingest complete: {total_new} new records ({len(processed):,} fatwas processed in total)."
+    )
 
 
 def cmd_status(args) -> None:
@@ -1042,17 +1252,28 @@ def cmd_status(args) -> None:
     print(f"Ingested batches: {len(done)}")
 
 
-def main(argv: Optional[Iterable[str]] = None) -> None:
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+def main(argv: Iterable[str] | None = None) -> None:
+    ap = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     sub = ap.add_subparsers(dest="command", required=True)
 
     def _job_opts(p):
-        p.add_argument("--chapter", action="append", help="Restrict to topic_chapter (repeatable), e.g. Salat")
-        p.add_argument("--include-grounded", action="store_true",
-                       help="Also send fatwas already grounded by the deterministic extractor")
+        p.add_argument(
+            "--chapter", action="append", help="Restrict to topic_chapter (repeatable), e.g. Salat"
+        )
+        p.add_argument(
+            "--include-grounded",
+            action="store_true",
+            help="Also send fatwas already grounded by the deterministic extractor",
+        )
         p.add_argument("--jobs-per-batch", type=int, default=DEFAULT_JOBS_PER_BATCH)
-        p.add_argument("--max-fatwas-per-job", type=int, default=DEFAULT_MAX_FATWAS_PER_JOB,
-                       help="Clusters up to this size are sent whole; larger ones use representatives")
+        p.add_argument(
+            "--max-fatwas-per-job",
+            type=int,
+            default=DEFAULT_MAX_FATWAS_PER_JOB,
+            help="Clusters up to this size are sent whole; larger ones use representatives",
+        )
         p.add_argument("--max-answer-chars", type=int, default=DEFAULT_MAX_ANSWER_CHARS)
         p.add_argument("--max-candidates", type=int, default=DEFAULT_MAX_CANDIDATES)
 
@@ -1065,17 +1286,29 @@ def main(argv: Optional[Iterable[str]] = None) -> None:
     p.add_argument("--max-jobs", type=int, help="Export at most N jobs (e.g. for a pilot)")
     p.set_defaults(func=cmd_export)
 
-    for name, func, help_ in (("check", cmd_check, "Validate response file(s) without writing"),
-                              ("ingest", cmd_ingest, "Append validated responses to llm_extractions.jsonl")):
+    for name, func, help_ in (
+        ("check", cmd_check, "Validate response file(s) without writing"),
+        ("ingest", cmd_ingest, "Append validated responses to llm_extractions.jsonl"),
+    ):
         p = sub.add_parser(name, help=help_)
         p.add_argument("batch", nargs="*", help="Batch ids, e.g. batch_0001 or 1")
-        p.add_argument("--all", action="store_true", help="All outstanding batches that have a response")
+        p.add_argument(
+            "--all", action="store_true", help="All outstanding batches that have a response"
+        )
         if name == "ingest":
-            p.add_argument("--model", default=os.environ.get("TASEEL_EXTRACTOR_MODEL", "coding-agent"),
-                           help="Label recorded with each extraction (env TASEEL_EXTRACTOR_MODEL)")
-            p.add_argument("--allow-partial", action="store_true",
-                           help="Ingest valid lines even if the batch has errors; the rest get re-exported")
-            p.add_argument("--reingest", action="store_true", help="Overwrite already-processed fatwas")
+            p.add_argument(
+                "--model",
+                default=os.environ.get("TASEEL_EXTRACTOR_MODEL", "coding-agent"),
+                help="Label recorded with each extraction (env TASEEL_EXTRACTOR_MODEL)",
+            )
+            p.add_argument(
+                "--allow-partial",
+                action="store_true",
+                help="Ingest valid lines even if the batch has errors; the rest get re-exported",
+            )
+            p.add_argument(
+                "--reingest", action="store_true", help="Overwrite already-processed fatwas"
+            )
         p.set_defaults(func=func)
 
     p = sub.add_parser("status", help="Show outstanding batches and progress")

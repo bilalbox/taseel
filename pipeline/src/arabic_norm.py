@@ -4,8 +4,6 @@ Maintains exact parity with frontend `src/utils/arabic.ts`.
 """
 
 import re
-from typing import Dict, List
-
 
 _DIACRITICS_RE = re.compile(r"[\u064B-\u065F\u0670]")
 _TATWEEL_RE = re.compile(r"\u0640")
@@ -33,7 +31,7 @@ def normalize_arabic(text: str) -> str:
 
 
 # Causal & methodological markers in classical Arabic fatwa reasoning
-CAUSAL_MARKERS: List[str] = [
+CAUSAL_MARKERS: list[str] = [
     "لان",
     "لاجل",
     "الاصل",
@@ -87,7 +85,7 @@ CAUSAL_MARKERS: List[str] = [
 ]
 
 
-def triage_fatwa_reasoning(answer_text: str, norm_text: str = "") -> Dict[str, object]:
+def triage_fatwa_reasoning(answer_text: str, norm_text: str = "") -> dict[str, object]:
     """
     Stage 1 Pre-Triage:
     Evaluates whether a fatwa answer contains causal jurisprudential reasoning
@@ -98,10 +96,9 @@ def triage_fatwa_reasoning(answer_text: str, norm_text: str = "") -> Dict[str, o
 
     # Guardrail: Check if 'الاجماع' or 'السنه' appears ONLY inside a routine proof formula
     # such as 'بالكتاب والسنه والاجماع' with no other causal or methodological markers.
-    is_routine_citation_only = (
-        ("بالكتاب والسنه والاجماع" in norm or "بالاجماع" in norm)
-        and len(matched_markers) == 0
-    )
+    is_routine_citation_only = ("بالكتاب والسنه والاجماع" in norm or "بالاجماع" in norm) and len(
+        matched_markers
+    ) == 0
 
     return {
         "has_causal_reasoning": len(matched_markers) > 0 and not is_routine_citation_only,

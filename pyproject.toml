@@ -1,0 +1,30 @@
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+extend-exclude = ["node_modules", "dist", ".wrangler", "public", ".agents", "baselines", "tests"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B", "I", "UP", "SIM", "C90"]
+ignore = ["E402", "E741"]
+
+[tool.ruff.lint.mccabe]
+max-complexity = 15
+
+[tool.ruff.lint.per-file-ignores]
+"pipeline/src/takhrij_engine.py" = ["C901", "SIM102"]
+"pipeline/src/extractor.py" = ["C901", "SIM102"]
+"pipeline/src/llm_batch_enrich.py" = ["C901", "SIM102"]
+"pipeline/src/compile_sqlite.py" = ["C901"]
+"pipeline/src/run_chapter_takhrij.py" = ["C901"]
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
+include = ["pipeline/src"]
+exclude = ["**/node_modules", "**/__pycache__", "pipeline/data", ".venv"]
+reportMissingImports = "none"
+reportMissingModuleSource = "none"
+
+[tool.vulture]
+min_confidence = 80
+paths = ["pipeline/src"]
+exclude = [".venv/", "vulture_whitelist.py"]

@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "1.0",
+  "workspaces": {
+    ".": {
+      "dev-deps-usage-on-prod": [
+        {
+          "file": "src/data/mockArchiveAdapter.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "src/services/sqliteClient.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "src/tests/archiveSearch.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "src/tests/learnerProgress.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "src/tests/quizAttempt.test.ts",
+          "module": "vitest"
+        },
+        {
+          "file": "src/tests/quizDistractors.test.ts",
+          "module": "vitest"
+        }
+      ],
+      "orphan-files": [
+        {
+          "file": "functions/api/feedback.ts"
+        },
+        {
+          "file": "postcss.config.js"
+        },
+        {
+          "file": "tailwind.config.js"
+        },
+        {
+          "file": "vite.config.ts"
+        }
+      ],
+      "unused-exports": [
+        {
+          "file": "functions/api/feedback.ts",
+          "export": "onRequestGet",
+          "isType": false
+        },
+        {
+          "file": "functions/api/feedback.ts",
+          "export": "onRequestOptions",
+          "isType": false
+        },
+        {
+          "file": "functions/api/feedback.ts",
+          "export": "onRequestPatch",
+          "isType": false
+        },
+        {
+          "file": "functions/api/feedback.ts",
+          "export": "onRequestPost",
+          "isType": false
+        },
+        {
+          "file": "postcss.config.js",
+          "export": "default",
+          "isType": false
+        },
+        {
+          "file": "tailwind.config.js",
+          "export": "default",
+          "isType": false
+        },
+        {
+          "file": "vite.config.ts",
+          "export": "default",
+          "isType": false
+        }
+      ],
+      "unused-node-modules": [
+        {
+          "module": "autoprefixer",
+          "packageJson": "package.json"
+        },
+        {
+          "module": "clsx",
+          "packageJson": "package.json"
+        },
+        {
+          "module": "postcss",
+          "packageJson": "package.json"
+        },
+        {
+          "module": "tailwind-merge",
+          "packageJson": "package.json"
+        },
+        {
+          "module": "tailwindcss",
+          "packageJson": "package.json"
+        }
+      ]
+    }
+  }
+}

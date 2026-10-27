@@ -6,23 +6,18 @@ Stage 3: 3-Step Hybrid Principle Extraction & Grounded Ontology Linker.
 """
 
 import re
-from typing import Dict, List, Optional, Set
-from arabic_norm import normalize_arabic, triage_fatwa_reasoning
-from ontology_index import OntologyGraph, STOP_TOKENS
 
+from arabic_norm import normalize_arabic, triage_fatwa_reasoning
+from ontology_index import STOP_TOKENS, OntologyGraph
 
 _CLAUSE_SPLIT_RE = re.compile(r"[.؛!؟\n]+")
 
 
-def extract_causal_clauses(answer_text: str) -> List[str]:
+def extract_causal_clauses(answer_text: str) -> list[str]:
     """
     Step 3A: Extracts causal clauses ('محل الشاهد') from a proofread Arabic fatwa answer.
     """
-    clauses = [
-        c.strip()
-        for c in _CLAUSE_SPLIT_RE.split(answer_text)
-        if len(c.strip()) > 12
-    ]
+    clauses = [c.strip() for c in _CLAUSE_SPLIT_RE.split(answer_text) if len(c.strip()) > 12]
     causal_clauses = []
     for cl in clauses:
         triage = triage_fatwa_reasoning(cl)
@@ -43,7 +38,7 @@ def extract_and_ground_fatwa(
     ontology: OntologyGraph,
     norm_question: str = "",
     norm_answer: str = "",
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """
     Runs the 3-Step Extraction & Grounding loop on a single Fatwa:
     1. Pre-triages & filters out routine proof citations (e.g. 'بالكتاب والسنة والإجماع').
@@ -72,9 +67,7 @@ def extract_and_ground_fatwa(
 
     norm_subtopic = normalize_arabic(fatwa.get("topic_subtopic", ""))
     norm_query = f"{norm_subtopic} {norm_answer}"
-    query_tokens: Set[str] = {
-        t for t in norm_query.split() if len(t) > 2 and t not in STOP_TOKENS
-    }
+    query_tokens: set[str] = {t for t in norm_query.split() if len(t) > 2 and t not in STOP_TOKENS}
 
     # Step 3B: High-speed inverted-index candidate subgraph retrieval
     candidates, _ = ontology.retrieve_candidate_subgraph_fast(
@@ -88,35 +81,36 @@ def extract_and_ground_fatwa(
             "grounded_links": [],
         }
 
-    answer_tokens: Set[str] = set(norm_answer.split())
+    answer_tokens: set[str] = set(norm_answer.split())
     chapter = fatwa["topic_chapter"]
 
     # Step 3C: Score candidates within the subgraph & enforce Guardrails + Specificity
-    qualified_by_root: Dict[str, List[dict]] = {}
+    qualified_by_root: dict[str, list[dict]] = {}
 
     for node in candidates:
         nid = node["id"]
         # Enforce Usul Guardrail on routine 'بالإجماع' or 'بالسنة' citations
-        if nid.startswith("usul.adillah.ijma"):
-            if (
-                "حجه قطعيه" not in norm_answer
-                and "تحرم مخالفته" not in norm_answer
-                and "يخرق" not in norm_answer
-            ):
-                continue
-        if (
-            nid.startswith("usul.adillah.sunnah")
-            and nid != "usul.adillah.sunnah.khabar_wahid.riwayat_sahabi"
+        if nid.startswith("usul.adillah.ijma") and (
+            "حجه قطعيه" not in norm_answer
+            and "تحرم مخالفته" not in norm_answer
+            and "يخرق" not in norm_answer
         ):
-            if "خبر الواحد" not in norm_answer and "حديث الاحاد" not in norm_answer:
-                continue
-        if nid == "usul.ahkam.ma_la_yatimmu_wajib":
-            if (
-                "ما لا يتم الواجب" not in norm_answer
-                and "لا يتم الواجب الا" not in norm_answer
-                and "وسيله الواجب" not in norm_answer
-            ):
-                continue
+            continue
+        if (
+            (
+                nid.startswith("usul.adillah.sunnah")
+                and nid != "usul.adillah.sunnah.khabar_wahid.riwayat_sahabi"
+            )
+            and "خبر الواحد" not in norm_answer
+            and "حديث الاحاد" not in norm_answer
+        ):
+            continue
+        if nid == "usul.ahkam.ma_la_yatimmu_wajib" and (
+            "ما لا يتم الواجب" not in norm_answer
+            and "لا يتم الواجب الا" not in norm_answer
+            and "وسيله الواجب" not in norm_answer
+        ):
+            continue
         if nid == "fiqh.yaqeen.baqaa":
             # Guardrail: Requires actual Istishab phrasing or doubt/certainty tension.
             # Pure mention of "بقاء" (e.g. بقاء النكاح as hikmah, or بقاء الأظافر) is NOT Istishab.
@@ -133,13 +127,12 @@ def extract_and_ground_fatwa(
                 )
             )
             has_doubt_context = any(
-                d in norm_answer
-                for d in ("شك", "الشك", "مشكوك", "ريب", "تردد", "تيقن", "اليقين")
+                d in norm_answer for d in ("شك", "الشك", "مشكوك", "ريب", "تردد", "تيقن", "اليقين")
             )
             if not (has_istishab_phrase or (has_doubt_context and "الاصل بقاء" in norm_answer)):
                 continue
 
-        matched_alias_id: Optional[str] = None
+        matched_alias_id: str | None = None
         invocation_type = "implicit_application"
         match_strength = 0.0
 
@@ -191,19 +184,15 @@ def extract_and_ground_fatwa(
 
     # Only split clauses once we know the fatwa actually grounded at least one principle!
     raw_clauses = [
-        c.strip()
-        for c in _CLAUSE_SPLIT_RE.split(fatwa["answer_text"])
-        if len(c.strip()) > 12
+        c.strip() for c in _CLAUSE_SPLIT_RE.split(fatwa["answer_text"]) if len(c.strip()) > 12
     ]
     if not raw_clauses:
         raw_clauses = [fatwa["answer_text"][:220]]
 
     # Pick the most specific node per independent root branch (supports Multi-Principle fatwas!)
     grounded_links = []
-    for idx, (root_id, branch_hits) in enumerate(qualified_by_root.items(), start=1):
-        branch_hits.sort(
-            key=lambda x: (x["specificity_score"], x["node"]["depth"]), reverse=True
-        )
+    for idx, (_root_id, branch_hits) in enumerate(qualified_by_root.items(), start=1):
+        branch_hits.sort(key=lambda x: (x["specificity_score"], x["node"]["depth"]), reverse=True)
         best = branch_hits[0]
         target_node = best["node"]
 
@@ -227,9 +216,7 @@ def extract_and_ground_fatwa(
                     f"خرّج الشيخ {fatwa['scholar_name']} حكم المسألة ({fatwa.get('topic_subtopic', '')}) "
                     f"على «{target_node['canonical_text_ar']}» ({target_node['summary_ar']})"
                 ),
-                "confidence_score": round(
-                    min(0.99, 0.78 + best["specificity_score"] * 0.02), 2
-                ),
+                "confidence_score": round(min(0.99, 0.78 + best["specificity_score"] * 0.02), 2),
             }
         )
 
