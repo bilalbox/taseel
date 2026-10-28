@@ -89,11 +89,18 @@ export interface FatwaDetail extends Fatwa {
 	fatwaPrinciples: FatwaPrinciple[];
 }
 
+export type QuizQuestionMode =
+	| "identify_principle"
+	| "compound_hierarchy"
+	| "usul_foundation"
+	| "auto";
+
 export interface RandomQuizQuestionParams {
 	scholar?: Scholar | "ALL";
 	chapter?: string | "ALL";
 	excludeFatwaIds?: string[];
 	seed?: number;
+	mode?: QuizQuestionMode;
 }
 
 export interface ArchiveQueryAdapter {
@@ -133,6 +140,7 @@ export interface QuizQuestionChoice {
 	is_correct: boolean;
 	explanation?: string;
 	science?: string;
+	subtext?: string;
 }
 
 export interface QuizQuestionItem {
@@ -140,6 +148,10 @@ export interface QuizQuestionItem {
 	correct_principle: Principle;
 	fatwa_principle: FatwaPrinciple;
 	choices: QuizQuestionChoice[];
+	question_mode?: QuizQuestionMode;
+	question_title_ar?: string;
+	root_kubra?: Principle;
+	usul_foundation?: Principle;
 }
 
 export interface UserQuizHistoryItem {

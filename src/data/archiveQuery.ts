@@ -9,6 +9,7 @@ import type {
 	PrincipleCategory,
 	QuizQuestionChoice,
 	QuizQuestionItem,
+	QuizQuestionMode,
 	RandomQuizQuestionParams,
 	Scholar,
 } from "../types";
@@ -230,6 +231,67 @@ export function executeBrowseFatwas(
 	};
 }
 
+function selectQuizCandidate(
+	db: any,
+	conditions: string[],
+	baseBindings: any[],
+	cleanExclude: string[],
+	seed?: number,
+): any {
+	const selectCandidateSql = `
+    SELECT f.id, f.episode_id, f.scholar_name, f.question_text, f.answer_text,
+           f.topic_domain, f.topic_chapter, f.topic_subtopic, f.audio_start_sec,
+           f.audio_url AS fatwa_audio_url,
+           e.episode_number, e.audio_url AS episode_audio_url,
+           fp.id AS fp_id, fp.principle_id, fp.invocation_type, fp.evidence_quote_ar,
+           fp.application_explanation_ar, fp.difficulty
+    FROM fatwas f
+    LEFT JOIN episodes e ON e.id = f.episode_id
+    JOIN fatwa_principles fp ON fp.fatwa_id = f.id
+  `;
+
+	if (cleanExclude.length > 0) {
+		const placeholders = cleanExclude.map(() => "?").join(",");
+		const unansweredConds = [...conditions, `f.id NOT IN (${placeholders})`];
+		const whereUnanswered = `WHERE ${unansweredConds.join(" AND ")}`;
+		const bindingsUnanswered = [...baseBindings, ...cleanExclude];
+
+		const rows = db.selectObjects(
+			`${selectCandidateSql} ${whereUnanswered} ${
+				seed !== undefined
+					? "ORDER BY f.rowid ASC"
+					: "ORDER BY RANDOM() LIMIT 1"
+			}`,
+			bindingsUnanswered,
+		);
+		if (rows.length > 0) {
+			if (seed !== undefined) {
+				const rng = mulberry32(seed);
+				return rows[Math.floor(rng() * rows.length)];
+			}
+			return rows[0];
+		}
+	}
+
+	const whereAll =
+		conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+	const rows = db.selectObjects(
+		`${selectCandidateSql} ${whereAll} ${
+			seed !== undefined ? "ORDER BY f.rowid ASC" : "ORDER BY RANDOM() LIMIT 1"
+		}`,
+		baseBindings,
+	);
+	if (rows.length > 0) {
+		if (seed !== undefined) {
+			const rng = mulberry32(seed);
+			return rows[Math.floor(rng() * rows.length)];
+		}
+		return rows[0];
+	}
+
+	return null;
+}
+
 export function executeGetRandomQuizQuestion(
 	db: any,
 	params: RandomQuizQuestionParams = {},
@@ -255,73 +317,13 @@ export function executeGetRandomQuizQuestion(
 	}
 
 	const cleanExclude = (excludeFatwaIds || []).filter(Boolean);
-	let selectedCandidate: any = null;
-
-	const selectCandidateSql = `
-    SELECT f.id, f.episode_id, f.scholar_name, f.question_text, f.answer_text,
-           f.topic_domain, f.topic_chapter, f.topic_subtopic, f.audio_start_sec,
-           f.audio_url AS fatwa_audio_url,
-           e.episode_number, e.audio_url AS episode_audio_url,
-           fp.id AS fp_id, fp.principle_id, fp.invocation_type, fp.evidence_quote_ar,
-           fp.application_explanation_ar, fp.difficulty
-    FROM fatwas f
-    LEFT JOIN episodes e ON e.id = f.episode_id
-    JOIN fatwa_principles fp ON fp.fatwa_id = f.id
-  `;
-
-	// 1. Prioritize unanswered questions by excluding cleanExclude
-	if (cleanExclude.length > 0) {
-		const placeholders = cleanExclude.map(() => "?").join(",");
-		const unansweredConds = [...conditions, `f.id NOT IN (${placeholders})`];
-		const whereUnanswered =
-			unansweredConds.length > 0
-				? `WHERE ${unansweredConds.join(" AND ")}`
-				: "";
-		const bindingsUnanswered = [...baseBindings, ...cleanExclude];
-
-		if (seed !== undefined) {
-			const rows = db.selectObjects(
-				`${selectCandidateSql} ${whereUnanswered} ORDER BY f.rowid ASC`,
-				bindingsUnanswered,
-			);
-			if (rows.length > 0) {
-				const rng = mulberry32(seed);
-				selectedCandidate = rows[Math.floor(rng() * rows.length)];
-			}
-		} else {
-			const rows = db.selectObjects(
-				`${selectCandidateSql} ${whereUnanswered} ORDER BY RANDOM() LIMIT 1`,
-				bindingsUnanswered,
-			);
-			if (rows.length > 0) {
-				selectedCandidate = rows[0];
-			}
-		}
-	}
-
-	// 2. Fallback to any matching grounded fatwa if all are answered (or cleanExclude was empty)
-	if (!selectedCandidate) {
-		const whereAll =
-			conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-		if (seed !== undefined) {
-			const rows = db.selectObjects(
-				`${selectCandidateSql} ${whereAll} ORDER BY f.rowid ASC`,
-				baseBindings,
-			);
-			if (rows.length > 0) {
-				const rng = mulberry32(seed);
-				selectedCandidate = rows[Math.floor(rng() * rows.length)];
-			}
-		} else {
-			const rows = db.selectObjects(
-				`${selectCandidateSql} ${whereAll} ORDER BY RANDOM() LIMIT 1`,
-				baseBindings,
-			);
-			if (rows.length > 0) {
-				selectedCandidate = rows[0];
-			}
-		}
-	}
+	const selectedCandidate = selectQuizCandidate(
+		db,
+		conditions,
+		baseBindings,
+		cleanExclude,
+		seed,
+	);
 
 	if (!selectedCandidate) {
 		return null;
@@ -399,12 +401,194 @@ export function executeGetRandomQuizQuestion(
 					: "beginner")) as any,
 	};
 
-	// 3. Select 3 high-contrast distractors directly in SQL:
-	// Priority 0: contrast_pair in principle_relations
-	// Priority 1: same science and same kind
-	// Priority 2: same science
-	// Priority 3: same depth
-	// Priority 4: others
+	const { rootKubra, usulFoundation } = resolvePrincipleLineage(
+		db,
+		targetPrincipleId,
+	);
+
+	const { effectiveMode, questionTitleAr } = resolveQuestionModeAndTitle(
+		params.mode,
+		correct_principle.science || "fiqh",
+		Boolean(rootKubra),
+		Boolean(usulFoundation),
+	);
+
+	let choices: QuizQuestionChoice[];
+	if (effectiveMode === "compound_hierarchy" && rootKubra) {
+		choices = buildCompoundHierarchyChoices(
+			db,
+			correct_principle,
+			rootKubra,
+			fatwa,
+			fatwa_principle,
+			seed,
+		);
+	} else if (effectiveMode === "usul_foundation" && usulFoundation) {
+		choices = buildUsulFoundationChoices(
+			db,
+			usulFoundation,
+			rootKubra,
+			correct_principle,
+			fatwa_principle,
+			seed,
+		);
+	} else {
+		choices = buildIdentifyPrincipleChoices(
+			db,
+			correct_principle,
+			fatwa,
+			fatwa_principle,
+			seed,
+		);
+	}
+
+	return {
+		fatwa,
+		correct_principle,
+		fatwa_principle,
+		choices,
+		question_mode: effectiveMode,
+		question_title_ar: questionTitleAr,
+		root_kubra: rootKubra,
+		usul_foundation: usulFoundation,
+	};
+}
+
+function resolvePrincipleLineage(
+	db: any,
+	targetPrincipleId: string,
+): {
+	rootKubra?: Principle;
+	usulFoundation?: Principle;
+} {
+	const lineageRows = db.selectObjects(
+		`WITH RECURSIVE lineage AS (
+			SELECT id, parent_id, depth, science, domain_section, kind,
+			       canonical_text_ar, canonical_text_norm, summary_ar, textual_evidence_ar
+			FROM principles
+			WHERE id = ?
+			UNION ALL
+			SELECT p.id, p.parent_id, p.depth, p.science, p.domain_section, p.kind,
+			       p.canonical_text_ar, p.canonical_text_norm, p.summary_ar, p.textual_evidence_ar
+			FROM principles p
+			JOIN lineage l ON p.id = l.parent_id
+		)
+		SELECT * FROM lineage ORDER BY depth ASC`,
+		[targetPrincipleId],
+	);
+
+	const rootRow = lineageRows.find((r: any) => r.depth === 0) || lineageRows[0];
+	const rootKubra: Principle | undefined =
+		rootRow && String(rootRow.id) !== targetPrincipleId
+			? {
+					id: String(rootRow.id),
+					parent_id: rootRow.parent_id ? String(rootRow.parent_id) : null,
+					depth: Number(rootRow.depth || 0),
+					science: String(rootRow.science),
+					domain_section: String(rootRow.domain_section),
+					kind: String(rootRow.kind),
+					canonical_text_ar: String(rootRow.canonical_text_ar),
+					canonical_text_norm: String(rootRow.canonical_text_norm),
+					category: mapCategory(String(rootRow.science), String(rootRow.kind)),
+					general_explanation_ar: String(rootRow.summary_ar),
+				}
+			: undefined;
+
+	const usulFoundationRows = db.selectObjects(
+		`WITH RECURSIVE lineage(id, parent_id) AS (
+			SELECT id, parent_id FROM principles WHERE id = ?
+			UNION ALL
+			SELECT p.id, p.parent_id FROM principles p JOIN lineage l ON p.id = l.parent_id
+		)
+		SELECT pr.source_id, pr.target_id, pr.relation_type, pr.explanation_ar,
+		       p.id, p.parent_id, p.depth, p.science, p.domain_section, p.kind,
+		       p.canonical_text_ar, p.canonical_text_norm, p.summary_ar, p.textual_evidence_ar
+		FROM lineage l
+		JOIN principle_relations pr ON (pr.source_id = l.id OR pr.target_id = l.id)
+		JOIN principles p ON (p.id = CASE WHEN pr.source_id = l.id THEN pr.target_id ELSE pr.source_id END)
+		WHERE pr.relation_type = 'usul_foundation'
+		  AND p.science = 'usul'
+		LIMIT 1`,
+		[targetPrincipleId],
+	);
+
+	const usulRow = usulFoundationRows[0];
+	const usulFoundation: Principle | undefined = usulRow
+		? {
+				id: String(usulRow.id),
+				parent_id: usulRow.parent_id ? String(usulRow.parent_id) : null,
+				depth: Number(usulRow.depth || 0),
+				science: String(usulRow.science),
+				domain_section: String(usulRow.domain_section),
+				kind: String(usulRow.kind),
+				canonical_text_ar: String(usulRow.canonical_text_ar),
+				canonical_text_norm: String(usulRow.canonical_text_norm),
+				category: "usuliyyah",
+				general_explanation_ar: usulRow.explanation_ar
+					? String(usulRow.explanation_ar)
+					: String(usulRow.summary_ar),
+			}
+		: undefined;
+
+	return { rootKubra, usulFoundation };
+}
+
+function resolveQuestionModeAndTitle(
+	requestedMode: QuizQuestionMode | undefined,
+	science: string,
+	hasRootKubra: boolean,
+	hasUsulFoundation: boolean,
+): { effectiveMode: QuizQuestionMode; questionTitleAr: string } {
+	if (requestedMode === "compound_hierarchy" && hasRootKubra) {
+		return {
+			effectiveMode: "compound_hierarchy",
+			questionTitleAr:
+				science === "usul"
+					? "ما الضابط الأصولي المطبق في هذه الفتوى، وتحت أي أصل كلي يندرج؟"
+					: "ما الضابط الفقهي المباشر المطبق في هذه الفتوى، وتحت أي قاعدة كبرى يندرج؟",
+		};
+	}
+
+	if (requestedMode === "usul_foundation" && hasUsulFoundation) {
+		return {
+			effectiveMode: "usul_foundation",
+			questionTitleAr:
+				"بُني الحكم في هذه الفتوى على قاعدة فقهية؛ فما الأصل الأصولي الكلي (الدليل الإجمالي) الذي تستند إليه هذه القاعدة؟",
+		};
+	}
+
+	if (requestedMode === "auto") {
+		if (hasRootKubra) {
+			return {
+				effectiveMode: "compound_hierarchy",
+				questionTitleAr:
+					science === "usul"
+						? "ما الضابط الأصولي المطبق في هذه الفتوى، وتحت أي أصل كلي يندرج؟"
+						: "ما الضابط الفقهي المباشر المطبق في هذه الفتوى، وتحت أي قاعدة كبرى يندرج؟",
+			};
+		}
+		if (hasUsulFoundation) {
+			return {
+				effectiveMode: "usul_foundation",
+				questionTitleAr:
+					"بُني الحكم في هذه الفتوى على قاعدة فقهية؛ فما الأصل الأصولي الكلي (الدليل الإجمالي) الذي تستند إليه هذه القاعدة؟",
+			};
+		}
+	}
+
+	return {
+		effectiveMode: "identify_principle",
+		questionTitleAr: "ما القاعدة التي بُني عليها الحكم في هذه الفتوى؟",
+	};
+}
+
+function buildIdentifyPrincipleChoices(
+	db: any,
+	correct_principle: Principle,
+	fatwa: Fatwa,
+	fatwa_principle: FatwaPrinciple,
+	seed?: number,
+): QuizQuestionChoice[] {
 	const distractorQuery = `
     SELECT p.id, p.parent_id, p.depth, p.science, p.domain_section, p.kind,
            p.canonical_text_ar, p.canonical_text_norm, p.summary_ar, p.textual_evidence_ar,
@@ -432,9 +616,9 @@ export function executeGetRandomQuizQuestion(
 		correct_principle.kind || "",
 		correct_principle.science,
 		correct_principle.depth ?? 0,
-		targetPrincipleId,
-		targetPrincipleId,
-		targetPrincipleId,
+		correct_principle.id,
+		correct_principle.id,
+		correct_principle.id,
 		fatwa.id,
 	];
 
@@ -473,15 +657,193 @@ export function executeGetRandomQuizQuestion(
 		})),
 	);
 
-	const rawChoices = [correctChoice, ...distractorChoices];
-	const choices = shuffleChoices(rawChoices, seed);
+	return shuffleChoices([correctChoice, ...distractorChoices], seed);
+}
 
-	return {
-		fatwa,
-		correct_principle,
-		fatwa_principle,
-		choices,
+function buildCompoundHierarchyChoices(
+	db: any,
+	correct_principle: Principle,
+	rootKubra: Principle,
+	fatwa: Fatwa,
+	fatwa_principle: FatwaPrinciple,
+	seed?: number,
+): QuizQuestionChoice[] {
+	const correctChoice: QuizQuestionChoice = {
+		id: correct_principle.id,
+		text: `الضابط: «${correct_principle.canonical_text_ar}» ⇠ يندرج تحت: «${rootKubra.canonical_text_ar}»`,
+		category: correct_principle.category,
+		science: correct_principle.science,
+		is_correct: true,
+		explanation: `قرر الشيخ أن الحكم مبني على ضابط «${correct_principle.canonical_text_ar}» المندرج تحت قاعدة «${rootKubra.canonical_text_ar}».`,
 	};
+
+	// Distractor 1: Same Dabit + WRONG Kubra
+	const altKubraRows = db.selectObjects(
+		`SELECT id, canonical_text_ar FROM principles
+		 WHERE depth = 0 AND id != ? AND science = ?
+		 ORDER BY ${seed !== undefined ? "rowid ASC" : "RANDOM()"} LIMIT 1`,
+		[rootKubra.id, correct_principle.science],
+	);
+	const altKubra = altKubraRows[0];
+	const altKubraText = altKubra
+		? String(altKubra.canonical_text_ar)
+		: "المشقة تجلب التيسير";
+	const altKubraId = altKubra ? String(altKubra.id) : "alt-kubra";
+
+	const distractor1: QuizQuestionChoice = {
+		id: `${correct_principle.id}__wrong_${altKubraId}`,
+		text: `الضابط: «${correct_principle.canonical_text_ar}» ⇠ يندرج تحت: «${altKubraText}»`,
+		category: correct_principle.category,
+		science: correct_principle.science,
+		is_correct: false,
+		explanation: `الضابط المذكور صحيح، لكنه لا يتفرع عن قاعدة «${altKubraText}»، بل يندرج تحت قاعدة «${rootKubra.canonical_text_ar}».`,
+	};
+
+	// Distractor 2: Contrast Dabit or Sibling Dabit under correct Kubra
+	const siblingRows = db.selectObjects(
+		`SELECT p.id, p.canonical_text_ar, pr.explanation_ar AS contrast_exp
+		 FROM principles p
+		 LEFT JOIN principle_relations pr ON (
+		   ((pr.source_id = ? AND pr.target_id = p.id) OR (pr.target_id = ? AND pr.source_id = p.id))
+		   AND pr.relation_type = 'contrast_pair'
+		 )
+		 WHERE p.id != ?
+		   AND (pr.relation_type = 'contrast_pair' OR p.parent_id = ? OR p.kind LIKE '%dabit%')
+		   AND p.id NOT IN (SELECT fp2.principle_id FROM fatwa_principles fp2 WHERE fp2.fatwa_id = ?)
+		 ORDER BY (CASE WHEN pr.relation_type = 'contrast_pair' THEN 0 ELSE 1 END) ASC,
+		          ${seed !== undefined ? "p.rowid ASC" : "RANDOM()"}
+		 LIMIT 1`,
+		[
+			correct_principle.id,
+			correct_principle.id,
+			correct_principle.id,
+			rootKubra.id,
+			fatwa.id,
+		],
+	);
+	const sibling = siblingRows[0];
+	const distractor2: QuizQuestionChoice = sibling
+		? {
+				id: String(sibling.id),
+				text: `الضابط: «${sibling.canonical_text_ar}» ⇠ يندرج تحت: «${rootKubra.canonical_text_ar}»`,
+				category: correct_principle.category,
+				science: correct_principle.science,
+				is_correct: false,
+				explanation: sibling.contrast_exp
+					? `قاعدة مقابلة: ${sibling.contrast_exp}`
+					: `هذا الضابط (${sibling.canonical_text_ar}) يندرج تحت نفس القاعدة الكبرى لكنه لا ينطبق على مسألة هذه الفتوى.`,
+			}
+		: {
+				id: "alt-sibling-dabit",
+				text: `الضابط: «الأصل في الصفات العارضة العدم» ⇠ يندرج تحت: «${rootKubra.canonical_text_ar}»`,
+				category: correct_principle.category,
+				science: correct_principle.science,
+				is_correct: false,
+				explanation: `ضابط لا ينطبق على مسألة هذه الفتوى.`,
+			};
+
+	// Distractor 3: Another Dabit from another branch + another Kubra
+	const otherDabitRows = db.selectObjects(
+		`SELECT p.id, p.canonical_text_ar, p.kind, p.science,
+		        COALESCE(parent.canonical_text_ar, 'قاعدة كلية أخرى') AS parent_text
+		 FROM principles p
+		 LEFT JOIN principles parent ON parent.id = p.parent_id
+		 WHERE p.id != ? AND p.id != ?
+		   AND (p.parent_id != ? OR p.parent_id IS NULL)
+		   AND p.kind LIKE '%dabit%'
+		 ORDER BY ${seed !== undefined ? "p.rowid ASC" : "RANDOM()"}
+		 LIMIT 1`,
+		[correct_principle.id, distractor2.id, rootKubra.id],
+	);
+	const otherDabit = otherDabitRows[0];
+	const distractor3: QuizQuestionChoice = otherDabit
+		? {
+				id: String(otherDabit.id),
+				text: `الضابط: «${otherDabit.canonical_text_ar}» ⇠ يندرج تحت: «${otherDabit.parent_text}»`,
+				category: mapCategory(
+					String(otherDabit.science),
+					String(otherDabit.kind),
+				),
+				science: String(otherDabit.science),
+				is_correct: false,
+				explanation: `هذا الضابط وقاعدته يتعلقان بباب آخر (${otherDabit.canonical_text_ar})، وليس مناط الحكم في هذه الفتوى.`,
+			}
+		: {
+				id: "alt-other-dabit",
+				text: `الضابط: «كل قرض جر نفعاً مشروطاً فهو ربا» ⇠ يندرج تحت: «الضرر يزال»`,
+				category: "dabit",
+				science: "fiqh",
+				is_correct: false,
+				explanation: `ضابط مالي مخصوص بباب القرض والمعاملات لا صلة له بهذه المسألة.`,
+			};
+
+	const distractorChoices = [distractor1, distractor2, distractor3];
+
+	fatwa_principle.distractor_principles_json = JSON.stringify(
+		distractorChoices.map((d) => ({
+			id: d.id,
+			canonical_text_ar: d.text,
+			category: d.category,
+			reason_incorrect: d.explanation || "",
+		})),
+	);
+
+	return shuffleChoices([correctChoice, ...distractorChoices], seed);
+}
+
+function buildUsulFoundationChoices(
+	db: any,
+	usulFoundation: Principle,
+	rootKubra: Principle | undefined,
+	correct_principle: Principle,
+	fatwa_principle: FatwaPrinciple,
+	seed?: number,
+): QuizQuestionChoice[] {
+	const governingPrincipleText = rootKubra
+		? rootKubra.canonical_text_ar
+		: correct_principle.canonical_text_ar;
+
+	const correctChoice: QuizQuestionChoice = {
+		id: usulFoundation.id,
+		text: `دليل «الاستصحاب»: «${usulFoundation.canonical_text_ar}»`,
+		category: "usuliyyah",
+		science: "usul",
+		is_correct: true,
+		explanation:
+			usulFoundation.general_explanation_ar ||
+			`الاستصحاب هو الدليل الأصولي الإجمالي الذي تتفرع عنه قاعدة «${governingPrincipleText}».`,
+	};
+
+	const distractorRows = db.selectObjects(
+		`SELECT id, canonical_text_ar, summary_ar, kind, science
+		 FROM principles
+		 WHERE science = 'usul' AND id != ?
+		 ORDER BY ${seed !== undefined ? "rowid ASC" : "RANDOM()"}
+		 LIMIT 3`,
+		[usulFoundation.id],
+	);
+
+	const distractorChoices: QuizQuestionChoice[] = distractorRows.map(
+		(d: any) => ({
+			id: String(d.id),
+			text: `«${d.canonical_text_ar}»`,
+			category: "usuliyyah" as const,
+			science: "usul",
+			is_correct: false,
+			explanation: `هذا الأصل الأصولي (${d.canonical_text_ar}) دليل أصولي معتبر في بابه، لكن الاستدلال في هذه الفتوى مبني على استصحاب الحكم الثابت بيقين.`,
+		}),
+	);
+
+	fatwa_principle.distractor_principles_json = JSON.stringify(
+		distractorChoices.map((d) => ({
+			id: d.id,
+			canonical_text_ar: d.text,
+			category: d.category,
+			reason_incorrect: d.explanation || "",
+		})),
+	);
+
+	return shuffleChoices([correctChoice, ...distractorChoices], seed);
 }
 
 export interface PrincipleRelationItem {
@@ -599,6 +961,27 @@ export function createInMemoryArchiveDb(
 				relation_type: "contrast_pair",
 				explanation_ar:
 					"التفريق الأصولي بين باب العبادات (التوقيف والمنع إلا بدليل) وباب المعاملات والعادات (الإباحة إلا بدليل).",
+			},
+			{
+				source_id: "fiqh.yaqeen",
+				target_id: "usul.adillah.istishab",
+				relation_type: "usul_foundation",
+				explanation_ar:
+					"قاعدة «اليقين لا يزول بالشك» وفروعها هي التطبيق الفقهي لدليل «الاستصحاب» الأصولي.",
+			},
+			{
+				source_id: "principle-yaqeen",
+				target_id: "usul.adillah.istishab",
+				relation_type: "usul_foundation",
+				explanation_ar:
+					"قاعدة «اليقين لا يزول بالشك» وفروعها هي التطبيق الفقهي لدليل «الاستصحاب» الأصولي.",
+			},
+			{
+				source_id: "principle-dabit-taharah",
+				target_id: "principle-dabit-hadath",
+				relation_type: "contrast_pair",
+				explanation_ar:
+					"التمييز الدقيق بين كون المتيقن السابق هو الطهارة أم الحدث.",
 			},
 		],
 	} = options;

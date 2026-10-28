@@ -386,5 +386,62 @@ describe("Server/Worker-side Distractor Generation & Quiz Query Engine (Ticket #
 			// q2 must not repeat q1 because another Taharah fatwa (fatwa-104) is unanswered
 			expect(q2?.fatwa.id).not.toBe(q1?.fatwa.id);
 		});
+
+		it("generates compound_hierarchy question when requested for a dabit with ancestor kubra", () => {
+			// fatwa-103 is linked to principle-dabit-riba which branches under principle-darar
+			const item = executeGetRandomQuizQuestion(db, {
+				chapter: "Muamalat",
+				excludeFatwaIds: ["fatwa-105"], // ensure fatwa-103 (dabit) is picked
+				mode: "compound_hierarchy",
+			});
+
+			expect(item).not.toBeNull();
+			expect(item?.question_mode).toBe("compound_hierarchy");
+			expect(item?.question_title_ar).toContain("الضابط");
+			expect(item?.root_kubra).toBeDefined();
+			expect(item?.root_kubra?.id).toBe("principle-darar");
+
+			expect(item?.choices).toHaveLength(4);
+			const correctChoice = item?.choices.find((c) => c.is_correct);
+			expect(correctChoice).toBeDefined();
+			expect(correctChoice?.text).toContain("كل قرض جر نفعاً مشروطاً فهو ربا");
+			expect(correctChoice?.text).toContain("الضرر يزال");
+
+			// Distractor 1 should contain wrong kubra
+			const wrongKubraChoice = item?.choices.find(
+				(c) => !c.is_correct && c.id.includes("__wrong_"),
+			);
+			expect(wrongKubraChoice).toBeDefined();
+			expect(wrongKubraChoice?.text).toContain("كل قرض جر نفعاً مشروطاً فهو ربا");
+			expect(wrongKubraChoice?.explanation).toContain("لا يتفرع عن قاعدة");
+		});
+
+		it("generates usul_foundation question when requested for a principle with usul foundation bridge", () => {
+			// fatwa-101 is linked to principle-yaqeen which has an usul_foundation bridge to usul.adillah.istishab
+			const item = executeGetRandomQuizQuestion(db, {
+				chapter: "Taharah",
+				excludeFatwaIds: ["fatwa-104"], // ensure fatwa-101 is picked
+				mode: "usul_foundation",
+			});
+
+			expect(item).not.toBeNull();
+			expect(item?.question_mode).toBe("usul_foundation");
+			expect(item?.question_title_ar).toContain("الأصل الأصولي");
+			expect(item?.usul_foundation).toBeDefined();
+			expect(item?.usul_foundation?.id).toBe("usul.adillah.istishab");
+
+			expect(item?.choices).toHaveLength(4);
+			const correctChoice = item?.choices.find((c) => c.is_correct);
+			expect(correctChoice).toBeDefined();
+			expect(correctChoice?.id).toBe("usul.adillah.istishab");
+			expect(correctChoice?.category).toBe("usuliyyah");
+			expect(correctChoice?.science).toBe("usul");
+
+			// All choices must be from usul science
+			for (const choice of item!.choices) {
+				expect(choice.category).toBe("usuliyyah");
+				expect(choice.science).toBe("usul");
+			}
+		});
 	});
 });

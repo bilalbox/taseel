@@ -232,7 +232,13 @@ def _retrieve_candidates(fatwa: dict, ontology: OntologyGraph, norm_answer: str)
     by_id = {n["id"]: n for n in candidates}
     for node in ontology.nodes.values():
         if node.get("match") and (
-            node["domain_section"] == chapter or node.get("kind") == "qa_idah_kubra"
+            node["domain_section"] == chapter
+            or node.get("kind") == "qa_idah_kubra"
+            or (
+                node.get("science") == "usul"
+                and node.get("domain_section") == "دلالات الألفاظ"
+                and node.get("kind") == "asl_kulli"
+            )
         ):
             by_id.setdefault(node["id"], node)
     # Also include every node that has match metadata and whose distinctive tokens

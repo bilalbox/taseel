@@ -7,6 +7,7 @@ import type {
 	Fatwa,
 	FatwaPrinciple,
 	Principle,
+	QuizQuestionMode,
 } from "../types";
 import { CATEGORY_LABELS } from "../utils/arabic";
 import { FeedbackModal } from "./FeedbackModal";
@@ -28,6 +29,24 @@ export function quizPaneRemountKey(
 	principleId: string | undefined,
 ): string {
 	return `${fatwaId ?? ""}:${principleId ?? ""}`;
+}
+
+function QuestionModeBadge({ mode }: { mode?: QuizQuestionMode }) {
+	if (mode === "compound_hierarchy") {
+		return (
+			<span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 text-indigo-700 border border-indigo-200">
+				هرمية القواعد
+			</span>
+		);
+	}
+	if (mode === "usul_foundation") {
+		return (
+			<span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-amber-50 text-amber-800 border border-amber-200">
+				الأصل الأصولي
+			</span>
+		);
+	}
+	return null;
 }
 
 export const QuizPane: React.FC<QuizPaneProps> = ({
@@ -174,6 +193,7 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
 					<span className="text-xs font-semibold text-ink">
 						سؤال في التخريج
 					</span>
+					<QuestionModeBadge mode={currentQ?.quizItem?.question_mode} />
 					{totalGroundedCount > 0 && (
 						<span className="text-[11px] text-ink-faint">
 							({answeredCount} من {totalGroundedCount} مُجاب)
@@ -216,7 +236,8 @@ export const QuizPane: React.FC<QuizPaneProps> = ({
 			</div>
 
 			<h2 className="font-semibold text-sm sm:text-base text-ink leading-snug">
-				ما القاعدة التي بُني عليها الحكم في هذه الفتوى؟
+				{currentQ?.quizItem?.question_title_ar ||
+					"ما القاعدة التي بُني عليها الحكم في هذه الفتوى؟"}
 			</h2>
 
 			<div className="space-y-2">

@@ -50,6 +50,10 @@ _Avoid_: Duplicate fatwa, domain section
 **Primary Proof Citation (استدلال بدليل تفصيلي)**:
 A Scholar's routine citation of a Quranic verse, Prophetic hadith, or consensus (_"forbidden by consensus"_) as direct evidence for a ruling without debating or invoking the methodological meta-rule itself; excluded from `fatwa_principles`.
 
+**Linguistic Textual Deduction (استدلال بدلالة اللفظ الأصولية)**:
+The derivation of a legal ruling from the linguistic construction of a Quranic verse or Prophetic hadith via an operative rule of _Dalalat al-Alfaz_ (such as imperative denoting obligation, prohibitive denoting invalidity, or indefinite in negation denoting generality); eligible for `fatwa_principles` under `science = 'usul'`.
+_Avoid_: Primary proof citation, routine citation
+
 **Evidence Quote (محل الشاهد والتعليل)**:
 The exact clause in a Scholar's answer where one or more Principles are actively invoked as the causal legal reasoning (_ta'lil_) to justify the ruling.
 

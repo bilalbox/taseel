@@ -11,6 +11,7 @@ import type {
 	FatwaPrinciple,
 	Principle,
 	QuizQuestionItem,
+	QuizQuestionMode,
 	Scholar,
 	UserQuizHistoryItem,
 	UserState,
@@ -525,6 +526,7 @@ export class LearnerProgressStore {
 	public async fetchNextRandomQuestion(filter?: {
 		scholar?: Scholar | "ALL";
 		chapter?: string;
+		mode?: QuizQuestionMode;
 	}): Promise<QuizQuestionItem | null> {
 		const activeFilter = filter || this.filter;
 		const answeredIds = this.getAnsweredFatwaIds();
@@ -536,6 +538,7 @@ export class LearnerProgressStore {
 			const item = await this.archiveAdapter.getRandomQuizQuestion({
 				scholar: activeFilter.scholar,
 				chapter: activeFilter.chapter,
+				mode: (activeFilter as any).mode,
 				excludeFatwaIds,
 			});
 
@@ -602,7 +605,12 @@ export class LearnerProgressStore {
 		const current = this.getCurrentQuestion();
 		if (!current) return null;
 
-		const isCorrect = selectedId === current.principle.id;
+		const matchedChoice = current.quizItem?.choices?.find(
+			(c) => c.id === selectedId,
+		);
+		const isCorrect = matchedChoice
+			? matchedChoice.is_correct
+			: selectedId === current.principle.id;
 		const attempt: UserQuizHistoryItem = {
 			id: `quiz-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
 			fatwa_id: current.fatwa.id,
@@ -625,6 +633,7 @@ export class LearnerProgressStore {
 	public async nextQuestion(filter?: {
 		scholar?: Scholar | "ALL";
 		chapter?: string;
+		mode?: QuizQuestionMode;
 	}): Promise<void> {
 		const item = await this.fetchNextRandomQuestion(filter);
 		if (item) {

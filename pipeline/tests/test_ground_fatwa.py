@@ -233,3 +233,62 @@ def test_baqaa_explicit_verbatim(ontology: OntologyGraph) -> None:
     inv = next(i for i in res.invocations if i.principle_id == "fiqh.yaqeen.baqaa")
     assert inv.invocation_type == "explicit_verbatim"
     assert "بقاء ما كان" in inv.evidence_quote_ar or inv.evidence_quote_ar in fatwa["answer_text"]
+
+
+def test_usuli_dalalat_al_alfaz_grounding(ontology: OntologyGraph) -> None:
+    fatwa = _fatwa(
+        "golden-usul-amr-fawr",
+        question="هل الحج واجب على الفور؟",
+        answer="يجب الحج على الفور لأن الأمر يقتضي الفور والمبادرة ولا يجوز التراخي.",
+        chapter="Hajj",
+    )
+    res = ground_fatwa(fatwa, ontology)
+    assert res.skipped is False
+    assert any(i.principle_id == "usul.alfaz.amr.fawr" for i in res.invocations)
+
+
+def test_dual_fiqh_and_usul_grounding(ontology: OntologyGraph) -> None:
+    fatwa = _fatwa(
+        "golden-dual-taharah",
+        question="ما حكم الشك في نقض الوضوء بلحم الإبل؟",
+        answer=(
+            "الأصل بقاء الطهارة فلا ينتقض بيقين الشك، ولكن إذا تيقن أكل لحم الإبل "
+            "وجب عليه الوضوء لأن النبي صلى الله عليه وسلم أمر بذلك والأصل في الأمر الوجوب."
+        ),
+        chapter="Taharah",
+    )
+    res = ground_fatwa(fatwa, ontology)
+    assert res.skipped is False
+    pids = {i.principle_id for i in res.invocations}
+    assert "fiqh.yaqeen.baqaa.taharah" in pids
+    assert "usul.alfaz.amr_wujub" in pids
+
+
+def test_validation_rejects_missing_usul_markers(ontology: OntologyGraph) -> None:
+    fatwa = _fatwa(
+        "f-usul-invalid",
+        question="سؤال عام",
+        answer="ذهب أهل العلم إلى جواز الصلاة جالسا للعاجز.",
+        chapter="Salat",
+    )
+    # Attempting to link amr_wujub to an answer that has no amr linguistic markers
+    resp = {
+        "fatwa_id": "f-usul-invalid",
+        "has_applicable_principle": True,
+        "invocations": [
+            {
+                "principle_id": "usul.alfaz.amr_wujub",
+                "matched_alias_id": None,
+                "invocation_type": "implicit_application",
+                "evidence_quote_ar": "ذهب أهل العلم",
+                "application_explanation_ar": "استنباط خاطئ غير مدعوم بالنص.",
+                "difficulty": "intermediate",
+                "confidence_score": 0.9,
+                "proposed_new_dabit": None,
+            }
+        ],
+    }
+    links, rejections, _ = validate_fatwa_response(resp, fatwa, ontology)
+    assert len(links) == 0
+    assert any(r["reason"] == "MISSING_AMR_LINGUISTIC_MARKER" for r in rejections)
+

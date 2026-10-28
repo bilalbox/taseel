@@ -28,6 +28,43 @@ import {
 	PRINCIPLES_DATA,
 } from "./mockData";
 
+export function buildPrinciplesTree(
+	principles: Principle[],
+	fatwaPrinciples: FatwaPrinciple[] = [],
+): PrincipleTreeNode[] {
+	const linkedCounts = new Map<string, number>();
+	for (const fp of fatwaPrinciples) {
+		linkedCounts.set(
+			fp.principle_id,
+			(linkedCounts.get(fp.principle_id) || 0) + 1,
+		);
+	}
+
+	const nodeMap = new Map<string, PrincipleTreeNode>();
+	const roots: PrincipleTreeNode[] = [];
+
+	for (const p of principles) {
+		const node: PrincipleTreeNode = {
+			...p,
+			depth: p.depth ?? 0,
+			parent_id: p.parent_id ?? null,
+			fatwas_count: linkedCounts.get(p.id) || 0,
+			children: [],
+		};
+		nodeMap.set(p.id, node);
+	}
+
+	for (const node of nodeMap.values()) {
+		if (node.parent_id && nodeMap.has(node.parent_id)) {
+			nodeMap.get(node.parent_id)!.children.push(node);
+		} else {
+			roots.push(node);
+		}
+	}
+
+	return roots;
+}
+
 export function flattenPrinciplesTree(
 	nodes: PrincipleTreeNode[],
 ): PrincipleTreeNode[] {
@@ -106,37 +143,7 @@ export class MockArchiveAdapter implements ArchiveQueryAdapter {
 	}
 
 	public async getPrinciplesTree(): Promise<PrincipleTreeNode[]> {
-		const linkedCounts = new Map<string, number>();
-		for (const fp of this.fatwaPrinciples) {
-			linkedCounts.set(
-				fp.principle_id,
-				(linkedCounts.get(fp.principle_id) || 0) + 1,
-			);
-		}
-
-		const nodeMap = new Map<string, PrincipleTreeNode>();
-		const roots: PrincipleTreeNode[] = [];
-
-		for (const p of this.principles) {
-			const node: PrincipleTreeNode = {
-				...p,
-				depth: p.depth ?? 0,
-				parent_id: p.parent_id ?? null,
-				fatwas_count: linkedCounts.get(p.id) || 0,
-				children: [],
-			};
-			nodeMap.set(p.id, node);
-		}
-
-		for (const node of nodeMap.values()) {
-			if (node.parent_id && nodeMap.has(node.parent_id)) {
-				nodeMap.get(node.parent_id)!.children.push(node);
-			} else {
-				roots.push(node);
-			}
-		}
-
-		return roots;
+		return buildPrinciplesTree(this.principles, this.fatwaPrinciples);
 	}
 
 	public async browseFatwas(

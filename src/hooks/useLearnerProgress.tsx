@@ -6,7 +6,12 @@ import {
 	type LearnerProgressStore,
 	type LearnerStats,
 } from "../stores/learnerStore";
-import type { Scholar, UserQuizHistoryItem, UserState } from "../types";
+import type {
+	QuizQuestionMode,
+	Scholar,
+	UserQuizHistoryItem,
+	UserState,
+} from "../types";
 
 export const LearnerProgressContext =
 	createContext<LearnerProgressStore>(defaultLearnerStore);
@@ -22,6 +27,7 @@ export interface UseLearnerProgressReturn {
 	nextQuestion: (filter?: {
 		scholar?: Scholar | "ALL";
 		chapter?: string;
+		mode?: QuizQuestionMode;
 	}) => Promise<void> | void;
 	toggleBookmark: (fatwaId: string) => Promise<boolean>;
 	resetProgress: () => Promise<void>;
@@ -50,8 +56,11 @@ export function useLearnerProgress(
 		isBookmarked: (fatwaId: string) => store.isBookmarked(fatwaId),
 		recordAttempt: (selectedId: string, timeSpentMs: number) =>
 			store.recordAttempt(selectedId, timeSpentMs),
-		nextQuestion: (filter?: { scholar?: Scholar | "ALL"; chapter?: string }) =>
-			store.nextQuestion(filter),
+		nextQuestion: (filter?: {
+			scholar?: Scholar | "ALL";
+			chapter?: string;
+			mode?: QuizQuestionMode;
+		}) => store.nextQuestion(filter),
 		toggleBookmark: (fatwaId: string) => store.toggleBookmark(fatwaId),
 		resetProgress: () => store.resetProgress(),
 		selectQuestion: (fatwaId: string, principleId?: string | null) =>

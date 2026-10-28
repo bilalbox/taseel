@@ -16,7 +16,8 @@ describe("MockArchiveAdapter", () => {
 			const tree = await mockArchiveAdapter.getPrinciplesTree();
 
 			expect(Array.isArray(tree)).toBe(true);
-			expect(tree.length).toBe(PRINCIPLES_DATA.length);
+			const rootCount = PRINCIPLES_DATA.filter((p) => !p.parent_id).length;
+			expect(tree.length).toBe(rootCount);
 
 			for (const node of tree) {
 				expect(node).toHaveProperty("id");
@@ -46,7 +47,7 @@ describe("MockArchiveAdapter", () => {
 			const tree = await mockArchiveAdapter.getPrinciplesTree();
 			const flat = flattenPrinciplesTree(tree);
 
-			expect(flat.length).toBe(tree.length);
+			expect(flat.length).toBe(PRINCIPLES_DATA.length);
 			expect(flat[0]?.id).toBe(tree[0]?.id);
 		});
 	});

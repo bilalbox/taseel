@@ -47,7 +47,7 @@ To run a takhrij batch directly through the coding agent:
 
 Always apply these essential rules during takhrij:
 
-1. **Primary Proof Citation Rule:** If the ruling rests on an explicit textual proof (*dalil tafsili*: a specific Quranic verse, Sahih hadith, or direct consensus) without deriving an unstated branch, return `has_applicable_principle: false`.
+1. **Primary Proof Citation vs. Dalalat al-Alfaz:** If the ruling rests on an explicit textual proof (*dalil tafsili*: a specific Quranic verse, Sahih hadith, or direct consensus) without legal or linguistic derivation, return `has_applicable_principle: false`. However, if the answer derives obligation, prohibition, invalidity, or generality from the linguistic construction of the text (e.g. an imperative denoting obligation, prohibition denoting corruption, or indefinite in negation denoting generality), link the applicable `usul.alfaz.*` principle.
 2. **Wisdom (*Hikmah*) is NOT a Maxim:** Explaining the legislative wisdom/intent (e.g. "the Lawgiver desires the persistence of marriage") is *hikmat al-tashri'*, NOT *takhrij* on *Al-Aslu Baqau Ma Kana 'Ala Ma Kan*.
 3. **True Istishab Requires Uncertainty:** *Al-Aslu Baqau Ma Kana 'Ala Ma Kan* requires an established prior certainty and a newly arising doubt (*shakk*).
 4. **No Spurious Usul Grounding:** Never link to `usul.adillah.ijma` or `usul.adillah.sunnah` just because the scholar cites consensus or a hadith, unless they actively discuss the epistemological authority of the proof.

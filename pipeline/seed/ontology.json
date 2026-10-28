@@ -1,5 +1,5 @@
 {
-  "version": "2026.10.27-grounding",
+  "version": "2026.10.28-dalalat-alfaz",
   "principles": [
     {
       "id": "fiqh.yaqeen",
@@ -1978,6 +1978,358 @@
         "difficulty": "intermediate"
       },
       "explanation_template_ar": "سلك الشيخ مسلك الجمع والتوفيق بين النصين دفعاً للتعارض، لأن إعمال الدليلين أولى من إهمال أحدهما."
+    },
+    {
+      "id": "usul.alfaz.amr.fawr",
+      "parent_id": "usul.alfaz.amr_wujub",
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "الأصل في الأمر المطلق الفور والمبادرة",
+      "summary_ar": "الأمر الشرعي يقتضي وجوب المبادرة والامتثال في أول أوقات الإمكان دون تأخير أو تراخ إلا لقرينة.",
+      "textual_evidence_ar": "قوله تعالى: ﴿وَسَارِعُوا إِلَى مَغْفِرَةٍ مِنْ رَبِّكُمْ﴾، وذم إبليس على تأخير الامتثال.",
+      "matching_guardrail": "يربط بها عندما يبين الشيخ وجوب المبادرة بالفعل وعدم جواز التأخير أو التراخي.",
+      "aliases": [
+        {
+          "id": "al.amr.fawr.1",
+          "alias_text_ar": "الأمر يقتضي الفور",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.amr.fawr.2",
+          "alias_text_ar": "الأمر المطلق يفيد الفور ولا يجوز التراخي",
+          "scholar_preference": "ابن باز"
+        }
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "الامر يقتضي الفور",
+          "الامر يفيد الفور",
+          "يقتضي الفور والوجوب",
+          "يقتضي الوجوب والفور"
+        ],
+        "quote_any": [
+          "يقتضي الفور",
+          "يفيد الفور"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "حمل الشيخ الأمر على المبادرة والفورية، لأن الأصل في الأمر المطلق يقتضي الفور وعدم التراخي."
+    },
+    {
+      "id": "usul.alfaz.amr.baad_hazar",
+      "parent_id": "usul.alfaz.amr_wujub",
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "الأمر بعد الحظر يفيد الإباحة ورفع الحظر",
+      "summary_ar": "إذا ورد صيغة الأمر بعد نهي أو تحريم سابق، دل ذلك على رفع الحظر ورجوع الأمر إلى الإباحة لا الوجوب.",
+      "textual_evidence_ar": "قوله تعالى: ﴿وَإِذَا حَلَلْتُمْ فَاصْطَادُوا﴾ بعد النهي عن الصيد في الإحرام.",
+      "matching_guardrail": "يربط بها عندما يعلل الشيخ بأن الأمر الوارد بعد المنع لا يفيد الإلزام وإنما الإذن ورفع الحرج.",
+      "aliases": [
+        {
+          "id": "al.amr.hazar.1",
+          "alias_text_ar": "الأمر بعد النهي للإباحة",
+          "scholar_preference": "ابن عثيمين"
+        }
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "الامر بعد الحظر",
+          "الامر بعد النهي يفيد الاباحه",
+          "الامر بعد المنع"
+        ],
+        "quote_any": [
+          "الامر بعد الحظر",
+          "الامر بعد النهي"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "advanced"
+      },
+      "explanation_template_ar": "بين الشيخ أن الأمر يفيد الإباحة لا الوجوب، لوروده بعد حظر سابق."
+    },
+    {
+      "id": "usul.alfaz.amr.sarf_nadb",
+      "parent_id": "usul.alfaz.amr_wujub",
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "صرف الأمر من الوجوب إلى الندب لا يكون إلا بقرينة صارفة",
+      "summary_ar": "الأصل بقاء الأمر على الوجوب، ولا يحكم بالاستحباب أو السنية إلا إذا دل دليل أو قرينة صحيحة على صرفه.",
+      "textual_evidence_ar": "إجماع الأصوليين على أن صيغة افعل حقيقة في الإيجاب مجاز في الندب.",
+      "matching_guardrail": "يربط بها عند مناقشة دلالة الأمر وهل هو واجب أم مستحب، ووجود الصارف من عدمه.",
+      "aliases": [
+        {
+          "id": "al.amr.sarf.1",
+          "alias_text_ar": "الأمر للاستحباب لوجود الصارف",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.amr.sarf.2",
+          "alias_text_ar": "الأصل الوجوب إلا لصارف",
+          "scholar_preference": "ابن باز"
+        }
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "للاستحباب لوجود الصارف",
+          "صرف الامر",
+          "الا لصارف يدل",
+          "محمول علي الاستحباب لقرينه"
+        ],
+        "quote_any": [
+          "لوجود الصارف",
+          "صرف الامر",
+          "محمول علي الاستحباب"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "بين الشيخ أن الأمر مصروف عن ظاهره (الوجوب) إلى الاستحباب لورود القرينة الصارفة."
+    },
+    {
+      "id": "usul.alfaz.nahy.fasad",
+      "parent_id": "usul.alfaz.nahy",
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "النهي في العبادات والمعاملات يقتضي الفساد والبطلان",
+      "summary_ar": "كل فعل أو عقد نهى الشارع عنه لذاته أو لشرطه فإن وقوعه باطل شرعاً لا تترتب عليه أحكامه.",
+      "textual_evidence_ar": "حديث: «من أحدث في أمرنا هذا ما ليس منه فهو رد».",
+      "matching_guardrail": "يربط بها عند إبطال العبادة أو المعاملة استناداً إلى النهي الشرعي الصريح عنها.",
+      "aliases": [
+        {
+          "id": "al.nahy.fasad.1",
+          "alias_text_ar": "النهي يقتضي الفساد",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.nahy.fasad.2",
+          "alias_text_ar": "المنهي عنه باطل وفاسد",
+          "scholar_preference": "ابن باز"
+        }
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "النهي يقتضي الفساد",
+          "النهي يقتضي البطلان",
+          "فاسده لان النبي نهي",
+          "باطل لان النبي نهي"
+        ],
+        "quote_any": [
+          "النهي يقتضي الفساد",
+          "النهي يقتضي البطلان"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.95,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "حكم الشيخ ببطلان الفعل وفساده، لأن النهي الشرعي يقتضي الفساد والبطلان."
+    },
+    {
+      "id": "usul.alfaz.nahy.sarf_karahah",
+      "parent_id": "usul.alfaz.nahy",
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "صرف النهي من التحريم إلى الكراهة لا يكون إلا بقرينة صارفة",
+      "summary_ar": "الأصل في النهي التحريم، ولا يحمل على كراهة التنزيه إلا بدليل أو قرينة صارفة تدل على عدم الإلزام بالترك.",
+      "textual_evidence_ar": "قواعد الأصول في حمل صيغ النهي على التحريم حتى يثبت الصارف.",
+      "matching_guardrail": "يربط بها عند الترجيح بأن النهي للكراهة فقط وليس للتحريم لوجود قرينة (كفعل النبي ﷺ له أحياناً).",
+      "aliases": [
+        {
+          "id": "al.nahy.karahah.1",
+          "alias_text_ar": "النهي للكراهة لوجود الصارف",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.nahy.karahah.2",
+          "alias_text_ar": "نهي كراهة لا نهي تحريم",
+          "scholar_preference": "ابن باز"
+        }
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "نهي كراهه لا نهي تحريم",
+          "النهي هنا للكراهه",
+          "محمول علي الكراهه لوجود الصارف"
+        ],
+        "quote_any": [
+          "نهي كراهه",
+          "النهي هنا للكراهه",
+          "محمول علي الكراهه"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.92,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "صرف الشيخ النهي عن ظاهره (التحريم) إلى كراهة التنزيه لقيام القرينة الصارفة."
+    },
+    {
+      "id": "usul.alfaz.umum.nakirah_nafy",
+      "parent_id": "usul.alfaz.umum",
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "qa_idah_usuliyyah",
+      "canonical_text_ar": "النكرة في سياق النفي أو النهي تفيد العموم والشمول",
+      "summary_ar": "ورود الاسم المنكر بعد أداة نفي أو نهي أو شرط أو استفهام إنكاري يعم جميع أفراده بلا استثناء إلا بدليل.",
+      "textual_evidence_ar": "قوله تعالى: ﴿فَلا تَقُلْ لَهُمَا أُفٍّ﴾ وحديث: «لا صلاة لمن لم يقرأ بفاتحة الكتاب».",
+      "matching_guardrail": "يربط بها عندما يعلل الشيخ عموم الحكم وشموله بوقوع اللفظ نكرة بعد نفي أو نهي.",
+      "aliases": [
+        {
+          "id": "al.umum.nakirah.1",
+          "alias_text_ar": "النكرة في سياق النفي تفيد العموم",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.umum.nakirah.2",
+          "alias_text_ar": "النكرة في سياق النهي تعم",
+          "scholar_preference": "ابن باز"
+        }
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "النكره في سياق النفي",
+          "النكره في سياق النهي",
+          "نكره في سياق النفي تفيد العموم"
+        ],
+        "quote_any": [
+          "النكره في سياق النفي",
+          "النكره في سياق النهي"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.96,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "استدل الشيخ بالعموم الشامل المستفاد من وقوع اللفظ نكرة في سياق النفي والنهي."
+    },
+    {
+      "id": "usul.alfaz.mutlaq_muqayyad",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "حمل المطلق على المقيد واجب عند اتحاد الحكم والسبب",
+      "summary_ar": "إذا ورد نص شرعي مطلق في موضع ومقيد بقيد في موضع آخر واتحد الحكم والسبب، وجب تقييد المطلق بذلك القيد.",
+      "textual_evidence_ar": "تقييد الرقبة بالإيمان في كفارة القتل وإطلاقها في الظهار.",
+      "matching_guardrail": "يربط بها عند تفسير نص عام أو مطلق بنص آخر يقيده بشروط أو أوصاف معينة.",
+      "aliases": [
+        {
+          "id": "al.mutlaq.1",
+          "alias_text_ar": "يحمل المطلق على المقيد",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.mutlaq.2",
+          "alias_text_ar": "تقييد المطلق بالنص المقيد",
+          "scholar_preference": "ابن باز"
+        }
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "يحمل المطلق علي المقيد",
+          "حمل المطلق علي المقيد",
+          "يقيد المطلق"
+        ],
+        "quote_any": [
+          "المطلق علي المقيد",
+          "يقيد المطلق"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.94,
+        "difficulty": "advanced"
+      },
+      "explanation_template_ar": "قيد الشيخ دلالة النص المطلق بما ورد في النصوص الأخرى المقيدة له، عملاً بقاعدة حمل المطلق على المقيد."
+    },
+    {
+      "id": "usul.alfaz.mafhum_mukhalafah",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "مفهوم المخالفة (دليل الخطاب) حجة بشرط ألا يكون للوصف فائدة أخرى",
+      "summary_ar": "إثبات نقيض حكم المنطوق به للمسكوت عنه عند تقييد الحكم بوصف أو شرط أو غاية أو عدد.",
+      "textual_evidence_ar": "حديث: «في سائمة الغنم الزكاة» دل بمفهومه على عدم وجوبها في المعلوفة.",
+      "matching_guardrail": "يربط بها عندما يستنبط الشيخ انتفاء الحكم عند انتفاء الوصف أو الشرط المذكور في الحديث أو الآية.",
+      "aliases": [
+        {
+          "id": "al.mafhum.1",
+          "alias_text_ar": "دلالة المفهوم المخالف",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.mafhum.2",
+          "alias_text_ar": "مفهوم المخالفة حجة",
+          "scholar_preference": "ابن باز"
+        }
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "مفهوم المخالفه",
+          "دليل الخطاب",
+          "بمفهوم المخالفه"
+        ],
+        "quote_any": [
+          "مفهوم المخالفه",
+          "بمفهوم المخالفه"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.93,
+        "difficulty": "advanced"
+      },
+      "explanation_template_ar": "استنبط الشيخ حكم المسألة بدلالة مفهوم المخالفة للقيد الوارد في النص الشرعي."
+    },
+    {
+      "id": "usul.alfaz.zahir",
+      "parent_id": null,
+      "science": "usul",
+      "domain_section": "دلالات الألفاظ",
+      "kind": "asl_kulli",
+      "canonical_text_ar": "الأصل إبقاء اللفظ على ظاهره ولا يصار إلى التأويل إلا بدليل صحيح",
+      "summary_ar": "الواجب حمل نصوص الكتاب والسنة على حقيقتها وظاهرها المتبادر، وتحريم صرفها إلى المجاز أو التأويل بلا برهان.",
+      "textual_evidence_ar": "إجماع السلف على إمرار النصوص على ظاهرها اللائق بالله وبشريعته.",
+      "matching_guardrail": "يربط بها عند رد التأويلات والتمسك بظاهر النص اللغوي والشرعي.",
+      "aliases": [
+        {
+          "id": "al.zahir.1",
+          "alias_text_ar": "الواجب إبقاء اللفظ على ظاهره",
+          "scholar_preference": "ابن عثيمين"
+        },
+        {
+          "id": "al.zahir.2",
+          "alias_text_ar": "الأصل إجراء النصوص على ظاهرها",
+          "scholar_preference": "ابن باز"
+        }
+      ],
+      "match": {
+        "context": "answer",
+        "require_any": [
+          "ابقاء اللفظ علي ظاهره",
+          "اجراء النصوص علي ظاهرها",
+          "لا يجوز تاويله",
+          "محمول علي ظاهره"
+        ],
+        "quote_any": [
+          "علي ظاهره",
+          "اجراء النصوص علي ظاهرها"
+        ],
+        "invocation_type": "explicit_verbatim",
+        "confidence": 0.94,
+        "difficulty": "intermediate"
+      },
+      "explanation_template_ar": "أجرى الشيخ النص الشرعي على ظاهره المتبادر دون تأويل، عملاً بالأصل في حمل الألفاظ على ظواهرها."
     }
   ],
   "relations": [
@@ -2016,6 +2368,42 @@
       "target_id": "usul.adillah.istishab.ibaha_muamalat",
       "relation_type": "contrast_pair",
       "explanation_ar": "التفريق الأصولي الجوهري بين باب العبادات (التوقيف والمنع إلا بدليل) وباب المعاملات والعادات (الإباحة إلا بدليل)."
+    },
+    {
+      "source_id": "usul.alfaz.amr_wujub",
+      "target_id": "usul.alfaz.amr.sarf_nadb",
+      "relation_type": "contrast_pair",
+      "explanation_ar": "الأصل في الأمر الوجوب يقابله صرفه إلى الندب عند قيام الصارف."
+    },
+    {
+      "source_id": "usul.alfaz.amr_wujub",
+      "target_id": "usul.alfaz.amr.baad_hazar",
+      "relation_type": "contrast_pair",
+      "explanation_ar": "الأمر المطلق يفيد الإيجاب بخلاف الأمر الوارد بعد الحظر فإنه يفيد الإباحة."
+    },
+    {
+      "source_id": "usul.alfaz.amr.fawr",
+      "target_id": "usul.alfaz.amr_wujub",
+      "relation_type": "secondary_parent",
+      "explanation_ar": "قاعدة الفور تتفرع عن أصل دلالة الأمر المطلق وتزيد عليه وجوب المبادرة زماناً."
+    },
+    {
+      "source_id": "usul.alfaz.nahy",
+      "target_id": "usul.alfaz.nahy.sarf_karahah",
+      "relation_type": "contrast_pair",
+      "explanation_ar": "الأصل في النهي التحريم يقابله صرفه إلى كراهة التنزيه بالقرينة."
+    },
+    {
+      "source_id": "usul.alfaz.nahy",
+      "target_id": "usul.alfaz.nahy.fasad",
+      "relation_type": "secondary_parent",
+      "explanation_ar": "النهي يقتضي التحريم كحكم تكليفي ويقتضي الفساد والبطلان كحكم وضعي."
+    },
+    {
+      "source_id": "usul.alfaz.umum",
+      "target_id": "usul.alfaz.mutlaq_muqayyad",
+      "relation_type": "contrast_pair",
+      "explanation_ar": "التمييز الدقيق بين العام (شمول استغراقي لجميع الأفراد) والمطلق (شمول بدلي لوصف الماهية)."
     }
   ],
   "grounding_skips": [

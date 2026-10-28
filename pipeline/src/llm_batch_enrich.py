@@ -239,10 +239,38 @@ def ancestor_ids(ontology: OntologyGraph, node_id: str) -> list[str]:
     return out
 
 
+def has_textual_proof_or_linguistic_markers(answer_raw: str, norm_answer: str) -> bool:
+    """Checks if answer contains Quran/Hadith citations or Usuli linguistic markers."""
+    if any(q in answer_raw for q in ("﴿", "﴾", "«", "»", "ﷺ", "قال النبي", "قال رسول")):
+        return True
+    usul_tokens = (
+        "الامر",
+        "النهي",
+        "الوجوب",
+        "التحريم",
+        "الاستحباب",
+        "الكراهه",
+        "الفور",
+        "العموم",
+        "النكره",
+        "المطلق",
+        "المقيد",
+        "صارف",
+        "الظاهر",
+        "مفهوم",
+        "دلاله",
+        "النفي",
+    )
+    return any(t in norm_answer for t in usul_tokens)
+
+
 def candidate_subgraph_ids(
-    fatwa: dict, ontology: OntologyGraph, max_candidates: int = DEFAULT_MAX_CANDIDATES
+    fatwa: dict,
+    ontology: OntologyGraph,
+    max_candidates: int = DEFAULT_MAX_CANDIDATES,
+    science: str | None = None,
 ) -> list[str]:
-    """Top-N inverted-index neighbourhood + topic_chapter dawabit, plus the 5 universal maxims."""
+    """Top-N inverted-index neighbourhood + topic_chapter dawabit, plus kubra maxims and Usul subgraphs."""
     norm_query = f"{fatwa['subtopic_norm']} {fatwa['question_norm']} {fatwa['answer_norm']}"
     tokens = {t for t in norm_query.split() if len(t) > 2 and t not in STOP_TOKENS}
     retrieved, _ = ontology.retrieve_candidate_subgraph_fast(norm_query, tokens, top_k_seeds=6)
@@ -251,20 +279,51 @@ def candidate_subgraph_ids(
     seen: set[str] = set()
 
     def _add(nid: str) -> None:
-        if nid not in seen:
+        if nid not in seen and nid in ontology.nodes:
             seen.add(nid)
             ordered.append(nid)
 
     for node in retrieved:
         _add(node["id"])
-    for node in ontology.nodes.values():
-        if node["domain_section"] == fatwa["topic_chapter"]:
-            _add(node["id"])
+    if science != "usul":
+        for node in ontology.nodes.values():
+            if node["domain_section"] == fatwa["topic_chapter"]:
+                _add(node["id"])
     ordered = ordered[:max_candidates]
     seen = set(ordered)
-    for node in ontology.nodes.values():
-        if node["kind"] == "qa_idah_kubra":
-            _add(node["id"])
+    if science != "usul":
+        for node in ontology.nodes.values():
+            if node["kind"] == "qa_idah_kubra":
+                _add(node["id"])
+
+    # Always inject relevant Usul nodes when textual citations or linguistic markers are present
+    if (
+        has_textual_proof_or_linguistic_markers(fatwa.get("answer_text", ""), fatwa["answer_norm"])
+        or science == "usul"
+    ):
+        ans_norm = fatwa["answer_norm"]
+        for node in ontology.nodes.values():
+            if node.get("science") == "usul" and node.get("domain_section") == "دلالات الألفاظ":
+                # Inject root asl_kulli nodes
+                if node.get("kind") == "asl_kulli":
+                    _add(node["id"])
+                # Inject amr sub-principles when amr/wujub is relevant
+                if any(
+                    k in ans_norm for k in ("امر", "يامر", "وجوب", "واجب", "فور", "افعل")
+                ) and node["id"].startswith("usul.alfaz.amr"):
+                    _add(node["id"])
+                # Inject nahy sub-principles when nahy/tahrim/fasad is relevant
+                if any(
+                    k in ans_norm
+                    for k in ("نهي", "ينهي", "حرم", "تحريم", "حرام", "فساد", "باطل", "كراهه")
+                ) and node["id"].startswith("usul.alfaz.nahy"):
+                    _add(node["id"])
+                # Inject umum sub-principles when umum/nafy is relevant
+                if any(k in ans_norm for k in ("عموم", "عام", "نفي", "نكره", "استفصال")) and node[
+                    "id"
+                ].startswith("usul.alfaz.umum"):
+                    _add(node["id"])
+
     return ordered
 
 
@@ -381,6 +440,7 @@ def build_jobs(
     max_answer_chars: int = DEFAULT_MAX_ANSWER_CHARS,
     max_candidates: int = DEFAULT_MAX_CANDIDATES,
     chapters: set[str] | None = None,
+    science: str | None = None,
 ) -> list[dict]:
     ontology = corpus.ontology
     by_cluster: dict[str, list[dict]] = {}
@@ -389,6 +449,10 @@ def build_jobs(
         if fid not in corpus.eligible_ids or fid in exclude_ids:
             continue
         if chapters and f["topic_chapter"] not in chapters:
+            continue
+        if science == "usul" and not has_textual_proof_or_linguistic_markers(
+            f.get("answer_text", ""), f["answer_norm"]
+        ):
             continue
         by_cluster.setdefault(corpus.fatwa_to_cluster[fid], []).append(f)
 
@@ -413,7 +477,7 @@ def build_jobs(
 
         cand: list[str] = []
         for f in sent:
-            for nid in candidate_subgraph_ids(f, ontology, max_candidates):
+            for nid in candidate_subgraph_ids(f, ontology, max_candidates, science=science):
                 if nid not in cand:
                     cand.append(nid)
 
@@ -493,7 +557,10 @@ python3 pipeline/src/llm_batch_enrich.py check {batch_id}
 2. **evidence_quote_ar** — copy an exact, contiguous substring (محل الشاهد) of the shown answer, ≤ 300
    characters, from a single segment (never across ` … `), no ellipses, no added/removed words.
 3. **Do not force links.** If the answer is a plain ruling, narration, عقيدة/أدب exhortation, or merely
-   cites a verse/hadith, set `has_applicable_principle: false` and `invocations: []`. Expect many of these.
+   cites a verse/hadith without active derivation, set `has_applicable_principle: false` and `invocations: []`.
+   **Dalalat al-Alfaz exception:** when the answer derives an obligation, prohibition, invalidity, or generality
+   from the linguistic construction of the quoted verse/hadith (e.g. an imperative implying obligation, negative particle
+   governing an indefinite noun, or resolving a qualifier), link the applicable `usul.alfaz.*` principle.
 4. **Routine proof guardrail:** never link `usul.adillah.ijma`, `usul.adillah.sunnah` or
    `usul.adillah.sunnah.khabar_wahid` when the scholar just cites consensus (بالإجماع) or a hadith as
    evidence for a ruling. Link them only when he discusses the *authority* of the proof itself
@@ -696,6 +763,41 @@ def validate_fatwa_response(
         if markers and not any(m in answer_norm for m in markers):
             _reject(inv, "ROUTINE_PROOF_CITATION")
             continue
+
+        quote_norm = normalize_arabic(quote)
+        # Structural linguistic marker verification for Dalalat al-Alfaz
+        if pid.startswith("usul.alfaz.amr"):
+            if not any(
+                k in quote_norm or k in answer_norm
+                for k in ("امر", "يامر", "وجوب", "واجب", "فرض", "فور", "افعل", "استحباب", "صارف")
+            ):
+                _reject(inv, "MISSING_AMR_LINGUISTIC_MARKER")
+                continue
+        elif pid.startswith("usul.alfaz.nahy"):
+            if not any(
+                k in quote_norm or k in answer_norm
+                for k in (
+                    "نهي",
+                    "ينهي",
+                    "حرم",
+                    "تحريم",
+                    "حرام",
+                    "فساد",
+                    "باطل",
+                    "كراهه",
+                    "مكروه",
+                    " لا ",
+                )
+            ):
+                _reject(inv, "MISSING_NAHY_LINGUISTIC_MARKER")
+                continue
+        elif pid == "usul.alfaz.umum.nakirah_nafy":
+            if not any(
+                k in quote_norm or k in answer_norm
+                for k in (" لا ", " ما ", " لم ", " لن ", " ليس ", "نكره", "نفي")
+            ):
+                _reject(inv, "MISSING_NAFY_LINGUISTIC_MARKER")
+                continue
 
         node = ontology.nodes[pid]
         alias_id = inv.get("matched_alias_id")
@@ -939,6 +1041,7 @@ def cmd_plan(args) -> None:
         args.max_answer_chars,
         args.max_candidates,
         set(args.chapter) if args.chapter else None,
+        science=getattr(args, "science", None),
     )
     eligible_clusters = {corpus.fatwa_to_cluster[f] for f in corpus.eligible_ids}
     sent = sum(len(j["fatwas"]) for j in jobs)
@@ -977,6 +1080,7 @@ def cmd_export(args) -> None:
         args.max_answer_chars,
         args.max_candidates,
         set(args.chapter) if args.chapter else None,
+        science=getattr(args, "science", None),
     )
     if args.max_jobs:
         jobs = jobs[: args.max_jobs]
@@ -1183,6 +1287,11 @@ def main(argv: Iterable[str] | None = None) -> None:
         )
         p.add_argument("--max-answer-chars", type=int, default=DEFAULT_MAX_ANSWER_CHARS)
         p.add_argument("--max-candidates", type=int, default=DEFAULT_MAX_CANDIDATES)
+        p.add_argument(
+            "--science",
+            choices=["fiqh", "usul"],
+            help="Filter jobs by science (e.g. usul for Dalalat al-Alfaz)",
+        )
 
     p = sub.add_parser("plan", help="Show eligibility and remaining work")
     _job_opts(p)

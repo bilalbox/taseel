@@ -45,6 +45,42 @@ export const PRINCIPLES_DATA: Principle[] = [
 		general_explanation_ar:
 			"من القواعد الفقهية الخمس الكبرى المتفق عليها؛ ومعناها أن الأمر الثابت بيقين لا يرتفع بمجرد ورود الشك الطارئ عليه، بل يستصحب حكم اليقين السابق حتى يثبت يقين آخر يزيله.",
 		english_transliteration: "Al-Yaqīnu Lā Yazūlu Bish-Shakk",
+		depth: 0,
+		science: "fiqh",
+		kind: "qa_idah_kubra",
+		domain_section: "القواعد الخمس الكبرى",
+	},
+	{
+		id: "principle-dabit-taharah",
+		parent_id: "principle-yaqeen",
+		canonical_text_ar: "من تيقن الطهارة وشك في الحدث فهو متطهر",
+		canonical_text_norm: normalizeArabic(
+			"من تيقن الطهارة وشك في الحدث فهو متطهر",
+		),
+		category: "dabit",
+		general_explanation_ar:
+			"ضابط فقهي في باب الطهارة متفرع عن قاعدة اليقين لا يزول بالشك؛ يقضي بأن المتوضئ إذا شك في انتقاض وضوئه بنى على يقين الطهارة.",
+		english_transliteration: "Man Tayaqqana At-Taharah Wa Shakka Fil-Hadath",
+		depth: 1,
+		science: "fiqh",
+		kind: "dabit_fiqhi",
+		domain_section: "Taharah",
+	},
+	{
+		id: "principle-dabit-hadath",
+		parent_id: "principle-yaqeen",
+		canonical_text_ar: "من تيقن الحدث وشك في الطهارة فهو محدث",
+		canonical_text_norm: normalizeArabic(
+			"من تيقن الحدث وشك في الطهارة فهو محدث",
+		),
+		category: "dabit",
+		general_explanation_ar:
+			"ضابط فقهي متفرع عن قاعدة اليقين لا يزول بالشك يقابل ضابط الطهارة؛ فمن تيقن أنه أحدث وشك هل توضأ لزمه الوضوء.",
+		english_transliteration: "Man Tayaqqana Al-Hadath Wa Shakka Fit-Taharah",
+		depth: 1,
+		science: "fiqh",
+		kind: "dabit_fiqhi",
+		domain_section: "Taharah",
 	},
 	{
 		id: "principle-ibaha",
@@ -56,6 +92,10 @@ export const PRINCIPLES_DATA: Principle[] = [
 		general_explanation_ar:
 			"قاعدة أصولية جليلة تقرر أن الأعيان النافعة والتصرفات والمعاملات الدنيوية الأصل فيها الحل والجواز حتى يقوم دليل صريح وصحيح على التحريم، بخلاف العبادات.",
 		english_transliteration: "Al-Aṣlu Fil-Ashyā’i Al-Ibāḥah",
+		depth: 0,
+		science: "usul",
+		kind: "asl_kulli",
+		domain_section: "الأدلة الشرعية",
 	},
 	{
 		id: "principle-tawqeef",
@@ -65,6 +105,10 @@ export const PRINCIPLES_DATA: Principle[] = [
 		general_explanation_ar:
 			"قاعدة أصولية تقتضي ألا يشرع في الدين تقرباً إلى الله من صلاة أو صيام أو ذكر أو هيئة إلا ما شرعه الله ورسوله بنص صحيح، فكل عبادة لا دليل عليها فهي بدعة مردودة.",
 		english_transliteration: "Al-Aṣlu Fil-‘Ibādāti At-Tawqīf",
+		depth: 0,
+		science: "usul",
+		kind: "asl_kulli",
+		domain_section: "الأدلة الشرعية",
 	},
 	{
 		id: "principle-mashaqqah",
@@ -74,6 +118,10 @@ export const PRINCIPLES_DATA: Principle[] = [
 		general_explanation_ar:
 			"من القواعد الكبرى الخمس؛ وأساسها رفع الحرج عن المكلفين. إذا طرأت مشقة خارجة عن المعتاد على المكلف بسبب مرض أو سفر أو إكراه رخّص الشارع له بما ييسر عليه.",
 		english_transliteration: "Al-Mashaqqatu Tajlibu At-Taysīr",
+		depth: 0,
+		science: "fiqh",
+		kind: "qa_idah_kubra",
+		domain_section: "القواعد الخمس الكبرى",
 	},
 	{
 		id: "principle-darar",
@@ -83,15 +131,24 @@ export const PRINCIPLES_DATA: Principle[] = [
 		general_explanation_ar:
 			'قاعدة كبرى مستقاة من الحديث النبوي "لا ضرر ولا ضرار"، تمنع ابتداء الضرر وتوجب رفعه ودفعه بقدر الإمكان ما لم يؤدِ رفعه إلى ضرر أعظم منه.',
 		english_transliteration: "Aḍ-Ḍararu Yuzāl",
+		depth: 0,
+		science: "fiqh",
+		kind: "qa_idah_kubra",
+		domain_section: "القواعد الخمس الكبرى",
 	},
 	{
 		id: "principle-dabit-riba",
+		parent_id: "principle-darar",
 		canonical_text_ar: "كل قرض جر نفعاً مشروطاً فهو ربا",
 		canonical_text_norm: normalizeArabic("كل قرض جر نفعاً مشروطاً فهو ربا"),
 		category: "dabit",
 		general_explanation_ar:
 			"ضابط فقهي مخصوص بباب القرض والمعاملات المالية؛ فالقرض عقد إرفاق وقربة، فإذا شرط فيه المقرض زيادة مالية أو منفعة عينية تحول العقد إلى معاوضة ربوية محرمة إجماعاً.",
 		english_transliteration: "Kullu Qarḍin Jarra Naf‘an Mashrūṭan Fa-Huwa Ribā",
+		depth: 1,
+		science: "fiqh",
+		kind: "dabit_fiqhi",
+		domain_section: "Muamalat",
 	},
 	{
 		id: "principle-maqasid",
@@ -101,6 +158,10 @@ export const PRINCIPLES_DATA: Principle[] = [
 		general_explanation_ar:
 			'قاعدة كلية أصلها "إنما الأعمال بالنيات"؛ يترتب عليها أن تصرفات المكلف وأقواله وأفعاله تختلف أحكامها الشرعية من حيث الصحة والفساد والحل والحرمة تبعاً لنيته ومقصده.',
 		english_transliteration: "Al-Umūru Bi-Maqāṣidihā",
+		depth: 0,
+		science: "fiqh",
+		kind: "qa_idah_kubra",
+		domain_section: "القواعد الخمس الكبرى",
 	},
 	{
 		id: "principle-adah",
@@ -110,6 +171,26 @@ export const PRINCIPLES_DATA: Principle[] = [
 		general_explanation_ar:
 			"قاعدة فقهية كبرى تقضي بأن العرف العام المستقر والمطرد أو الغالب يصار إليه في تحديد معاني الألفاظ والالتزامات والمقادير التي لم يحددها الشارع بضابط مخصوص.",
 		english_transliteration: "Al-‘Ādatu Muḥakkamah",
+		depth: 0,
+		science: "fiqh",
+		kind: "qa_idah_kubra",
+		domain_section: "القواعد الخمس الكبرى",
+	},
+	{
+		id: "usul.adillah.istishab",
+		canonical_text_ar:
+			"الاستصحاب حجة في إبقاء ما كان على ما كان ونفي ما لم يثبت",
+		canonical_text_norm: normalizeArabic(
+			"الاستصحاب حجة في إبقاء ما كان على ما كان ونفي ما لم يثبت",
+		),
+		category: "usuliyyah",
+		general_explanation_ar:
+			"دليل أصولي كلي يقضي باستمرار الحكم الثابت أو العدم الأصلي حتى يقوم الدليل الناقل عنه.",
+		english_transliteration: "Al-Istishab Hujjatan",
+		depth: 0,
+		science: "usul",
+		kind: "asl_kulli",
+		domain_section: "الأدلة الشرعية",
 	},
 	{
 		id: "principle-ijma",
@@ -124,6 +205,7 @@ export const PRINCIPLES_DATA: Principle[] = [
 		depth: 0,
 		science: "usul",
 		kind: "asl_kulli",
+		domain_section: "الأدلة الشرعية",
 	},
 	{
 		id: "principle-wajib",
@@ -136,6 +218,7 @@ export const PRINCIPLES_DATA: Principle[] = [
 		depth: 0,
 		science: "usul",
 		kind: "qa_idah_usuliyyah",
+		domain_section: "الأحكام الشرعية",
 	},
 ];
 

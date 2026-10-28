@@ -73,6 +73,53 @@ export const CATEGORY_LABELS: Record<
 	},
 };
 
+export function getPrincipleKindBadge(p: {
+	kind?: string;
+	science?: string;
+	category?: string;
+}): { label: string; color: string } {
+	switch (p.kind) {
+		case "qa_idah_kubra":
+			return {
+				label: "قاعدة كبرى",
+				color:
+					"bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/25",
+			};
+		case "qa_idah_kulliyyah":
+			return {
+				label: "قاعدة كلية",
+				color: "bg-accent-soft text-accent-deep border-accent/25",
+			};
+		case "dabit_fiqhi":
+			return {
+				label: "ضابط فقهي",
+				color: "bg-page-sunken text-ink-muted border-page-line",
+			};
+		case "asl_kulli":
+			return {
+				label: "أصل كلي",
+				color: "bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/25",
+			};
+		case "qa_idah_usuliyyah":
+			return {
+				label: "قاعدة أصولية",
+				color:
+					"bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-indigo-500/25",
+			};
+		case "dabit_usuli":
+			return {
+				label: "ضابط أصولي",
+				color:
+					"bg-teal-500/10 text-teal-700 dark:text-teal-400 border-teal-500/25",
+			};
+		default:
+			return {
+				label: p.science === "usul" ? "قاعدة أصولية" : "قاعدة فقهية",
+				color: "bg-page-sunken text-ink-muted border-page-line",
+			};
+	}
+}
+
 const CHAPTER_AR: Record<string, string> = {
 	Taharah: "الطهارة",
 	Salat: "الصلاة",

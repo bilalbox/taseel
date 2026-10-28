@@ -8,7 +8,8 @@ When evaluating a fatwa from *Noor 'ala al-Darb*, determine whether the scholar 
 
 | Category | Description | Outcome |
 | :--- | :--- | :--- |
-| **Primary Proof Citation** (*Dalil Tafsili*) | Scholar cites an explicit Quranic ayah, authentic hadith, or direct consensus establishing the first-order ruling without debating meta-rules. | `has_applicable_principle: false` |
+| **Primary Proof Citation** (*Dalil Tafsili*) | Scholar cites an explicit Quranic ayah, authentic hadith, or direct consensus establishing the first-order ruling without debating meta-rules or linguistic dalalat. | `has_applicable_principle: false` |
+| **Linguistic Textual Deduction** (*Dalalat al-Alfaz*) | Scholar derives obligation, prohibition, invalidity, or generality from the linguistic construction of the quoted verse or hadith (e.g. `usul.alfaz.*`). | `has_applicable_principle: true` (`science = 'usul'`) |
 | **Explicit Verbatim Principle** | Scholar cites the canonical text of a Qaidah or Dabit verbatim (e.g. "اليقين لا يزول بالشك"). | `has_applicable_principle: true`, `invocation_type: "explicit_verbatim"` |
 | **Explicit Paraphrase** | Scholar uses a known scholarly alias or explicit paraphrased rule (e.g. "الأصل بقاء الطهارة"). | `has_applicable_principle: true`, `invocation_type: "explicit_paraphrase"` |
 | **Implicit Application** | Scholar derives an unstated ruling using the causal mechanics (*manat*) of a maxim without reciting its name. | `has_applicable_principle: true`, `invocation_type: "implicit_application"` |
